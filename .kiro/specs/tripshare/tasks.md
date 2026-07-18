@@ -1,0 +1,327 @@
+# Implementation Plan: TripShare
+
+## Overview
+
+Incremental implementation of the TripShare expense-splitting app with multi-user collaboration. Each task builds on the previous, starting with project scaffolding and core domain logic, then layering in Firebase integration, authentication, trip CRUD with role-based access, collaboration features (share links, join flow), and finally deployment. Property-based tests validate the balance/settlement/protection algorithms early, ensuring correctness before the UI consumes them.
+
+## Tasks
+
+- [x] 1. Project setup and configuration
+  - [x] 1.1 Initialize Vite project with React 19 + TypeScript
+    - Run `npm create vite@latest` with react-ts template
+    - Install dependencies: react-router, tailwindcss v4, date-fns, lucide-react, sonner
+    - Install Firebase SDK v12+
+    - Install shadcn/ui and configure it for Tailwind v4
+    - Configure TypeScript strict mode
+    - _Requirements: 17.1, 17.2, 17.3_
+  - [x] 1.2 Set up project structure and type definitions
+    - Create directory structure: components/, pages/, hooks/, lib/, contexts/, types/
+    - Define TypeScript interfaces in `types/index.ts`: Trip (with collaboratorIds, shareToken), Expense, Transaction, UserProfile, TripRole
+    - _Requirements: 10.1, 7.2_
+  - [x] 1.3 Configure Firebase
+    - Create `lib/firebase.ts` with Firebase app initialization, auth, and firestore exports
+    - Use environment variables for Firebase config (VITE_FIREBASE_* prefix)
+    - _Requirements: 18.2_
+  - [x] 1.4 Set up Vitest and fast-check for testing
+    - Install vitest, @testing-library/react, fast-check, jsdom
+    - Configure vitest.config.ts
+    - _Requirements: 10.1, 11.1_
+
+- [x] 2. Core domain logic (balance calculation, debt simplification, participant protection)
+  - [x] 2.1 Implement `calculateBalances` function
+    - Create `lib/balances.ts`
+    - Implement the balance calculation: for each expense, add amount to payer's balance, subtract (amount / sharedBy.length) from each sharer's balance
+    - Initialize all participants to zero balance
+    - _Requirements: 10.1_
+  - [x] 2.2 Implement `simplifyDebts` function
+    - Implement the greedy debt simplification algorithm in `lib/balances.ts`
+    - Separate debtors (balance < -0.01) and creditors (balance > 0.01)
+    - Sort both descending by amount, iteratively pair largest debtor with largest creditor
+    - Round each transaction amount to 2 decimal places
+    - _Requirements: 11.1, 11.3, 11.4_
+  - [x] 2.3 Implement participant protection functions
+    - Create `lib/participants.ts` with `isParticipantProtected` and `getRemovableParticipants`
+    - `isParticipantProtected(name, expenses)`: returns true if name appears in any expense's paidBy or sharedBy
+    - `getRemovableParticipants(participants, expenses)`: categorizes into removable and protected lists
+    - _Requirements: 16.1, 16.2_
+  - [x] 2.4 Implement share link utilities
+    - Create `lib/shareLink.ts` with `generateShareToken` (uses `crypto.randomUUID()`) and `buildShareLink` (constructs full URL from token)
+    - _Requirements: 14.1_
+  - [x] 2.5 Implement formatting utilities
+    - Create `lib/formatters.ts` with `formatCurrency` (returns `$X.XX`) and `formatDate` (uses date-fns)
+    - _Requirements: 7.6_
+  - [x] 2.6 Implement dashboard filtering logic
+    - Create `lib/tripFilters.ts` with a function that takes a user UID and array of trips, returns those where uid == ownerId OR uid is in collaboratorIds, annotated with the user's role
+    - _Requirements: 2.1_
+  - [ ]* 2.7 Write property tests for balance calculation
+    - **Property 1: Balance conservation (zero-sum)**
+    - **Validates: Requirements 10.1**
+    - Generate random expenses (positive amounts, non-empty sharedBy from participants) and verify sum of all balances ≈ 0
+  - [ ]* 2.8 Write property tests for settlement algorithm
+    - **Property 2: Settlement completeness**
+    - **Validates: Requirements 11.1, 11.5**
+    - Generate random balances, apply simplifyDebts, verify all positions resolve to zero
+  - [ ]* 2.9 Write property test for settlement minimality
+    - **Property 3: Settlement minimality bound**
+    - **Validates: Requirements 11.1**
+    - Generate random balances with N non-zero participants, verify transactions.length ≤ N-1
+  - [ ]* 2.10 Write property test for payer attribution
+    - **Property 4: Payer balance attribution**
+    - **Validates: Requirements 10.1**
+    - Generate a single random expense, verify payer balance = amount, each sharer balance = -(amount / sharedBy.length)
+  - [ ]* 2.11 Write property test for threshold filtering
+    - **Property 5: Settlement threshold filtering**
+    - **Validates: Requirements 11.3**
+    - Generate balances all within ±$0.01, verify simplifyDebts returns empty array
+  - [ ]* 2.12 Write property test for amount rounding
+    - **Property 6: Settlement amount rounding**
+    - **Validates: Requirements 11.4**
+    - For all transactions from simplifyDebts, verify amount * 100 is an integer (within tolerance)
+  - [ ]* 2.13 Write property test for participant protection
+    - **Property 7: Participant protection correctness**
+    - **Validates: Requirements 16.1, 16.2**
+    - Generate random participant names and expenses, verify isParticipantProtected returns true iff name is in paidBy or sharedBy of any expense
+  - [ ]* 2.14 Write property test for dashboard filtering
+    - **Property 8: Dashboard trip visibility**
+    - **Validates: Requirements 2.1**
+    - Generate random user UID and trips with various ownerId/collaboratorIds, verify filter returns exactly matching trips
+
+- [x] 3. Checkpoint - Core logic verified
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 4. Authentication and routing
+  - [x] 4.1 Implement AuthContext
+    - Create `contexts/AuthContext.tsx` with `onAuthStateChanged` listener
+    - Expose: user (UserProfile | null), loading (boolean), signIn (Google popup), signOut
+    - Wrap app in AuthProvider
+    - _Requirements: 1.1, 1.2, 1.5_
+  - [x] 4.2 Implement ProtectedRoute component
+    - Create `components/layout/ProtectedRoute.tsx`
+    - Redirect to `/login` if user is null and loading is false
+    - Show loading skeleton while auth state is resolving
+    - _Requirements: 1.3_
+  - [x] 4.3 Set up react-router with route definitions
+    - Configure createBrowserRouter in `App.tsx`
+    - Routes: `/login` → LoginPage, `/` → DashboardPage (protected), `/trip/:tripId` → TripDetailPage (protected), `/join/:shareToken` → JoinTripPage (protected)
+    - _Requirements: 1.3, 6.1, 15.1_
+  - [x] 4.4 Implement LoginPage
+    - Create `pages/LoginPage.tsx` with Google Sign-In button
+    - Redirect to Dashboard if already authenticated
+    - Store intended redirect path (for join flow) in sessionStorage before redirecting to login
+    - Show error toast on auth failure
+    - _Requirements: 1.1, 1.2, 1.6, 15.3_
+  - [x] 4.5 Implement Header component
+    - Create `components/layout/Header.tsx`
+    - Display app logo/name, user avatar (Google photo), display name, logout button
+    - _Requirements: 1.4, 1.5_
+
+- [x] 5. Dashboard and Trip CRUD
+  - [x] 5.1 Implement `useTrips` hook
+    - Create `hooks/useTrips.ts`
+    - Subscribe to two queries: trips where ownerId == current user UID, and trips where collaboratorIds array-contains current user UID
+    - Merge results client-side, annotate each with role (owner/collaborator)
+    - Return trips array, loading state, error state
+    - Clean up both listeners on unmount
+    - _Requirements: 2.1, 12.1, 12.3_
+  - [x] 5.2 Implement TripCard component
+    - Create `components/trip/TripCard.tsx`
+    - Display: trip name, participant count with initials/avatars, total spent (computed from expenses), last activity, role badge (Owner/Collaborator)
+    - Use shadcn Card component with rounded-xl, subtle shadows
+    - _Requirements: 2.2, 17.1_
+  - [x] 5.3 Implement DashboardPage
+    - Create `pages/DashboardPage.tsx`
+    - Display grid of TripCards, "New Trip" button (green), empty state when no trips
+    - Loading skeleton during data fetch
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 17.5_
+  - [x] 5.4 Implement ParticipantInput component with protection
+    - Create `components/trip/ParticipantInput.tsx`
+    - Dynamic list: text input to add names, remove button per name
+    - Use `getRemovableParticipants` to visually distinguish protected participants (grayed out remove button with tooltip)
+    - Pass expenses to determine protection status
+    - _Requirements: 3.3, 16.2, 16.3_
+  - [x] 5.5 Implement TripForm component
+    - Create `components/trip/TripForm.tsx`
+    - Fields: trip name (required), ParticipantInput for participants
+    - Validation: non-empty trip name
+    - Support create mode (empty) and edit mode (pre-filled with expenses for protection check)
+    - _Requirements: 3.2, 3.3, 3.5, 4.1, 4.3_
+  - [x] 5.6 Implement Create Trip flow
+    - Add shadcn Dialog to DashboardPage triggered by "New Trip" button
+    - On submit: write Trip document to Firestore (ownerId, name, participants, collaboratorIds: [], shareToken: null, timestamps)
+    - Show success toast, close dialog
+    - _Requirements: 3.1, 3.4, 3.6_
+  - [x] 5.7 Implement Edit Trip flow (Owner Only)
+    - Add edit action to TripDetailPage (shown only when user is owner)
+    - Open TripForm in edit mode inside Dialog, pass current expenses for participant protection
+    - On submit: update Trip document, update updatedAt timestamp
+    - Enforce participant protection: block removal of protected participants
+    - _Requirements: 4.1, 4.2, 4.4, 16.1, 16.2_
+  - [x] 5.8 Implement Delete Trip flow (Owner Only)
+    - Add delete action with confirmation dialog (shadcn AlertDialog), shown only to owner
+    - On confirm: delete Trip document and all subcollection expenses
+    - Show success toast, navigate to Dashboard
+    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+
+- [x] 6. Checkpoint - Dashboard and Trip CRUD working
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 7. Trip Detail Page and Expense CRUD
+  - [x] 7.1 Implement `useTrip` hook
+    - Create `hooks/useTrip.ts`
+    - Subscribe to single trip document by ID via onSnapshot
+    - Return trip, loading, error
+    - _Requirements: 6.1, 12.1_
+  - [x] 7.2 Implement `useExpenses` hook
+    - Create `hooks/useExpenses.ts`
+    - Subscribe to expenses subcollection ordered by createdAt desc via onSnapshot
+    - Return expenses array, loading, error
+    - Clean up listener on unmount
+    - _Requirements: 6.3, 12.1, 12.3_
+  - [x] 7.3 Implement ExpenseForm component
+    - Create `components/expense/ExpenseForm.tsx`
+    - Fields: description (text), date (date picker, default today), amount (number $), paid by (dropdown), shared by (multi-select checkboxes)
+    - Validation: amount > 0, at least one sharer selected
+    - Support create and edit modes
+    - _Requirements: 7.1, 7.3, 7.4, 8.1, 8.3, 8.4_
+  - [x] 7.4 Implement ExpenseItem component
+    - Create `components/expense/ExpenseItem.tsx`
+    - Display: description, amount ($X.XX), paid by, shared by names, date
+    - Edit and delete action buttons
+    - _Requirements: 7.6_
+  - [x] 7.5 Implement ExpenseList component
+    - Create `components/expense/ExpenseList.tsx`
+    - Scrollable list of ExpenseItem components, newest first
+    - Empty state when no expenses
+    - _Requirements: 6.2_
+  - [x] 7.6 Implement TripDetailPage layout with role-based rendering
+    - Create `pages/TripDetailPage.tsx`
+    - Header: trip name, back button, participant avatars, collaborator list (display names/avatars)
+    - Determine role: compare user.uid to trip.ownerId
+    - Owner view: edit trip button, manage participants, share link section, delete trip button, plus expense CRUD
+    - Collaborator view: expense CRUD only, no trip management options
+    - Two-column layout on desktop (expenses left, form right), stacked on mobile
+    - Integrate ExpenseList, ExpenseForm, BalanceSummary, SettlementList
+    - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.6_
+  - [x] 7.7 Implement Add Expense flow
+    - On form submit: create Expense document in Firestore subcollection
+    - Clear form, show success toast
+    - Accessible to both owner and collaborators
+    - _Requirements: 7.2, 7.5_
+  - [x] 7.8 Implement Edit Expense flow
+    - Open ExpenseForm in edit mode (pre-filled)
+    - On submit: update Expense document in Firestore
+    - Accessible to both owner and collaborators
+    - _Requirements: 8.1, 8.2_
+  - [x] 7.9 Implement Delete Expense flow
+    - Confirmation dialog before deletion
+    - On confirm: delete Expense document from Firestore
+    - Show success toast
+    - Accessible to both owner and collaborators
+    - _Requirements: 9.1, 9.2, 9.3_
+
+- [x] 8. Balances and Settlements UI
+  - [x] 8.1 Implement BalanceSummary component
+    - Create `components/balance/BalanceSummary.tsx`
+    - Call `calculateBalances` with trip expenses and participants
+    - Display each participant's net balance: green (emerald-500) for positive, red for negative
+    - Format all amounts as $X.XX
+    - _Requirements: 10.1, 10.2, 10.3, 10.4_
+  - [x] 8.2 Implement SettlementList component
+    - Create `components/balance/SettlementList.tsx`
+    - Call `simplifyDebts` with computed balances
+    - Display each transaction as "[From] pays [To] $X.XX"
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+  - [x] 8.3 Integrate balance and settlement into TripDetailPage
+    - Add a "Balances / Settle Up" tab or section to TripDetailPage
+    - BalanceSummary and SettlementList rendered with live expense data
+    - _Requirements: 10.4, 6.2_
+
+- [x] 9. Checkpoint - Trip detail and expense CRUD working
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 10. Share link and collaboration features
+  - [x] 10.1 Implement ShareLinkSection component
+    - Create `components/trip/ShareLinkSection.tsx`
+    - Display current share link URL (if shareToken exists) with copy-to-clipboard button
+    - "Generate Share Link" button when no token exists
+    - "Revoke Link" button to set shareToken to null
+    - "Regenerate Link" button after revocation
+    - Only rendered when user is the owner
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
+  - [x] 10.2 Implement CollaboratorList component
+    - Create `components/trip/CollaboratorList.tsx`
+    - Display collaborator avatars and display names
+    - Fetch collaborator profiles from Firebase Auth (or display UIDs as fallback)
+    - Show in trip header or settings area
+    - _Requirements: 6.1_
+  - [x] 10.3 Implement JoinTripPage
+    - Create `pages/JoinTripPage.tsx`
+    - Extract shareToken from URL params
+    - Query Firestore for trip where shareToken matches
+    - If found and user not already member: add user's UID to collaboratorIds, redirect to trip detail, show success toast
+    - If user is already owner or collaborator: redirect directly to trip detail
+    - If no matching trip found: display error message (link invalid or expired)
+    - _Requirements: 15.1, 15.2, 15.4, 15.5_
+  - [x] 10.4 Implement join flow auth redirect
+    - In LoginPage: check sessionStorage for pending join redirect after successful auth
+    - In ProtectedRoute wrapping JoinTripPage: if unauthenticated, store `/join/:shareToken` path and redirect to login
+    - After login success: redirect back to stored join path
+    - _Requirements: 15.3_
+  - [x] 10.5 Wire ShareLinkSection and CollaboratorList into TripDetailPage
+    - Add ShareLinkSection to owner view in TripDetailPage settings/header area
+    - Add CollaboratorList to trip header for all users
+    - _Requirements: 14.5, 6.1_
+
+- [x] 11. Checkpoint - Collaboration features working
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 12. Security rules and deployment
+  - [x] 12.1 Write Firestore security rules
+    - Create `firestore.rules` file with rules that:
+      - Allow trip READ when auth.uid == ownerId OR auth.uid in collaboratorIds
+      - Allow trip CREATE when auth.uid == ownerId in submitted data
+      - Allow trip UPDATE when auth.uid == ownerId (full update) OR when user adds own UID to collaboratorIds with matching shareToken (join operation)
+      - Allow trip DELETE only when auth.uid == ownerId
+      - Allow expense read/write when auth.uid == parent trip's ownerId OR auth.uid in parent trip's collaboratorIds
+      - Validate amount > 0, sharedBy is non-empty array, paidBy is in participants
+    - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8_
+  - [x] 12.2 Configure Firebase Hosting
+    - Create `firebase.json` with hosting config (public: dist, rewrites to index.html for SPA)
+    - Create `.firebaserc` with project alias
+    - Add `firestore.indexes.json` with index for collaboratorIds array-contains query
+    - _Requirements: 18.1, 18.2, 18.3_
+  - [x] 12.3 Add deployment scripts and documentation
+    - Add `deploy` script to package.json: `vite build && firebase deploy`
+    - Add setup instructions as comments in firebase config or a brief section in README
+    - _Requirements: 18.1_
+
+- [x] 13. Polish and final integration
+  - [x] 13.1 Add loading skeletons
+    - Add skeleton components for Dashboard (trip cards), TripDetailPage (expense list, balances), JoinTripPage
+    - Display while hooks report loading state
+    - _Requirements: 17.5_
+  - [x] 13.2 Add error handling and toast notifications
+    - Ensure all Firestore write operations catch errors and display toast via sonner
+    - Ensure all hooks expose error state for UI consumption
+    - Handle share link errors (invalid token, already joined)
+    - _Requirements: 17.6, 1.6_
+  - [x] 13.3 Responsive design verification
+    - Verify mobile-first layout: stacked sections on mobile, side-by-side on desktop
+    - Verify all shadcn components render correctly at all breakpoints
+    - Verify share link section and collaborator list render on mobile
+    - _Requirements: 17.4, 6.2_
+
+- [x] 14. Final checkpoint
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional property-based tests and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation at logical boundaries
+- Property tests (tasks 2.7–2.14) validate the core balance/settlement/protection algorithms which are the critical domain logic
+- The domain logic (task 2) is implemented and tested before any UI, ensuring correctness from the start
+- Firebase real-time sync means no separate "refresh" logic is needed — onSnapshot listeners handle all data updates
+- The collaboration model introduces two new pure logic concerns (participant protection, dashboard filtering) that are tested alongside the balance logic
+- Share link management and join flow (task 10) depend on Trip CRUD being complete (task 5)
+- Security rules (task 12) encode the full access control model: owner vs collaborator vs join-via-token

@@ -1,0 +1,1195 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Initialize Vite project with React 19 + TypeScript": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492315
+      },
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347502062
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794019
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347802852
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784348832512
+      }
+    ],
+    "1.2 Set up project structure and type definitions": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492435
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794110
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784348838296
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784348936100
+      }
+    ],
+    "1.3 Configure Firebase": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492484
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794163
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784348941548
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784348979640
+      }
+    ],
+    "1.4 Set up Vitest and fast-check for testing": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492518
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794212
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784348982538
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349100666
+      }
+    ],
+    "2.1 Implement `calculateBalances` function": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492576
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794254
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349107492
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349209607
+      }
+    ],
+    "2.2 Implement `simplifyDebts` function": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492614
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794310
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349212659
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349263740
+      }
+    ],
+    "2.3 Implement participant protection functions": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492657
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794380
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349266463
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349329407
+      }
+    ],
+    "2.4 Implement share link utilities": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492688
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794446
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349333510
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349371605
+      }
+    ],
+    "2.5 Implement formatting utilities": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492716
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794486
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349375116
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349414419
+      }
+    ],
+    "2.6 Implement dashboard filtering logic": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492767
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794525
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349417890
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349482611
+      }
+    ],
+    "3. Checkpoint - Core logic verified": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492800
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794600
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349499050
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349502282
+      }
+    ],
+    "4.1 Implement AuthContext": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347492976
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794642
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349512918
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349571781
+      }
+    ],
+    "4.2 Implement ProtectedRoute component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493165
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794686
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349575065
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349612387
+      }
+    ],
+    "4.3 Set up react-router with route definitions": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493200
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794741
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349615728
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349673685
+      }
+    ],
+    "4.4 Implement LoginPage": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493237
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794797
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349677919
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349817289
+      }
+    ],
+    "4.5 Implement Header component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493275
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794852
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349678691
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349818067
+      }
+    ],
+    "5.1 Implement `useTrips` hook": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493310
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794899
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349822069
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349877980
+      }
+    ],
+    "5.2 Implement TripCard component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493341
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347794952
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349881322
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349970609
+      }
+    ],
+    "5.3 Implement DashboardPage": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493510
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795024
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349975370
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350048564
+      }
+    ],
+    "5.4 Implement ParticipantInput component with protection": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493686
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795065
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349882277
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349971296
+      }
+    ],
+    "5.5 Implement TripForm component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493724
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795106
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349974645
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350049285
+      }
+    ],
+    "5.6 Implement Create Trip flow": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493759
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795160
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350052670
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350157606
+      }
+    ],
+    "5.7 Implement Edit Trip flow (Owner Only)": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493795
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795213
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350053579
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350158343
+      }
+    ],
+    "5.8 Implement Delete Trip flow (Owner Only)": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493831
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795265
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350054277
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350159015
+      }
+    ],
+    "6. Checkpoint - Dashboard and Trip CRUD working": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493865
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795314
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350163536
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350167540
+      }
+    ],
+    "7.1 Implement `useTrip` hook": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493899
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795364
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350171606
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350233618
+      }
+    ],
+    "7.2 Implement `useExpenses` hook": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347493943
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795411
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350172411
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350232929
+      }
+    ],
+    "7.3 Implement ExpenseForm component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494083
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795478
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350238215
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350337314
+      }
+    ],
+    "7.4 Implement ExpenseItem component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494141
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795517
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350238972
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350338086
+      }
+    ],
+    "7.5 Implement ExpenseList component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494174
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795558
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350239745
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350338864
+      }
+    ],
+    "7.6 Implement TripDetailPage layout with role-based rendering": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494226
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795612
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350343893
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350479117
+      }
+    ],
+    "7.7 Implement Add Expense flow": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494263
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795668
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350483560
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350488618
+      }
+    ],
+    "7.8 Implement Edit Expense flow": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494295
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795719
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350484284
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350489277
+      }
+    ],
+    "7.9 Implement Delete Expense flow": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494329
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795767
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350484900
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350490045
+      }
+    ],
+    "8.1 Implement BalanceSummary component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494363
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795811
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350495314
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350567751
+      }
+    ],
+    "8.2 Implement SettlementList component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494397
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795863
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350494574
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350568508
+      }
+    ],
+    "8.3 Integrate balance and settlement into TripDetailPage": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494441
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795925
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350572221
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350631016
+      }
+    ],
+    "9. Checkpoint - Trip detail and expense CRUD working": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494533
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347795963
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350636671
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350640518
+      }
+    ],
+    "10.1 Implement ShareLinkSection component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494624
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796009
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350644974
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350753910
+      }
+    ],
+    "10.2 Implement CollaboratorList component": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494672
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796058
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350645830
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350755458
+      }
+    ],
+    "10.3 Implement JoinTripPage": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494707
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796108
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350646667
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350754678
+      }
+    ],
+    "10.4 Implement join flow auth redirect": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494740
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796156
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350759636
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350842106
+      }
+    ],
+    "10.5 Wire ShareLinkSection and CollaboratorList into TripDetailPage": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494796
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796206
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350760536
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350842820
+      }
+    ],
+    "11. Checkpoint - Collaboration features working": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494840
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796275
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350847935
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350851714
+      }
+    ],
+    "12.1 Write Firestore security rules": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494897
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796320
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350857693
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350970494
+      }
+    ],
+    "12.2 Configure Firebase Hosting": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347494957
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796369
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350857023
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350971109
+      }
+    ],
+    "12.3 Add deployment scripts and documentation": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347495050
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796419
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350856143
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350971834
+      }
+    ],
+    "13.1 Add loading skeletons": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347495114
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796468
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350979624
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784351097169
+      }
+    ],
+    "13.2 Add error handling and toast notifications": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347495163
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796519
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350980534
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784351097775
+      }
+    ],
+    "13.3 Responsive design verification": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347495213
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796569
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350978844
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784351098443
+      }
+    ],
+    "14. Final checkpoint": [
+      {
+        "executionId": "b81a3f4f-e2f2-41d2-9edf-812e822e783d",
+        "chatSessionId": "sess_9d9cb836-51e0-44d1-9f8d-1b0b4f3d3c16",
+        "timestamp": 1784347495275
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784347796638
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784351103276
+      },
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784351151653
+      }
+    ],
+    "1. Project setup and configuration": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349100759
+      }
+    ],
+    "2. Core domain logic (balance calculation, debt simplification, participant protection)": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349482662
+      }
+    ],
+    "4. Authentication and routing": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784349818115
+      }
+    ],
+    "5. Dashboard and Trip CRUD": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350159075
+      }
+    ],
+    "7. Trip Detail Page and Expense CRUD": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350490093
+      }
+    ],
+    "8. Balances and Settlements UI": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350631091
+      }
+    ],
+    "10. Share link and collaboration features": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350842863
+      }
+    ],
+    "12. Security rules and deployment": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784350971884
+      }
+    ],
+    "13. Polish and final integration": [
+      {
+        "executionId": "5b7ba3b6-3b9c-4366-b5fa-39966e287136",
+        "chatSessionId": "sess_9dc47e8c-1c0b-4cb0-a26a-8afaeb50999e",
+        "timestamp": 1784351098506
+      }
+    ]
+  }
+}
