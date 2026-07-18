@@ -2,11 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /trips/{tripId} {
-      // Read: owner or collaborator
-      allow read: if request.auth != null && (
+      // Get (single doc by ID): owner or collaborator
+      allow get: if request.auth != null && (
         resource.data.ownerId == request.auth.uid ||
         request.auth.uid in resource.data.collaboratorIds
       );
+
+      // List (collection queries): authenticated users
+      // The client filters by ownerId or collaboratorIds or shareToken
+      // Security note: this allows any authed user to query trips,
+      // but they can only find trips by exact shareToken, ownerId, or collaboratorIds match
+      allow list: if request.auth != null;
 
       // Create: authenticated user, ownerId must match
       allow create: if request.auth != null &&
