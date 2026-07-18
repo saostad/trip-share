@@ -53,6 +53,7 @@ export function TripDetailPage() {
 
   const [editTripOpen, setEditTripOpen] = useState(false);
   const [deleteTripOpen, setDeleteTripOpen] = useState(false);
+  const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -190,6 +191,7 @@ export function TripDetailPage() {
         createdAt: serverTimestamp(),
       });
       toast.success("Expense added successfully");
+      setAddExpenseOpen(false);
     } catch {
       toast.error("Failed to add expense. Please try again.");
     } finally {
@@ -304,79 +306,61 @@ export function TripDetailPage() {
           </div>
         </div>
 
-        {/* Two-column layout: expenses left, form + balances right */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Left column: Expense List */}
-          <div className="space-y-4">
+        {/* Single column layout */}
+        <div className="space-y-4">
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Expenses</CardTitle>
+              <Button
+                size="sm"
+                onClick={() => setAddExpenseOpen(true)}
+                className="gap-1.5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Expense
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <ExpenseList
+                expenses={expenses}
+                participants={trip.participants}
+                onEdit={(expense) => setEditingExpense(expense)}
+                onDelete={(expense) => setDeletingExpense(expense)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Balance Summary */}
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader>
+              <CardTitle>Balances</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BalanceSummary expenses={expenses} participants={trip.participants} />
+            </CardContent>
+          </Card>
+
+          {/* Settlement List */}
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader>
+              <CardTitle>Settle Up</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SettlementList expenses={expenses} participants={trip.participants} />
+            </CardContent>
+          </Card>
+
+          {/* Share Link - Owner only */}
+          {isOwner && (
             <Card className="rounded-xl shadow-sm">
               <CardHeader>
-                <CardTitle>Expenses</CardTitle>
+                <CardTitle>Share Link</CardTitle>
               </CardHeader>
               <CardContent>
-                <ExpenseList
-                  expenses={expenses}
-                  participants={trip.participants}
-                  onEdit={(expense) => setEditingExpense(expense)}
-                  onDelete={(expense) => setDeletingExpense(expense)}
-                />
+                <ShareLinkSection trip={trip} />
               </CardContent>
             </Card>
-
-            {/* Balance Summary */}
-            <Card className="rounded-xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Balances</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BalanceSummary expenses={expenses} participants={trip.participants} />
-              </CardContent>
-            </Card>
-
-            {/* Settlement List */}
-            <Card className="rounded-xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Settle Up</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SettlementList expenses={expenses} participants={trip.participants} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right column: Add Expense Form */}
-          <div className="space-y-4">
-            <Card className="rounded-xl shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Expense
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ExpenseForm
-                  participants={trip.participants}
-                  onSubmit={handleAddExpense}
-                />
-                {submitting && (
-                  <div className="mt-2 text-center text-sm text-muted-foreground">
-                    Saving...
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Share Link - Owner only */}
-            {isOwner && (
-              <Card className="rounded-xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>Share Link</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ShareLinkSection trip={trip} />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
@@ -399,6 +383,20 @@ export function TripDetailPage() {
           onOpenChange={setDeleteTripOpen}
         />
       )}
+
+      {/* Add Expense Dialog */}
+      <Dialog open={addExpenseOpen} onOpenChange={setAddExpenseOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Expense</DialogTitle>
+          </DialogHeader>
+          <ExpenseForm
+            participants={trip.participants}
+            onSubmit={handleAddExpense}
+            onCancel={() => setAddExpenseOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Expense Dialog */}
       <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
