@@ -64,7 +64,7 @@ export function TripDetailPage() {
   // Loading skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <Header />
         <div className="container mx-auto max-w-6xl px-4 py-6">
           {/* Header skeleton */}
@@ -156,7 +156,7 @@ export function TripDetailPage() {
   // Trip not found
   if (!trip) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <Header />
         <div className="container mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-16">
           <h2 className="mb-2 text-xl font-semibold">Trip not found</h2>
@@ -245,7 +245,7 @@ export function TripDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Header />
       <div className="container mx-auto max-w-6xl px-4 py-6">
         {/* Trip Header */}
