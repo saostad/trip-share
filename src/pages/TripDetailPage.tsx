@@ -247,16 +247,18 @@ export function TripDetailPage() {
     amount: number;
     date: string;
     note: string;
-  }) {
+  }[]) {
     if (!tripId) return;
     setSubmitting(true);
     try {
       const paymentsRef = collection(db, "trips", tripId, "payments");
-      await addDoc(paymentsRef, {
-        ...data,
-        createdAt: serverTimestamp(),
-      });
-      toast.success("Payment recorded successfully");
+      for (const payment of data) {
+        await addDoc(paymentsRef, {
+          ...payment,
+          createdAt: serverTimestamp(),
+        });
+      }
+      toast.success(data.length > 1 ? "Payments recorded successfully" : "Payment recorded successfully");
       setAddPaymentOpen(false);
     } catch {
       toast.error("Failed to record payment. Please try again.");
