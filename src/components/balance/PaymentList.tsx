@@ -25,23 +25,33 @@ export function PaymentList({ payments, onDelete }: PaymentListProps) {
       {payments.map((payment) => (
         <li
           key={payment.id}
-          className="flex items-center gap-2 rounded-lg border p-3 text-sm"
+          className="flex flex-col gap-1 rounded-lg border p-3 text-sm"
         >
-          <span className="min-w-0 truncate font-medium">{payment.from}</span>
-          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 truncate font-medium">{payment.to}</span>
-          <span className="ml-auto shrink-0 font-semibold text-emerald-600">
-            {formatCurrency(payment.amount)}
-          </span>
-          <span className="shrink-0 text-xs text-muted-foreground">{payment.date}</span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => onDelete(payment)}
-            aria-label="Delete payment"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className="min-w-0 truncate font-medium">{payment.from}</span>
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 truncate font-medium">{payment.to}</span>
+            <span className="ml-auto shrink-0 font-semibold text-emerald-600">
+              {formatCurrency(payment.amount)}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => onDelete(payment)}
+              aria-label="Delete payment"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>{payment.date}</span>
+            {payment.note && (
+              <>
+                <span>&middot;</span>
+                <span className="min-w-0 truncate">{payment.note}</span>
+              </>
+            )}
+          </div>
         </li>
       ))}
     </ul>
