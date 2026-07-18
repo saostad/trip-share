@@ -96,6 +96,15 @@ export function ExpenseForm({
       paidBy,
       sharedBy,
     });
+
+    // Reset form after submit (only in create mode)
+    if (!isEditMode) {
+      setDescription("");
+      setDate(today);
+      setAmount("");
+      setPaidBy(participants[0] ?? "");
+      setSharedBy([...participants]);
+    }
   }
 
   return (
