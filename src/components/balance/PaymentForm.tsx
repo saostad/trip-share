@@ -96,8 +96,8 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
         amount: perPerson,
         date,
         note: note.trim()
-          ? `${note.trim()} (paid by ${from} on behalf of ${allPayers.join(", ")})`
-          : `Paid by ${from} on behalf of ${allPayers.join(", ")}`,
+          ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
+          : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
       }));
 
       onSubmit(payments);
