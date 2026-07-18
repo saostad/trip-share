@@ -21,19 +21,23 @@ interface ExpenseListProps {
 
 export function ExpenseList({ expenses, participants = [], onEdit, onDelete }: ExpenseListProps) {
   const [showFilters, setShowFilters] = useState(false);
-  const [filterPerson, setFilterPerson] = useState<string>("all");
+  const [filterPaidBy, setFilterPaidBy] = useState<string>("all");
+  const [filterSharedBy, setFilterSharedBy] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
-  const hasActiveFilters = filterPerson !== "all" || filterDateFrom || filterDateTo;
+  const hasActiveFilters = filterPaidBy !== "all" || filterSharedBy !== "all" || filterDateFrom || filterDateTo;
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
-      // Filter by person (paid by or shared by)
-      if (filterPerson !== "all") {
-        if (expense.paidBy !== filterPerson && !expense.sharedBy.includes(filterPerson)) {
-          return false;
-        }
+      // Filter by paid by
+      if (filterPaidBy !== "all" && expense.paidBy !== filterPaidBy) {
+        return false;
+      }
+
+      // Filter by shared by
+      if (filterSharedBy !== "all" && !expense.sharedBy.includes(filterSharedBy)) {
+        return false;
       }
 
       // Filter by date range
@@ -46,10 +50,11 @@ export function ExpenseList({ expenses, participants = [], onEdit, onDelete }: E
 
       return true;
     });
-  }, [expenses, filterPerson, filterDateFrom, filterDateTo]);
+  }, [expenses, filterPaidBy, filterSharedBy, filterDateFrom, filterDateTo]);
 
   function clearFilters() {
-    setFilterPerson("all");
+    setFilterPaidBy("all");
+    setFilterSharedBy("all");
     setFilterDateFrom("");
     setFilterDateTo("");
   }
@@ -94,16 +99,34 @@ export function ExpenseList({ expenses, participants = [], onEdit, onDelete }: E
       {/* Filter controls */}
       {showFilters && (
         <div className="flex flex-col gap-2 rounded-lg border border-input bg-muted/30 p-3">
-          {/* Person filter */}
+          {/* Paid by filter */}
           {participants.length > 0 && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Person</label>
-              <Select value={filterPerson} onValueChange={(val) => setFilterPerson(val ?? "all")}>
+              <label className="text-xs font-medium text-muted-foreground">Paid by</label>
+              <Select value={filterPaidBy} onValueChange={(val) => setFilterPaidBy(val ?? "all")}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All participants" />
+                  <SelectValue placeholder="Anyone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All participants</SelectItem>
+                  <SelectItem value="all">Anyone</SelectItem>
+                  {participants.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Shared by filter */}
+          {participants.length > 0 && (
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Shared by</label>
+              <Select value={filterSharedBy} onValueChange={(val) => setFilterSharedBy(val ?? "all")}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Anyone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Anyone</SelectItem>
                   {participants.map((p) => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
