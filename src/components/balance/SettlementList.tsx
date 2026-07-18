@@ -1,15 +1,16 @@
 import { calculateBalances, simplifyDebts } from "@/lib/balances";
 import { formatCurrency } from "@/lib/formatters";
 import { ArrowRight } from "lucide-react";
-import type { Expense } from "@/types";
+import type { Expense, Payment } from "@/types";
 
 interface SettlementListProps {
   expenses: Expense[];
   participants: string[];
+  payments?: Payment[];
 }
 
-export function SettlementList({ expenses, participants }: SettlementListProps) {
-  const balances = calculateBalances(expenses, participants);
+export function SettlementList({ expenses, participants, payments = [] }: SettlementListProps) {
+  const balances = calculateBalances(expenses, participants, payments);
   const transactions = simplifyDebts(balances);
 
   if (transactions.length === 0) {

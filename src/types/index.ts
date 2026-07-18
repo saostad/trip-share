@@ -27,6 +27,16 @@ export interface Transaction {
   amount: number; // positive, rounded to cents
 }
 
+export interface Payment {
+  id: string;
+  from: string; // person who paid
+  to: string; // person who received
+  amount: number; // positive, in dollars
+  date: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: Timestamp;
+}
+
 export interface UserProfile {
   uid: string;
   displayName: string | null;

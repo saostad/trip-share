@@ -1,11 +1,15 @@
-import type { Expense, Transaction } from "@/types";
+import type { Expense, Payment, Transaction } from "@/types";
 
 /**
- * Computes the net balance for each participant based on all expenses.
+ * Computes the net balance for each participant based on all expenses and payments.
  *
  * For each expense:
  * - The payer's balance increases by the full expense amount (they are owed money).
  * - Each sharer's balance decreases by their equal portion (amount / number of sharers).
+ *
+ * For each payment:
+ * - The payer's (from) balance decreases (they paid off debt).
+ * - The receiver's (to) balance decreases (they received what they were owed).
  *
  * A positive balance means the participant is owed money.
  * A negative balance means the participant owes money.
@@ -13,6 +17,7 @@ import type { Expense, Transaction } from "@/types";
 export function calculateBalances(
   expenses: Expense[],
   participants: string[],
+  payments: Payment[] = [],
 ): Record<string, number> {
   const balances: Record<string, number> = {};
 
@@ -31,6 +36,14 @@ export function calculateBalances(
     for (const person of expense.sharedBy) {
       balances[person] = (balances[person] ?? 0) - share;
     }
+  }
+
+  // Process each payment (settlement between two people)
+  for (const payment of payments) {
+    // "from" paid money to "to", so from's debt decreases (balance goes up)
+    // and "to"'s credit decreases (balance goes down)
+    balances[payment.from] = (balances[payment.from] ?? 0) + payment.amount;
+    balances[payment.to] = (balances[payment.to] ?? 0) - payment.amount;
   }
 
   return balances;

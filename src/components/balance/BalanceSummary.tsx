@@ -1,20 +1,21 @@
 import { calculateBalances } from "@/lib/balances";
 import { formatCurrency } from "@/lib/formatters";
-import type { Expense } from "@/types";
+import type { Expense, Payment } from "@/types";
 
 interface BalanceSummaryProps {
   expenses: Expense[];
   participants: string[];
+  payments?: Payment[];
 }
 
-export function BalanceSummary({ expenses, participants }: BalanceSummaryProps) {
+export function BalanceSummary({ expenses, participants, payments = [] }: BalanceSummaryProps) {
   if (expenses.length === 0 || participants.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">No balances to show</p>
     );
   }
 
-  const balances = calculateBalances(expenses, participants);
+  const balances = calculateBalances(expenses, participants, payments);
 
   return (
     <ul className="space-y-2">
