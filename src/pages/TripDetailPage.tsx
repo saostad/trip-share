@@ -315,6 +315,7 @@ export function TripDetailPage() {
               <CardContent>
                 <ExpenseList
                   expenses={expenses}
+                  participants={trip.participants}
                   onEdit={(expense) => setEditingExpense(expense)}
                   onDelete={(expense) => setDeletingExpense(expense)}
                 />
