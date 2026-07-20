@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/Header";
 import { TripCard } from "@/components/trip/TripCard";
@@ -48,7 +48,7 @@ export function DashboardPage() {
     if (!user) return;
 
     try {
-      await addDoc(collection(db, "trips"), {
+      const tripRef = await addDoc(collection(db, "trips"), {
         ownerId: user.uid,
         name: data.name,
         participants: data.participants,
@@ -57,6 +57,15 @@ export function DashboardPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+
+      // Save owner's profile in members subcollection
+      await setDoc(doc(db, "trips", tripRef.id, "members", user.uid), {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+      });
+
       toast.success("Trip created successfully");
       setShowCreateDialog(false);
     } catch {

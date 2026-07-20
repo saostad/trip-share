@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarGroup } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from "@/components/ui/avatar";
 import { Users } from "lucide-react";
 import {
   Dialog,
@@ -7,30 +7,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { UserProfile } from "@/types";
 
 interface CollaboratorListProps {
   collaboratorIds: string[];
+  members?: Record<string, UserProfile>;
 }
 
-/**
- * Derives fallback initials from a UID (first 2 characters, uppercased).
- */
-function getCollaboratorInitials(uid: string): string {
+function getInitials(profile: UserProfile | undefined, uid: string): string {
+  if (profile?.displayName) {
+    return profile.displayName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }
   return uid.slice(0, 2).toUpperCase();
 }
 
-/**
- * Shortens a UID for display (first 8 characters).
- */
-function shortenUid(uid: string): string {
-  return uid.slice(0, 8);
+function getDisplayName(profile: UserProfile | undefined, uid: string): string {
+  if (profile?.displayName) return profile.displayName;
+  if (profile?.email) return profile.email;
+  return `User ${uid.slice(0, 6)}`;
 }
 
 /**
  * Displays a clickable horizontal list of collaborator avatars.
- * Clicking opens a dialog with the full list of collaborator IDs.
+ * Clicking opens a dialog with the full list showing names, emails, and photos.
  */
-export function CollaboratorList({ collaboratorIds }: CollaboratorListProps) {
+export function CollaboratorList({ collaboratorIds, members = {} }: CollaboratorListProps) {
   const [open, setOpen] = useState(false);
 
   if (collaboratorIds.length === 0) {
@@ -47,11 +53,15 @@ export function CollaboratorList({ collaboratorIds }: CollaboratorListProps) {
       >
         <Users className="h-4 w-4 text-muted-foreground" />
         <AvatarGroup>
-          {collaboratorIds.slice(0, 3).map((uid) => (
-            <Avatar key={uid} size="sm">
-              <AvatarFallback>{getCollaboratorInitials(uid)}</AvatarFallback>
-            </Avatar>
-          ))}
+          {collaboratorIds.slice(0, 3).map((uid) => {
+            const profile = members[uid];
+            return (
+              <Avatar key={uid} size="sm">
+                {profile?.photoURL && <AvatarImage src={profile.photoURL} alt={getDisplayName(profile, uid)} />}
+                <AvatarFallback>{getInitials(profile, uid)}</AvatarFallback>
+              </Avatar>
+            );
+          })}
         </AvatarGroup>
         <span className="text-xs text-muted-foreground">
           {collaboratorIds.length}{" "}
@@ -67,24 +77,30 @@ export function CollaboratorList({ collaboratorIds }: CollaboratorListProps) {
             </DialogTitle>
           </DialogHeader>
           <ul className="max-h-[400px] space-y-2 overflow-y-auto">
-            {collaboratorIds.map((uid) => (
-              <li
-                key={uid}
-                className="flex items-center gap-3 rounded-lg border p-3"
-              >
-                <Avatar size="default">
-                  <AvatarFallback>{getCollaboratorInitials(uid)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    Collaborator
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    ID: {shortenUid(uid)}...
-                  </p>
-                </div>
-              </li>
-            ))}
+            {collaboratorIds.map((uid) => {
+              const profile = members[uid];
+              return (
+                <li
+                  key={uid}
+                  className="flex items-center gap-3 rounded-lg border p-3"
+                >
+                  <Avatar size="default">
+                    {profile?.photoURL && <AvatarImage src={profile.photoURL} alt={getDisplayName(profile, uid)} />}
+                    <AvatarFallback>{getInitials(profile, uid)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {getDisplayName(profile, uid)}
+                    </p>
+                    {profile?.email && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {profile.email}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </DialogContent>
       </Dialog>

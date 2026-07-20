@@ -52,6 +52,19 @@ service cloud.firestore {
           request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.collaboratorIds
         );
       }
+
+      match /members/{memberId} {
+        // Read: owner or collaborator of parent trip
+        allow read: if request.auth != null && (
+          get(/databases/$(database)/documents/trips/$(tripId)).data.ownerId == request.auth.uid ||
+          request.auth.uid in get(/databases/$(database)/documents/trips/$(tripId)).data.collaboratorIds
+        );
+        // Write: only the user themselves (saving their own profile) or trip owner
+        allow write: if request.auth != null && (
+          request.auth.uid == memberId ||
+          get(/databases/$(database)/documents/trips/$(tripId)).data.ownerId == request.auth.uid
+        );
+      }
     }
   }
 }

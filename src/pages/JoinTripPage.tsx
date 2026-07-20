@@ -7,6 +7,7 @@ import {
   getDocs,
   doc,
   updateDoc,
+  setDoc,
   arrayUnion,
   limit,
 } from 'firebase/firestore';
@@ -63,6 +64,14 @@ export function JoinTripPage() {
         setState('joining');
         await updateDoc(doc(db, 'trips', tripId), {
           collaboratorIds: arrayUnion(user!.uid),
+        });
+
+        // Save member profile for display
+        await setDoc(doc(db, 'trips', tripId, 'members', user!.uid), {
+          uid: user!.uid,
+          displayName: user!.displayName,
+          email: user!.email,
+          photoURL: user!.photoURL,
         });
 
         toast.success('You have joined the trip!');

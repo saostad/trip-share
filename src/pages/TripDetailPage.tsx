@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router";
 import { useTrip } from "@/hooks/useTrip";
 import { useExpenses } from "@/hooks/useExpenses";
 import { usePayments } from "@/hooks/usePayments";
+import { useMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { ExpenseList } from "@/components/expense/ExpenseList";
@@ -54,6 +55,7 @@ export function TripDetailPage() {
   const { trip, loading: tripLoading } = useTrip(tripId ?? "");
   const { expenses, loading: expensesLoading } = useExpenses(tripId ?? "");
   const { payments, loading: paymentsLoading } = usePayments(tripId ?? "");
+  const { members } = useMembers(tripId ?? "");
   const { user } = useAuth();
 
   const [editTripOpen, setEditTripOpen] = useState(false);
@@ -349,7 +351,7 @@ export function TripDetailPage() {
             </div>
 
             {/* Collaborator list */}
-            <CollaboratorList collaboratorIds={trip.collaboratorIds} />
+            <CollaboratorList collaboratorIds={trip.collaboratorIds} members={members} />
 
             {/* Owner controls */}
             {isOwner && (
