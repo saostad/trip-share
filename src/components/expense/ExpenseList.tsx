@@ -174,7 +174,7 @@ export function ExpenseList({ expenses, participants = [], onEdit, onDelete }: E
           </p>
         </div>
       ) : (
-        <div className="max-h-[500px] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
           {filteredExpenses.map((expense) => (
             <ExpenseItem
               key={expense.id}

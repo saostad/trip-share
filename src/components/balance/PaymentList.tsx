@@ -22,7 +22,7 @@ export function PaymentList({ payments, onEdit, onDelete }: PaymentListProps) {
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="max-h-[300px] space-y-2 overflow-y-auto pr-1">
       {payments.map((payment) => (
         <li
           key={payment.id}
