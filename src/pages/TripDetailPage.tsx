@@ -72,22 +72,22 @@ export function TripDetailPage() {
   // Loading skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto max-w-6xl px-4 py-6">
           {/* Header skeleton */}
           <div className="mb-6 animate-pulse">
             <div className="mb-4 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-gray-200" />
-              <div className="h-7 w-48 rounded bg-gray-200" />
+              <div className="h-8 w-8 rounded-lg bg-muted" />
+              <div className="h-7 w-48 rounded bg-muted" />
             </div>
             <div className="flex items-center gap-4">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-8 w-8 rounded-full bg-gray-200 ring-2 ring-white" />
+                  <div key={i} className="h-8 w-8 rounded-full bg-muted ring-2 ring-background" />
                 ))}
               </div>
-              <div className="h-5 w-24 rounded bg-gray-200" />
+              <div className="h-5 w-24 rounded bg-muted" />
             </div>
           </div>
 
@@ -96,17 +96,17 @@ export function TripDetailPage() {
             {/* Left column: Expense list + balances */}
             <div className="space-y-4">
               {/* Expenses card skeleton */}
-              <div className="rounded-xl bg-white p-6 shadow-sm">
-                <div className="mb-4 h-5 w-24 rounded bg-gray-200" />
+              <div className="rounded-xl bg-card p-6 shadow-sm">
+                <div className="mb-4 h-5 w-24 rounded bg-muted" />
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse rounded-lg border border-gray-100 p-3">
+                    <div key={i} className="animate-pulse rounded-lg border border-muted p-3">
                       <div className="flex items-center justify-between">
                         <div className="space-y-2">
-                          <div className="h-4 w-32 rounded bg-gray-200" />
-                          <div className="h-3 w-24 rounded bg-gray-100" />
+                          <div className="h-4 w-32 rounded bg-muted" />
+                          <div className="h-3 w-24 rounded bg-muted/50" />
                         </div>
-                        <div className="h-5 w-16 rounded bg-gray-200" />
+                        <div className="h-5 w-16 rounded bg-muted" />
                       </div>
                     </div>
                   ))}
@@ -114,24 +114,24 @@ export function TripDetailPage() {
               </div>
 
               {/* Balances card skeleton */}
-              <div className="rounded-xl bg-white p-6 shadow-sm">
-                <div className="mb-4 h-5 w-20 rounded bg-gray-200" />
+              <div className="rounded-xl bg-card p-6 shadow-sm">
+                <div className="mb-4 h-5 w-20 rounded bg-muted" />
                 <div className="animate-pulse space-y-2">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center justify-between">
-                      <div className="h-4 w-20 rounded bg-gray-200" />
-                      <div className="h-4 w-14 rounded bg-gray-200" />
+                      <div className="h-4 w-20 rounded bg-muted" />
+                      <div className="h-4 w-14 rounded bg-muted" />
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Settle Up card skeleton */}
-              <div className="rounded-xl bg-white p-6 shadow-sm">
-                <div className="mb-4 h-5 w-24 rounded bg-gray-200" />
+              <div className="rounded-xl bg-card p-6 shadow-sm">
+                <div className="mb-4 h-5 w-24 rounded bg-muted" />
                 <div className="animate-pulse space-y-2">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-4 w-48 rounded bg-gray-200" />
+                    <div key={i} className="h-4 w-48 rounded bg-muted" />
                   ))}
                 </div>
               </div>
@@ -139,19 +139,19 @@ export function TripDetailPage() {
 
             {/* Right column: Form skeleton */}
             <div className="space-y-4">
-              <div className="rounded-xl bg-white p-6 shadow-sm">
-                <div className="mb-4 h-5 w-28 rounded bg-gray-200" />
+              <div className="rounded-xl bg-card p-6 shadow-sm">
+                <div className="mb-4 h-5 w-28 rounded bg-muted" />
                 <div className="animate-pulse space-y-4">
-                  <div className="h-9 w-full rounded-md bg-gray-200" />
-                  <div className="h-9 w-full rounded-md bg-gray-200" />
-                  <div className="h-9 w-full rounded-md bg-gray-200" />
-                  <div className="h-9 w-full rounded-md bg-gray-200" />
+                  <div className="h-9 w-full rounded-md bg-muted" />
+                  <div className="h-9 w-full rounded-md bg-muted" />
+                  <div className="h-9 w-full rounded-md bg-muted" />
+                  <div className="h-9 w-full rounded-md bg-muted" />
                   <div className="flex gap-2">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-6 w-16 rounded bg-gray-100" />
+                      <div key={i} className="h-6 w-16 rounded bg-muted/50" />
                     ))}
                   </div>
-                  <div className="h-9 w-full rounded-md bg-gray-200" />
+                  <div className="h-9 w-full rounded-md bg-muted" />
                 </div>
               </div>
             </div>
@@ -164,7 +164,7 @@ export function TripDetailPage() {
   // Trip not found
   if (!trip) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-16">
           <h2 className="mb-2 text-xl font-semibold">Trip not found</h2>
@@ -315,7 +315,7 @@ export function TripDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto max-w-6xl px-4 py-6">
         {/* Trip Header */}

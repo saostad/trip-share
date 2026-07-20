@@ -22,15 +22,15 @@ function TripCardSkeleton() {
     <Card className="rounded-xl p-6 shadow-sm">
       <div className="flex animate-pulse flex-col gap-3">
         <div className="flex items-start justify-between">
-          <div className="h-5 w-32 rounded bg-gray-200" />
-          <div className="h-5 w-20 rounded-full bg-gray-200" />
+          <div className="h-5 w-32 rounded bg-muted" />
+          <div className="h-5 w-20 rounded-full bg-muted" />
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-gray-200" />
-          <div className="h-7 w-7 rounded-full bg-gray-200" />
-          <div className="h-4 w-24 rounded bg-gray-200" />
+          <div className="h-7 w-7 rounded-full bg-muted" />
+          <div className="h-7 w-7 rounded-full bg-muted" />
+          <div className="h-4 w-24 rounded bg-muted" />
         </div>
-        <div className="h-3 w-20 rounded bg-gray-200" />
+        <div className="h-3 w-20 rounded bg-muted" />
       </div>
     </Card>
   );
@@ -65,12 +65,12 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">My Trips</h1>
+          <h1 className="text-2xl font-bold text-foreground">My Trips</h1>
           <Button
             className="bg-emerald-500 text-white hover:bg-emerald-600"
             onClick={() => setShowCreateDialog(true)}
@@ -81,7 +81,7 @@ export function DashboardPage() {
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             Failed to load trips. Please try again.
           </div>
         )}
@@ -96,11 +96,11 @@ export function DashboardPage() {
 
         {!loading && !error && trips.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <MapPin className="mb-4 size-12 text-gray-300" />
-            <h2 className="mb-2 text-lg font-semibold text-gray-700">
+            <MapPin className="mb-4 size-12 text-muted-foreground/50" />
+            <h2 className="mb-2 text-lg font-semibold text-foreground">
               No trips yet
             </h2>
-            <p className="mb-6 max-w-sm text-sm text-gray-500">
+            <p className="mb-6 max-w-sm text-sm text-muted-foreground">
               Create your first trip to start splitting expenses with friends.
             </p>
             <Button

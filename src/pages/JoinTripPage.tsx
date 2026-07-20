@@ -79,10 +79,10 @@ export function JoinTripPage() {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="animate-pulse space-y-4">
-          <div className="mx-auto h-8 w-48 rounded bg-gray-200" />
-          <div className="mx-auto h-4 w-64 rounded bg-gray-200" />
+          <div className="mx-auto h-8 w-48 rounded bg-muted" />
+          <div className="mx-auto h-4 w-64 rounded bg-muted" />
         </div>
-        <p className="mt-6 text-gray-500">
+        <p className="mt-6 text-muted-foreground">
           {state === 'joining' ? 'Joining trip...' : 'Loading...'}
         </p>
       </div>
@@ -92,10 +92,10 @@ export function JoinTripPage() {
   return (
     <div className="container mx-auto px-4 py-16 text-center">
       <h1 className="text-2xl font-bold text-red-600">Invalid Link</h1>
-      <p className="mt-4 text-gray-600">
+      <p className="mt-4 text-muted-foreground">
         This link is invalid or has expired.
       </p>
-      <p className="mt-2 text-gray-500">
+      <p className="mt-2 text-muted-foreground">
         Please ask the trip owner for a new share link.
       </p>
       <Link

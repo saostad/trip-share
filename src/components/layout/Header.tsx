@@ -31,7 +31,7 @@ export function Header() {
     : "?";
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-white px-4 dark:bg-gray-900 md:px-6">
+    <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
       <Link to="/" className="text-xl font-bold text-blue-600">
         TripShare
       </Link>
