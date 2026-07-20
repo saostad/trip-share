@@ -1,14 +1,15 @@
-import { ArrowRight, Trash2, Banknote } from "lucide-react";
+import { ArrowRight, Trash2, Pencil, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/formatters";
 import type { Payment } from "@/types";
 
 interface PaymentListProps {
   payments: Payment[];
+  onEdit: (payment: Payment) => void;
   onDelete: (payment: Payment) => void;
 }
 
-export function PaymentList({ payments, onDelete }: PaymentListProps) {
+export function PaymentList({ payments, onEdit, onDelete }: PaymentListProps) {
   if (payments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
@@ -34,6 +35,14 @@ export function PaymentList({ payments, onDelete }: PaymentListProps) {
             <span className="ml-auto shrink-0 font-semibold text-emerald-600">
               {formatCurrency(payment.amount)}
             </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => onEdit(payment)}
+              aria-label="Edit payment"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon-sm"

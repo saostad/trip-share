@@ -13,6 +13,7 @@ import { BalanceSummary } from "@/components/balance/BalanceSummary";
 import { SettlementList } from "@/components/balance/SettlementList";
 import { PaymentForm } from "@/components/balance/PaymentForm";
 import { PaymentList } from "@/components/balance/PaymentList";
+import { EditPaymentForm } from "@/components/balance/EditPaymentForm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -59,6 +60,7 @@ export function TripDetailPage() {
   const [deleteTripOpen, setDeleteTripOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addPaymentOpen, setAddPaymentOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
@@ -282,6 +284,27 @@ export function TripDetailPage() {
     }
   }
 
+  async function handleEditPayment(data: {
+    from: string;
+    to: string;
+    amount: number;
+    date: string;
+    note: string;
+  }) {
+    if (!tripId || !editingPayment) return;
+    setSubmitting(true);
+    try {
+      const paymentRef = doc(db, "trips", tripId, "payments", editingPayment.id);
+      await updateDoc(paymentRef, data);
+      toast.success("Payment updated successfully");
+      setEditingPayment(null);
+    } catch {
+      toast.error("Failed to update payment. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   function getInitials(name: string): string {
     return name
       .split(" ")
@@ -414,6 +437,7 @@ export function TripDetailPage() {
             <CardContent>
               <PaymentList
                 payments={payments}
+                onEdit={(payment) => setEditingPayment(payment)}
                 onDelete={(payment) => setDeletingPayment(payment)}
               />
             </CardContent>
@@ -521,6 +545,23 @@ export function TripDetailPage() {
             onSubmit={handleAddPayment}
             onCancel={() => setAddPaymentOpen(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Payment Dialog */}
+      <Dialog open={!!editingPayment} onOpenChange={(open) => !open && setEditingPayment(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Payment</DialogTitle>
+          </DialogHeader>
+          {editingPayment && (
+            <EditPaymentForm
+              payment={editingPayment}
+              participants={trip.participants}
+              onSubmit={handleEditPayment}
+              onCancel={() => setEditingPayment(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
