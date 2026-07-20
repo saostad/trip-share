@@ -351,7 +351,7 @@ export function TripDetailPage() {
             </div>
 
             {/* Collaborator list */}
-            <CollaboratorList collaboratorIds={trip.collaboratorIds} members={members} />
+            <CollaboratorList tripId={trip.id} collaboratorIds={trip.collaboratorIds} members={members} isOwner={isOwner} />
 
             {/* Owner controls */}
             {isOwner && (
