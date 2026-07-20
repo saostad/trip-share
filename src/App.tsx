@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { Toaster } from 'sonner'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
+import { InstallPrompt } from '@/components/layout/InstallPrompt'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { TripDetailPage } from '@/pages/TripDetailPage'
@@ -9,6 +10,7 @@ import { JoinTripPage } from '@/pages/JoinTripPage'
 function App() {
   return (
     <BrowserRouter>
+      <InstallPrompt />
       <Toaster richColors position="top-right" />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
