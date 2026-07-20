@@ -29,9 +29,11 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
   const today = format(new Date(), "yyyy-MM-dd");
 
   const [onBehalfMode, setOnBehalfMode] = useState(false);
+  const [customAmounts, setCustomAmounts] = useState(false);
   const [from, setFrom] = useState(participants[0] ?? "");
   const [to, setTo] = useState(participants[1] ?? "");
   const [onBehalfOf, setOnBehalfOf] = useState<string[]>([]);
+  const [personAmounts, setPersonAmounts] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
@@ -39,9 +41,12 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
   const [amountError, setAmountError] = useState("");
   const [personError, setPersonError] = useState("");
   const [behalfError, setBehalfError] = useState("");
+  const [splitError, setSplitError] = useState("");
 
   // People who can be selected as "on behalf of" (everyone except "from" and "to")
   const behalfOptions = participants.filter((p) => p !== from && p !== to);
+
+  const allPayers = onBehalfMode ? [from, ...onBehalfOf] : [from];
 
   function handleToggleBehalf(person: string) {
     setOnBehalfOf((prev) =>
@@ -50,6 +55,12 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
         : [...prev, person]
     );
     if (behalfError) setBehalfError("");
+    if (splitError) setSplitError("");
+  }
+
+  function handlePersonAmountChange(person: string, value: string) {
+    setPersonAmounts((prev) => ({ ...prev, [person]: value }));
+    if (splitError) setSplitError("");
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -79,15 +90,46 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
       setBehalfError("");
     }
 
+    // Validate custom amounts sum up to total
+    if (onBehalfMode && customAmounts) {
+      const total = allPayers.reduce((sum, p) => {
+        const val = parseFloat(personAmounts[p] ?? "0");
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+      const diff = Math.abs(total - parsedAmount);
+      if (diff > 0.01) {
+        setSplitError(`Custom amounts total $${total.toFixed(2)} but payment is $${parsedAmount.toFixed(2)}`);
+        hasError = true;
+      } else {
+        setSplitError("");
+      }
+    }
+
     if (hasError) return;
 
     if (!onBehalfMode) {
       // Single payment: from pays to
       onSubmit([{ from, to, amount: parsedAmount, date, note: note.trim() }]);
+    } else if (customAmounts) {
+      // Custom split: each person has their own amount
+      const payments: PaymentSubmitData[] = allPayers
+        .map((person) => {
+          const personAmount = Math.round(parseFloat(personAmounts[person] ?? "0") * 100) / 100;
+          return {
+            from: person,
+            to,
+            amount: personAmount,
+            date,
+            note: note.trim()
+              ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
+              : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
+          };
+        })
+        .filter((p) => p.amount > 0);
+
+      onSubmit(payments);
     } else {
-      // Split: "from" is paying "to" on behalf of multiple people
-      // The total is split equally among "from" + the selected people
-      const allPayers = [from, ...onBehalfOf];
+      // Equal split among "from" + selected people
       const perPerson = Math.round((parsedAmount / allPayers.length) * 100) / 100;
 
       const payments: PaymentSubmitData[] = allPayers.map((person) => ({
@@ -103,6 +145,14 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
       onSubmit(payments);
     }
   }
+
+  const customTotal = allPayers.reduce((sum, p) => {
+    const val = parseFloat(personAmounts[p] ?? "0");
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  const parsedTotalAmount = parseFloat(amount) || 0;
+  const remaining = parsedTotalAmount - customTotal;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -151,7 +201,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
             step="0.01"
             min="0"
             value={amount}
-            onChange={(e) => { setAmount(e.target.value); if (amountError) setAmountError(""); }}
+            onChange={(e) => { setAmount(e.target.value); if (amountError) setAmountError(""); if (splitError) setSplitError(""); }}
             placeholder="0.00"
             className="pl-6"
             aria-invalid={!!amountError}
@@ -170,7 +220,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
             checked={onBehalfMode}
             onCheckedChange={(checked) => {
               setOnBehalfMode(!!checked);
-              if (!checked) { setOnBehalfOf([]); setBehalfError(""); }
+              if (!checked) { setOnBehalfOf([]); setBehalfError(""); setCustomAmounts(false); setPersonAmounts({}); setSplitError(""); }
             }}
           />
           <label htmlFor="on-behalf-toggle" className="cursor-pointer text-sm font-medium">
@@ -178,7 +228,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
           </label>
         </div>
         <p className="text-xs text-muted-foreground">
-          Enable this if the payer is covering the payment for other people too. The total will be split equally.
+          Enable this if the payer is covering the payment for other people too.
         </p>
 
         {onBehalfMode && (
@@ -205,10 +255,68 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
             {behalfError && (
               <p className="text-sm text-destructive">{behalfError}</p>
             )}
-            {onBehalfOf.length > 0 && amount && parseFloat(amount) > 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Each person&apos;s share: ${(parseFloat(amount) / (onBehalfOf.length + 1)).toFixed(2)}
-              </p>
+
+            {/* Custom amounts toggle */}
+            {onBehalfOf.length > 0 && (
+              <div className="mt-2 space-y-2 border-t pt-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="custom-amounts-toggle"
+                    checked={customAmounts}
+                    onCheckedChange={(checked) => {
+                      setCustomAmounts(!!checked);
+                      if (!checked) { setPersonAmounts({}); setSplitError(""); }
+                    }}
+                  />
+                  <label htmlFor="custom-amounts-toggle" className="cursor-pointer text-sm font-medium">
+                    Custom amounts per person
+                  </label>
+                </div>
+
+                {!customAmounts && parsedTotalAmount > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Equal split: ${(parsedTotalAmount / allPayers.length).toFixed(2)} each
+                  </p>
+                )}
+
+                {customAmounts && (
+                  <div className="space-y-2">
+                    {allPayers.map((person) => (
+                      <div key={person} className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-sm">{person}</span>
+                        <div className="relative w-24">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={personAmounts[person] ?? ""}
+                            onChange={(e) => handlePersonAmountChange(person, e.target.value)}
+                            placeholder="0.00"
+                            className="h-8 pl-5 text-xs"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        Total: ${customTotal.toFixed(2)} / ${parsedTotalAmount.toFixed(2)}
+                      </span>
+                      {Math.abs(remaining) > 0.01 && (
+                        <span className={remaining > 0 ? "text-amber-600" : "text-destructive"}>
+                          {remaining > 0 ? `$${remaining.toFixed(2)} remaining` : `$${Math.abs(remaining).toFixed(2)} over`}
+                        </span>
+                      )}
+                      {Math.abs(remaining) <= 0.01 && parsedTotalAmount > 0 && (
+                        <span className="text-emerald-600">Balanced</span>
+                      )}
+                    </div>
+                    {splitError && (
+                      <p className="text-sm text-destructive">{splitError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
