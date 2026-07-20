@@ -7,6 +7,63 @@ import type { FileAttachment } from "@/types";
 
 export type { FileAttachment };
 
+const MAX_IMAGE_WIDTH = 1600;
+const MAX_IMAGE_HEIGHT = 1600;
+const IMAGE_QUALITY = 0.7;
+
+/**
+ * Compresses an image file by resizing and reducing quality.
+ * Returns the compressed file as a Blob. Non-image files pass through unchanged.
+ */
+async function compressImage(file: File): Promise<Blob> {
+  // Only compress images
+  if (!file.type.startsWith("image/")) return file;
+
+  // Skip SVGs and GIFs (they don't benefit from canvas compression)
+  if (file.type === "image/svg+xml" || file.type === "image/gif") return file;
+
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Scale down if larger than max dimensions
+      if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT) {
+        const ratio = Math.min(MAX_IMAGE_WIDTH / width, MAX_IMAGE_HEIGHT / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(blob);
+          } else {
+            // If compression made it larger, use original
+            resolve(file);
+          }
+        },
+        "image/jpeg",
+        IMAGE_QUALITY
+      );
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 interface FileUploadProps {
   /** Storage path prefix, e.g. "trips/{tripId}/expenses" */
   storagePath: string;
@@ -34,12 +91,21 @@ export function FileUpload({ storagePath, value, onChange }: FileUploadProps) {
     setUploading(true);
     setProgress(0);
 
+    // Compress images before upload
+    let fileToUpload: Blob;
+    try {
+      fileToUpload = await compressImage(file);
+    } catch {
+      fileToUpload = file;
+    }
+
     const timestamp = Date.now();
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fullPath = `${storagePath}/${timestamp}_${safeName}`;
+    const extension = file.type.startsWith("image/") && fileToUpload !== file ? ".jpg" : "";
+    const fullPath = `${storagePath}/${timestamp}_${safeName}${extension}`;
     const storageRef = ref(storage, fullPath);
 
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
     uploadTask.on(
       "state_changed",
@@ -57,7 +123,7 @@ export function FileUpload({ storagePath, value, onChange }: FileUploadProps) {
           name: file.name,
           url,
           path: fullPath,
-          type: file.type,
+          type: fileToUpload === file ? file.type : "image/jpeg",
         });
         setUploading(false);
       }
