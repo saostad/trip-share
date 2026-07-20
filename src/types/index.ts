@@ -11,6 +11,13 @@ export interface Trip {
   updatedAt: Timestamp;
 }
 
+export interface FileAttachment {
+  name: string;
+  url: string;
+  path: string;
+  type: string;
+}
+
 export interface Expense {
   id: string;
   description: string;
@@ -18,6 +25,7 @@ export interface Expense {
   amount: number; // positive, in dollars
   paidBy: string; // must be in parent trip's participants
   sharedBy: string[]; // non-empty subset of participants
+  attachment?: FileAttachment | null;
   createdAt: Timestamp;
 }
 
@@ -34,6 +42,7 @@ export interface Payment {
   amount: number; // positive, in dollars
   date: string; // YYYY-MM-DD
   note?: string;
+  attachment?: FileAttachment | null;
   createdAt: Timestamp;
 }
 

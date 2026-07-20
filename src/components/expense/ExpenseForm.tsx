@@ -9,18 +9,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FileUpload } from "@/components/ui/FileUpload";
 import { format } from "date-fns";
-import type { Expense } from "@/types";
+import type { Expense, FileAttachment } from "@/types";
 
 interface ExpenseFormProps {
   expense?: Expense;
   participants: string[];
+  tripId?: string;
   onSubmit: (data: {
     description: string;
     date: string;
     amount: number;
     paidBy: string;
     sharedBy: string[];
+    attachment?: FileAttachment | null;
   }) => void;
   onCancel?: () => void;
 }
@@ -28,6 +31,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({
   expense,
   participants,
+  tripId,
   onSubmit,
   onCancel,
 }: ExpenseFormProps) {
@@ -42,6 +46,9 @@ export function ExpenseForm({
   const [paidBy, setPaidBy] = useState(expense?.paidBy ?? (participants[0] ?? ""));
   const [sharedBy, setSharedBy] = useState<string[]>(
     expense?.sharedBy ?? [...participants]
+  );
+  const [attachment, setAttachment] = useState<FileAttachment | null>(
+    expense?.attachment ?? null
   );
 
   const [amountError, setAmountError] = useState("");
@@ -95,6 +102,7 @@ export function ExpenseForm({
       amount: parsedAmount,
       paidBy,
       sharedBy,
+      attachment,
     });
 
     // Reset form after submit (only in create mode)
@@ -104,6 +112,7 @@ export function ExpenseForm({
       setAmount("");
       setPaidBy(participants[0] ?? "");
       setSharedBy([...participants]);
+      setAttachment(null);
     }
   }
 
@@ -221,6 +230,18 @@ export function ExpenseForm({
           </p>
         )}
       </div>
+
+      {/* File attachment */}
+      {tripId && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Receipt / Document (optional)</label>
+          <FileUpload
+            storagePath={`trips/${tripId}/expenses`}
+            value={attachment}
+            onChange={setAttachment}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         {onCancel && (

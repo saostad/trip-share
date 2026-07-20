@@ -9,7 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileUpload } from "@/components/ui/FileUpload";
 import { format } from "date-fns";
+import type { FileAttachment } from "@/types";
 
 export interface PaymentSubmitData {
   from: string;
@@ -17,15 +19,17 @@ export interface PaymentSubmitData {
   amount: number;
   date: string;
   note: string;
+  attachment?: FileAttachment | null;
 }
 
 interface PaymentFormProps {
   participants: string[];
+  tripId?: string;
   onSubmit: (payments: PaymentSubmitData[]) => void;
   onCancel: () => void;
 }
 
-export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormProps) {
+export function PaymentForm({ participants, tripId, onSubmit, onCancel }: PaymentFormProps) {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const [onBehalfMode, setOnBehalfMode] = useState(false);
@@ -37,6 +41,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
+  const [attachment, setAttachment] = useState<FileAttachment | null>(null);
 
   const [amountError, setAmountError] = useState("");
   const [personError, setPersonError] = useState("");
@@ -109,11 +114,11 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
 
     if (!onBehalfMode) {
       // Single payment: from pays to
-      onSubmit([{ from, to, amount: parsedAmount, date, note: note.trim() }]);
+      onSubmit([{ from, to, amount: parsedAmount, date, note: note.trim(), attachment }]);
     } else if (customAmounts) {
       // Custom split: each person has their own amount
       const payments: PaymentSubmitData[] = allPayers
-        .map((person) => {
+        .map((person, idx) => {
           const personAmount = Math.round(parseFloat(personAmounts[person] ?? "0") * 100) / 100;
           return {
             from: person,
@@ -123,6 +128,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
             note: note.trim()
               ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
               : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
+            attachment: idx === 0 ? attachment : null,
           };
         })
         .filter((p) => p.amount > 0);
@@ -132,7 +138,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
       // Equal split among "from" + selected people
       const perPerson = Math.round((parsedAmount / allPayers.length) * 100) / 100;
 
-      const payments: PaymentSubmitData[] = allPayers.map((person) => ({
+      const payments: PaymentSubmitData[] = allPayers.map((person, idx) => ({
         from: person,
         to,
         amount: perPerson,
@@ -140,6 +146,7 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
         note: note.trim()
           ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
           : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
+        attachment: idx === 0 ? attachment : null,
       }));
 
       onSubmit(payments);
@@ -345,6 +352,18 @@ export function PaymentForm({ participants, onSubmit, onCancel }: PaymentFormPro
           placeholder="e.g. Venmo transfer"
         />
       </div>
+
+      {/* File attachment */}
+      {tripId && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Receipt / Document (optional)</label>
+          <FileUpload
+            storagePath={`trips/${tripId}/payments`}
+            value={attachment}
+            onChange={setAttachment}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>

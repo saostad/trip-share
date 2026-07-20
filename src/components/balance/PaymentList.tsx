@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowRight, Trash2, Pencil, Banknote, Filter, X } from "lucide-react";
+import { ArrowRight, Trash2, Pencil, Banknote, Filter, X, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -196,6 +196,20 @@ export function PaymentList({ payments, participants = [], onEdit, onDelete }: P
                   <>
                     <span>&middot;</span>
                     <span className="min-w-0 truncate">{payment.note}</span>
+                  </>
+                )}
+                {payment.attachment && (
+                  <>
+                    <span>&middot;</span>
+                    <a
+                      href={payment.attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 text-blue-600 hover:underline"
+                    >
+                      <Paperclip className="h-3 w-3" />
+                      <span className="truncate">{payment.attachment.name}</span>
+                    </a>
                   </>
                 )}
               </div>

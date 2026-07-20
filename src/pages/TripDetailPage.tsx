@@ -191,13 +191,19 @@ export function TripDetailPage() {
     amount: number;
     paidBy: string;
     sharedBy: string[];
+    attachment?: import("@/types").FileAttachment | null;
   }) {
     if (!tripId) return;
     setSubmitting(true);
     try {
       const expensesRef = collection(db, "trips", tripId, "expenses");
       await addDoc(expensesRef, {
-        ...data,
+        description: data.description,
+        date: data.date,
+        amount: data.amount,
+        paidBy: data.paidBy,
+        sharedBy: data.sharedBy,
+        attachment: data.attachment ?? null,
         createdAt: serverTimestamp(),
       });
       toast.success("Expense added successfully");
@@ -215,12 +221,20 @@ export function TripDetailPage() {
     amount: number;
     paidBy: string;
     sharedBy: string[];
+    attachment?: import("@/types").FileAttachment | null;
   }) {
     if (!tripId || !editingExpense) return;
     setSubmitting(true);
     try {
       const expenseRef = doc(db, "trips", tripId, "expenses", editingExpense.id);
-      await updateDoc(expenseRef, data);
+      await updateDoc(expenseRef, {
+        description: data.description,
+        date: data.date,
+        amount: data.amount,
+        paidBy: data.paidBy,
+        sharedBy: data.sharedBy,
+        attachment: data.attachment ?? null,
+      });
       toast.success("Expense updated successfully");
       setEditingExpense(null);
     } catch {
@@ -251,6 +265,7 @@ export function TripDetailPage() {
     amount: number;
     date: string;
     note: string;
+    attachment?: import("@/types").FileAttachment | null;
   }[]) {
     if (!tripId) return;
     setSubmitting(true);
@@ -258,7 +273,12 @@ export function TripDetailPage() {
       const paymentsRef = collection(db, "trips", tripId, "payments");
       for (const payment of data) {
         await addDoc(paymentsRef, {
-          ...payment,
+          from: payment.from,
+          to: payment.to,
+          amount: payment.amount,
+          date: payment.date,
+          note: payment.note,
+          attachment: payment.attachment ?? null,
           createdAt: serverTimestamp(),
         });
       }
@@ -292,12 +312,20 @@ export function TripDetailPage() {
     amount: number;
     date: string;
     note: string;
+    attachment?: import("@/types").FileAttachment | null;
   }) {
     if (!tripId || !editingPayment) return;
     setSubmitting(true);
     try {
       const paymentRef = doc(db, "trips", tripId, "payments", editingPayment.id);
-      await updateDoc(paymentRef, data);
+      await updateDoc(paymentRef, {
+        from: data.from,
+        to: data.to,
+        amount: data.amount,
+        date: data.date,
+        note: data.note,
+        attachment: data.attachment ?? null,
+      });
       toast.success("Payment updated successfully");
       setEditingPayment(null);
     } catch {
@@ -488,6 +516,7 @@ export function TripDetailPage() {
           </DialogHeader>
           <ExpenseForm
             participants={trip.participants}
+            tripId={tripId}
             onSubmit={handleAddExpense}
             onCancel={() => setAddExpenseOpen(false)}
           />
@@ -504,6 +533,7 @@ export function TripDetailPage() {
             <ExpenseForm
               expense={editingExpense}
               participants={trip.participants}
+              tripId={tripId}
               onSubmit={handleEditExpense}
               onCancel={() => setEditingExpense(null)}
             />
@@ -545,6 +575,7 @@ export function TripDetailPage() {
           </DialogHeader>
           <PaymentForm
             participants={trip.participants}
+            tripId={tripId}
             onSubmit={handleAddPayment}
             onCancel={() => setAddPaymentOpen(false)}
           />
@@ -561,6 +592,7 @@ export function TripDetailPage() {
             <EditPaymentForm
               payment={editingPayment}
               participants={trip.participants}
+              tripId={tripId}
               onSubmit={handleEditPayment}
               onCancel={() => setEditingPayment(null)}
             />

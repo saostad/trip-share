@@ -8,21 +8,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Payment } from "@/types";
+import { FileUpload } from "@/components/ui/FileUpload";
+import type { Payment, FileAttachment } from "@/types";
 
 interface EditPaymentFormProps {
   payment: Payment;
   participants: string[];
-  onSubmit: (data: { from: string; to: string; amount: number; date: string; note: string }) => void;
+  tripId?: string;
+  onSubmit: (data: { from: string; to: string; amount: number; date: string; note: string; attachment?: FileAttachment | null }) => void;
   onCancel: () => void;
 }
 
-export function EditPaymentForm({ payment, participants, onSubmit, onCancel }: EditPaymentFormProps) {
+export function EditPaymentForm({ payment, participants, tripId, onSubmit, onCancel }: EditPaymentFormProps) {
   const [from, setFrom] = useState(payment.from);
   const [to, setTo] = useState(payment.to);
   const [amount, setAmount] = useState(String(payment.amount));
   const [date, setDate] = useState(payment.date);
   const [note, setNote] = useState(payment.note ?? "");
+  const [attachment, setAttachment] = useState<FileAttachment | null>(payment.attachment ?? null);
 
   const [amountError, setAmountError] = useState("");
   const [personError, setPersonError] = useState("");
@@ -49,7 +52,7 @@ export function EditPaymentForm({ payment, participants, onSubmit, onCancel }: E
 
     if (hasError) return;
 
-    onSubmit({ from, to, amount: parsedAmount, date, note: note.trim() });
+    onSubmit({ from, to, amount: parsedAmount, date, note: note.trim(), attachment });
   }
 
   return (
@@ -133,6 +136,18 @@ export function EditPaymentForm({ payment, participants, onSubmit, onCancel }: E
           placeholder="e.g. Venmo transfer"
         />
       </div>
+
+      {/* File attachment */}
+      {tripId && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Receipt / Document (optional)</label>
+          <FileUpload
+            storagePath={`trips/${tripId}/payments`}
+            value={attachment}
+            onChange={setAttachment}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>

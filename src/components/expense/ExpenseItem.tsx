@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/formatters";
@@ -22,6 +22,17 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
             {expense.sharedBy.length === 1 ? "person" : "people"}
           </p>
           <p className="text-xs text-muted-foreground">{expense.date}</p>
+          {expense.attachment && (
+            <a
+              href={expense.attachment.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+            >
+              <Paperclip className="h-3 w-3" />
+              {expense.attachment.name}
+            </a>
+          )}
         </div>
         <div className="flex shrink-0 gap-1">
           <Button
