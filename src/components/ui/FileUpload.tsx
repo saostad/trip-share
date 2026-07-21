@@ -9,7 +9,7 @@ export type { FileAttachment };
 
 const MAX_IMAGE_WIDTH = 1600;
 const MAX_IMAGE_HEIGHT = 1600;
-const IMAGE_QUALITY = 0.7;
+const IMAGE_QUALITY = 0.5;
 
 /**
  * Compresses an image file by resizing and reducing quality.
