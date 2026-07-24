@@ -26,6 +26,47 @@ A web application for splitting trip expenses among participants with multi-user
 
 This runs `vite build` followed by `firebase deploy` to deploy both the hosting site and Firestore rules.
 
+## Firestore Backups
+
+A daily backup schedule is configured for the Firestore database with 7-day retention.
+
+### Managing Backup Schedules
+
+```bash
+# List backup schedules
+gcloud firestore backups schedules list --database='(default)'
+
+# Delete a backup schedule
+gcloud firestore backups schedules delete SCHEDULE_ID --database='(default)'
+
+# Create a new daily backup schedule
+gcloud firestore backups schedules create \
+  --database='(default)' \
+  --recurrence=daily \
+  --retention=7d
+```
+
+### Listing Available Backups
+
+```bash
+gcloud firestore backups list --location=nam5
+```
+
+Replace `nam5` with your database's location if different.
+
+### Restoring a Backup
+
+```bash
+# Restore to a new database
+gcloud firestore databases restore \
+  --source-backup=projects/trip-share-e3fb5/location/nam5/backups/BACKUP_ID \
+  --destination-database=restored-db
+
+# After verifying the restored data, you can swap or migrate as needed.
+```
+
+> **Note:** Restores always create a new database — they cannot overwrite the existing one in place. After restoring, verify the data and then either point your app to the new database or export/import the collections you need back into the default database.
+
 ## Tech Stack
 
 - React 19 + TypeScript
