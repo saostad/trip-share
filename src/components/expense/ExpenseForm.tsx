@@ -12,6 +12,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  EXPENSE_CATEGORIES,
+  resolveExpenseCategory,
+} from "@/lib/expenseCategories";
 import type { Expense, FileAttachment } from "@/types";
 
 interface ExpenseFormProps {
@@ -20,6 +24,7 @@ interface ExpenseFormProps {
   tripId?: string;
   onSubmit: (data: {
     description: string;
+    category?: string | null;
     date: string;
     amount: number;
     paidBy: string;
@@ -37,7 +42,12 @@ const STEPS = [
   { id: "receipt", label: "Receipt" },
 ] as const;
 
-const LAST_STEP_INDEX = STEPS.length - 1; // 4 = Receipt
+const LAST_STEP_INDEX = STEPS.length - 1;
+
+function initialCategory(expense?: Expense): string | null {
+  if (!expense) return null;
+  return resolveExpenseCategory(expense.category, expense.description)?.id ?? null;
+}
 
 export function ExpenseForm({
   expense,
@@ -51,6 +61,7 @@ export function ExpenseForm({
 
   const [step, setStep] = useState(0);
 
+  const [category, setCategory] = useState<string | null>(initialCategory(expense));
   const [description, setDescription] = useState(expense?.description ?? "");
   const [date, setDate] = useState(expense?.date ?? today);
   const [amount, setAmount] = useState(
@@ -73,6 +84,18 @@ export function ExpenseForm({
   const allSelected =
     participants.length > 0 && participants.every((p) => sharedBy.includes(p));
   const isLastStep = step === LAST_STEP_INDEX;
+
+  function selectPreset(id: string, label: string) {
+    setCategory(id);
+    setDescription(label);
+  }
+
+  function handleDescriptionChange(value: string) {
+    setDescription(value);
+    // If user types something that no longer matches the selected preset, clear category
+    const match = EXPENSE_CATEGORIES.find((c) => c.label === value);
+    setCategory(match ? match.id : null);
+  }
 
   function handleToggleParticipant(participant: string) {
     setSharedBy((prev) =>
@@ -133,7 +156,6 @@ export function ExpenseForm({
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  /** Save only when user explicitly clicks Save on the Receipt step */
   function handleSave() {
     const parsedAmount = parseFloat(amount);
     let hasError = false;
@@ -165,7 +187,8 @@ export function ExpenseForm({
     if (hasError) return;
 
     onSubmit({
-      description: description.trim(),
+      description: description.trim() || "Expense",
+      category,
       date,
       amount: parsedAmount,
       paidBy,
@@ -174,6 +197,7 @@ export function ExpenseForm({
     });
 
     if (!isEditMode) {
+      setCategory(null);
       setDescription("");
       setDate(today);
       setAmount("");
@@ -184,7 +208,6 @@ export function ExpenseForm({
     }
   }
 
-  // Block native form submit (Enter key, accidental submit buttons)
   function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isLastStep) {
@@ -196,7 +219,6 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4">
-      {/* Step indicator */}
       <div className="flex items-center gap-1.5">
         {STEPS.map((s, i) => (
           <div key={s.id} className="flex flex-1 flex-col items-center gap-1">
@@ -224,7 +246,6 @@ export function ExpenseForm({
         ))}
       </div>
 
-      {/* Progress bar */}
       <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full bg-primary transition-all duration-300"
@@ -232,9 +253,39 @@ export function ExpenseForm({
         />
       </div>
 
-      {/* Step 0: Description + Date */}
+      {/* Step 0: Details */}
       {step === 0 && (
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">
+              What was it for?
+            </label>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {EXPENSE_CATEGORIES.map((c) => {
+                const Icon = c.icon;
+                const selected = category === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => selectPreset(c.id, c.label)}
+                    className={
+                      "flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-center transition-colors " +
+                      (selected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-input bg-background hover:bg-muted/60")
+                    }
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="text-[11px] font-medium leading-tight">
+                      {c.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label
               htmlFor="expense-description"
@@ -245,10 +296,12 @@ export function ExpenseForm({
             <Input
               id="expense-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What was this expense for?"
-              autoFocus
+              onChange={(e) => handleDescriptionChange(e.target.value)}
+              placeholder="Or type your own description"
             />
+            <p className="text-xs text-muted-foreground">
+              Tap a category above or type a custom description.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -268,7 +321,6 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 1: Amount */}
       {step === 1 && (
         <div className="space-y-2">
           <label
@@ -306,7 +358,6 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 2: Paid by */}
       {step === 2 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Paid by</label>
@@ -334,7 +385,6 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 3: Shared by */}
       {step === 3 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Shared by</label>
@@ -383,7 +433,6 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 4: Summary + Receipt (MUST show before save) */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
@@ -436,7 +485,6 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Navigation — all buttons are type="button" so nothing auto-submits */}
       <div className="flex justify-between gap-2 pt-2">
         <div className="flex gap-2">
           {onCancel && step === 0 && (

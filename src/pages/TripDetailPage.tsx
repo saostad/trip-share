@@ -48,7 +48,17 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
-import type { Expense, Payment } from "@/types";
+import type { Expense, Payment, FileAttachment } from "@/types";
+
+type ExpenseFormData = {
+  description: string;
+  category?: string | null;
+  date: string;
+  amount: number;
+  paidBy: string;
+  sharedBy: string[];
+  attachment?: FileAttachment | null;
+};
 
 export function TripDetailPage() {
   const { tripId } = useParams<{ tripId: string }>();
@@ -71,13 +81,11 @@ export function TripDetailPage() {
   const isOwner = user?.uid === trip?.ownerId;
   const loading = tripLoading || expensesLoading || paymentsLoading;
 
-  // Loading skeleton
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto max-w-6xl px-4 py-6">
-          {/* Header skeleton */}
           <div className="mb-6 animate-pulse">
             <div className="mb-4 flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-muted" />
@@ -93,11 +101,8 @@ export function TripDetailPage() {
             </div>
           </div>
 
-          {/* Content skeleton */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Left column: Expense list + balances */}
             <div className="space-y-4">
-              {/* Expenses card skeleton */}
               <div className="rounded-xl bg-card p-6 shadow-sm">
                 <div className="mb-4 h-5 w-24 rounded bg-muted" />
                 <div className="space-y-3">
@@ -114,48 +119,6 @@ export function TripDetailPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Balances card skeleton */}
-              <div className="rounded-xl bg-card p-6 shadow-sm">
-                <div className="mb-4 h-5 w-20 rounded bg-muted" />
-                <div className="animate-pulse space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="h-4 w-20 rounded bg-muted" />
-                      <div className="h-4 w-14 rounded bg-muted" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Settle Up card skeleton */}
-              <div className="rounded-xl bg-card p-6 shadow-sm">
-                <div className="mb-4 h-5 w-24 rounded bg-muted" />
-                <div className="animate-pulse space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="h-4 w-48 rounded bg-muted" />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Right column: Form skeleton */}
-            <div className="space-y-4">
-              <div className="rounded-xl bg-card p-6 shadow-sm">
-                <div className="mb-4 h-5 w-28 rounded bg-muted" />
-                <div className="animate-pulse space-y-4">
-                  <div className="h-9 w-full rounded-md bg-muted" />
-                  <div className="h-9 w-full rounded-md bg-muted" />
-                  <div className="h-9 w-full rounded-md bg-muted" />
-                  <div className="h-9 w-full rounded-md bg-muted" />
-                  <div className="flex gap-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-6 w-16 rounded bg-muted/50" />
-                    ))}
-                  </div>
-                  <div className="h-9 w-full rounded-md bg-muted" />
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -163,7 +126,6 @@ export function TripDetailPage() {
     );
   }
 
-  // Trip not found
   if (!trip) {
     return (
       <div className="min-h-screen bg-background">
@@ -185,20 +147,14 @@ export function TripDetailPage() {
     );
   }
 
-  async function handleAddExpense(data: {
-    description: string;
-    date: string;
-    amount: number;
-    paidBy: string;
-    sharedBy: string[];
-    attachment?: import("@/types").FileAttachment | null;
-  }) {
+  async function handleAddExpense(data: ExpenseFormData) {
     if (!tripId) return;
     setSubmitting(true);
     try {
       const expensesRef = collection(db, "trips", tripId, "expenses");
       await addDoc(expensesRef, {
         description: data.description,
+        category: data.category ?? null,
         date: data.date,
         amount: data.amount,
         paidBy: data.paidBy,
@@ -215,20 +171,14 @@ export function TripDetailPage() {
     }
   }
 
-  async function handleEditExpense(data: {
-    description: string;
-    date: string;
-    amount: number;
-    paidBy: string;
-    sharedBy: string[];
-    attachment?: import("@/types").FileAttachment | null;
-  }) {
+  async function handleEditExpense(data: ExpenseFormData) {
     if (!tripId || !editingExpense) return;
     setSubmitting(true);
     try {
       const expenseRef = doc(db, "trips", tripId, "expenses", editingExpense.id);
       await updateDoc(expenseRef, {
         description: data.description,
+        category: data.category ?? null,
         date: data.date,
         amount: data.amount,
         paidBy: data.paidBy,
@@ -265,7 +215,7 @@ export function TripDetailPage() {
     amount: number;
     date: string;
     note: string;
-    attachment?: import("@/types").FileAttachment | null;
+    attachment?: FileAttachment | null;
   }[]) {
     if (!tripId) return;
     setSubmitting(true);
@@ -312,7 +262,7 @@ export function TripDetailPage() {
     amount: number;
     date: string;
     note: string;
-    attachment?: import("@/types").FileAttachment | null;
+    attachment?: FileAttachment | null;
   }) {
     if (!tripId || !editingPayment) return;
     setSubmitting(true);
@@ -348,7 +298,6 @@ export function TripDetailPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto max-w-6xl px-4 py-6">
-        {/* Trip Header */}
         <div className="mb-6">
           <div className="mb-4 flex items-center gap-3">
             <Link
@@ -362,7 +311,6 @@ export function TripDetailPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            {/* Participant Avatars */}
             <div className="flex items-center gap-2">
               <AvatarGroup>
                 {trip.participants.slice(0, 5).map((participant) => (
@@ -378,10 +326,8 @@ export function TripDetailPage() {
               )}
             </div>
 
-            {/* Collaborator list */}
             <CollaboratorList tripId={trip.id} collaboratorIds={trip.collaboratorIds} members={members} isOwner={isOwner} />
 
-            {/* Owner controls */}
             {isOwner && (
               <div className="ml-auto flex gap-2">
                 <Button
@@ -406,7 +352,6 @@ export function TripDetailPage() {
           </div>
         </div>
 
-        {/* Single column layout */}
         <div className="space-y-4">
           <Card className="rounded-xl shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -430,7 +375,6 @@ export function TripDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Balance Summary */}
           <Card className="rounded-xl shadow-sm">
             <CardHeader>
               <CardTitle>Balances</CardTitle>
@@ -440,7 +384,6 @@ export function TripDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Settlement List */}
           <Card className="rounded-xl shadow-sm">
             <CardHeader>
               <CardTitle>Settle Up</CardTitle>
@@ -450,7 +393,6 @@ export function TripDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Payments */}
           <Card className="rounded-xl shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Payments</CardTitle>
@@ -474,7 +416,6 @@ export function TripDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Share Link - Owner only */}
           {isOwner && (
             <Card className="rounded-xl shadow-sm">
               <CardHeader>
@@ -488,7 +429,6 @@ export function TripDetailPage() {
         </div>
       </div>
 
-      {/* Edit Trip Dialog (Owner Only) */}
       {isOwner && (
         <EditTripDialog
           trip={trip}
@@ -498,7 +438,6 @@ export function TripDetailPage() {
         />
       )}
 
-      {/* Delete Trip Dialog (Owner Only) */}
       {isOwner && (
         <DeleteTripDialog
           tripId={trip.id}
@@ -508,7 +447,6 @@ export function TripDetailPage() {
         />
       )}
 
-      {/* Add Expense Dialog */}
       <Dialog open={addExpenseOpen} onOpenChange={setAddExpenseOpen}>
         <DialogContent>
           <DialogHeader>
@@ -523,7 +461,6 @@ export function TripDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Expense Dialog */}
       <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
         <DialogContent>
           <DialogHeader>
@@ -541,7 +478,6 @@ export function TripDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Expense Confirmation */}
       <AlertDialog
         open={!!deletingExpense}
         onOpenChange={(open) => !open && setDeletingExpense(null)}
@@ -567,7 +503,6 @@ export function TripDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add Payment Dialog */}
       <Dialog open={addPaymentOpen} onOpenChange={setAddPaymentOpen}>
         <DialogContent>
           <DialogHeader>
@@ -582,7 +517,6 @@ export function TripDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Payment Dialog */}
       <Dialog open={!!editingPayment} onOpenChange={(open) => !open && setEditingPayment(null)}>
         <DialogContent>
           <DialogHeader>
@@ -600,7 +534,6 @@ export function TripDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Payment Confirmation */}
       <AlertDialog
         open={!!deletingPayment}
         onOpenChange={(open) => !open && setDeletingPayment(null)}
