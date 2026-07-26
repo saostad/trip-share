@@ -11,7 +11,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Camera,
+  Keyboard,
+  Receipt,
+} from "lucide-react";
 import {
   EXPENSE_CATEGORIES,
   resolveExpenseCategory,
@@ -39,14 +45,16 @@ const STEPS = [
   { id: "amount", label: "Amount" },
   { id: "paidBy", label: "Paid by" },
   { id: "sharedBy", label: "Shared by" },
-  { id: "receipt", label: "Receipt" },
+  { id: "confirm", label: "Confirm" },
 ] as const;
 
 const LAST_STEP_INDEX = STEPS.length - 1;
 
 function initialCategory(expense?: Expense): string | null {
   if (!expense) return null;
-  return resolveExpenseCategory(expense.category, expense.description)?.id ?? null;
+  return (
+    resolveExpenseCategory(expense.category, expense.description)?.id ?? null
+  );
 }
 
 export function ExpenseForm({
@@ -59,14 +67,18 @@ export function ExpenseForm({
   const today = format(new Date(), "yyyy-MM-dd");
   const isEditMode = !!expense;
 
+  // New expenses start at optional receipt gateway; edit skips it
+  const [phase, setPhase] = useState<"start" | "form">(
+    isEditMode ? "form" : "start"
+  );
   const [step, setStep] = useState(0);
 
-  const [category, setCategory] = useState<string | null>(initialCategory(expense));
+  const [category, setCategory] = useState<string | null>(
+    initialCategory(expense)
+  );
   const [description, setDescription] = useState(expense?.description ?? "");
   const [date, setDate] = useState(expense?.date ?? today);
-  const [amount, setAmount] = useState(
-    expense ? String(expense.amount) : ""
-  );
+  const [amount, setAmount] = useState(expense ? String(expense.amount) : "");
   const [paidBy, setPaidBy] = useState(
     expense?.paidBy ?? (participants[0] ?? "")
   );
@@ -92,7 +104,6 @@ export function ExpenseForm({
 
   function handleDescriptionChange(value: string) {
     setDescription(value);
-    // If user types something that no longer matches the selected preset, clear category
     const match = EXPENSE_CATEGORIES.find((c) => c.label === value);
     setCategory(match ? match.id : null);
   }
@@ -153,7 +164,25 @@ export function ExpenseForm({
   }
 
   function handleBack() {
+    if (step === 0 && !isEditMode) {
+      setPhase("start");
+      return;
+    }
     setStep((s) => Math.max(s - 1, 0));
+  }
+
+  function startManual() {
+    setPhase("form");
+    setStep(0);
+  }
+
+  function handleStartAttachment(file: FileAttachment | null) {
+    setAttachment(file);
+    // Once a receipt is attached from the gate, move into the form
+    if (file) {
+      setPhase("form");
+      setStep(0);
+    }
   }
 
   function handleSave() {
@@ -205,11 +234,13 @@ export function ExpenseForm({
       setSharedBy([...participants]);
       setAttachment(null);
       setStep(0);
+      setPhase("start");
     }
   }
 
   function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (phase !== "form") return;
     if (isLastStep) {
       handleSave();
     } else {
@@ -217,6 +248,76 @@ export function ExpenseForm({
     }
   }
 
+  // ── Optional start gate (add mode only) ──────────────────────────
+  if (phase === "start") {
+    return (
+      <div className="space-y-5">
+        <div className="space-y-1 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Receipt className="h-6 w-6" />
+          </div>
+          <h3 className="text-base font-semibold">Add an expense</h3>
+          <p className="text-sm text-muted-foreground">
+            Start from a receipt, or enter details manually.
+          </p>
+        </div>
+
+        {tripId ? (
+          <div className="space-y-2 rounded-lg border border-input p-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Camera className="h-4 w-4 text-muted-foreground" />
+              Scan or upload receipt
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Optional. We’ll keep the file with this expense. Auto-fill from OCR
+              can come later.
+            </p>
+            <FileUpload
+              storagePath={`trips/${tripId}/expenses`}
+              value={attachment}
+              onChange={handleStartAttachment}
+            />
+          </div>
+        ) : (
+          <p className="rounded-lg border border-dashed border-input p-3 text-center text-sm text-muted-foreground">
+            Receipt upload needs a trip context.
+          </p>
+        )}
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full gap-2"
+          onClick={startManual}
+        >
+          <Keyboard className="h-4 w-4" />
+          Enter manually
+        </Button>
+
+        {onCancel && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={onCancel}
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // ── Main wizard ──────────────────────────────────────────────────
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4">
       <div className="flex items-center gap-1.5">
@@ -252,6 +353,12 @@ export function ExpenseForm({
           style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
         />
       </div>
+
+      {attachment && step === 0 && (
+        <p className="rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
+          Receipt attached: {attachment.name}. Fill in the details below.
+        </p>
+      )}
 
       {/* Step 0: Details */}
       {step === 0 && (
@@ -433,6 +540,7 @@ export function ExpenseForm({
         </div>
       )}
 
+      {/* Step 4: Confirm + receipt */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
@@ -487,22 +595,15 @@ export function ExpenseForm({
 
       <div className="flex justify-between gap-2 pt-2">
         <div className="flex gap-2">
-          {onCancel && step === 0 && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
-          {step > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleBack}
-              className="gap-1"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              Back
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            className="gap-1"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Back
+          </Button>
         </div>
 
         <div className="flex gap-2">
