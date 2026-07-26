@@ -32,7 +32,8 @@ interface ExpenseFormProps {
 const STEPS = [
   { id: "details", label: "Details" },
   { id: "amount", label: "Amount" },
-  { id: "people", label: "People" },
+  { id: "paidBy", label: "Paid by" },
+  { id: "sharedBy", label: "Shared by" },
   { id: "receipt", label: "Receipt" },
 ] as const;
 
@@ -62,6 +63,7 @@ export function ExpenseForm({
   );
 
   const [amountError, setAmountError] = useState("");
+  const [paidByError, setPaidByError] = useState("");
   const [sharedByError, setSharedByError] = useState("");
 
   const allSelected =
@@ -98,6 +100,15 @@ export function ExpenseForm({
     }
 
     if (step === 2) {
+      if (!paidBy) {
+        setPaidByError("Please select who paid");
+        return false;
+      }
+      setPaidByError("");
+      return true;
+    }
+
+    if (step === 3) {
       if (sharedBy.length === 0) {
         setSharedByError("At least one participant must be selected");
         return false;
@@ -132,9 +143,17 @@ export function ExpenseForm({
       setAmountError("");
     }
 
+    if (!paidBy) {
+      setPaidByError("Please select who paid");
+      if (!hasError) setStep(2);
+      hasError = true;
+    } else {
+      setPaidByError("");
+    }
+
     if (sharedBy.length === 0) {
       setSharedByError("At least one participant must be selected");
-      if (!hasError) setStep(2);
+      if (!hasError) setStep(3);
       hasError = true;
     } else {
       setSharedByError("");
@@ -165,9 +184,9 @@ export function ExpenseForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Step indicator */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {STEPS.map((s, i) => (
-          <div key={s.id} className="flex flex-1 flex-col items-center gap-1.5">
+          <div key={s.id} className="flex flex-1 flex-col items-center gap-1">
             <div
               className={
                 "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-colors " +
@@ -182,7 +201,7 @@ export function ExpenseForm({
             </div>
             <span
               className={
-                "text-[10px] font-medium " +
+                "text-[10px] font-medium text-center leading-tight " +
                 (i === step ? "text-foreground" : "text-muted-foreground")
               }
             >
@@ -274,79 +293,86 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 3: Paid by + Shared by */}
+      {/* Step 3: Paid by */}
       {step === 2 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">Paid by</label>
-            <Select
-              value={paidBy}
-              onValueChange={(val) => setPaidBy(val as string)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select who paid" />
-              </SelectTrigger>
-              <SelectContent>
-                {participants.map((participant) => (
-                  <SelectItem key={participant} value={participant}>
-                    {participant}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">Shared by</label>
-            <div
-              className="space-y-2 rounded-lg border border-input p-3"
-              role="group"
-              aria-labelledby="shared-by-label"
-              aria-describedby={
-                sharedByError ? "expense-shared-by-error" : undefined
-              }
-            >
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="select-all"
-                  checked={allSelected}
-                  onCheckedChange={handleSelectAll}
-                />
-                <label
-                  htmlFor="select-all"
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  Select All
-                </label>
-              </div>
-              <div className="h-px bg-border" />
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Paid by</label>
+          <Select
+            value={paidBy}
+            onValueChange={(val) => {
+              setPaidBy(val as string);
+              if (paidByError) setPaidByError("");
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select who paid" />
+            </SelectTrigger>
+            <SelectContent>
               {participants.map((participant) => (
-                <div key={participant} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`shared-${participant}`}
-                    checked={sharedBy.includes(participant)}
-                    onCheckedChange={() => handleToggleParticipant(participant)}
-                  />
-                  <label
-                    htmlFor={`shared-${participant}`}
-                    className="text-sm cursor-pointer"
-                  >
-                    {participant}
-                  </label>
-                </div>
+                <SelectItem key={participant} value={participant}>
+                  {participant}
+                </SelectItem>
               ))}
-            </div>
-            {sharedByError && (
-              <p id="expense-shared-by-error" className="text-sm text-destructive">
-                {sharedByError}
-              </p>
-            )}
-          </div>
+            </SelectContent>
+          </Select>
+          {paidByError && (
+            <p className="text-sm text-destructive">{paidByError}</p>
+          )}
         </div>
       )}
 
-      {/* Step 4: Summary + Attachment */}
+      {/* Step 4: Shared by */}
       {step === 3 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">Shared by</label>
+          <div
+            className="space-y-2 rounded-lg border border-input p-3"
+            role="group"
+            aria-labelledby="shared-by-label"
+            aria-describedby={
+              sharedByError ? "expense-shared-by-error" : undefined
+            }
+          >
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="select-all"
+                checked={allSelected}
+                onCheckedChange={handleSelectAll}
+              />
+              <label
+                htmlFor="select-all"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Select All
+              </label>
+            </div>
+            <div className="h-px bg-border" />
+            {participants.map((participant) => (
+              <div key={participant} className="flex items-center gap-2">
+                <Checkbox
+                  id={`shared-${participant}`}
+                  checked={sharedBy.includes(participant)}
+                  onCheckedChange={() => handleToggleParticipant(participant)}
+                />
+                <label
+                  htmlFor={`shared-${participant}`}
+                  className="text-sm cursor-pointer"
+                >
+                  {participant}
+                </label>
+              </div>
+            ))}
+          </div>
+          {sharedByError && (
+            <p id="expense-shared-by-error" className="text-sm text-destructive">
+              {sharedByError}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Step 5: Summary + Attachment */}
+      {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
             <div className="flex justify-between gap-2">
