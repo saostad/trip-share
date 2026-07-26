@@ -37,6 +37,8 @@ const STEPS = [
   { id: "receipt", label: "Receipt" },
 ] as const;
 
+const LAST_STEP_INDEX = STEPS.length - 1; // 4 = Receipt
+
 export function ExpenseForm({
   expense,
   participants,
@@ -54,7 +56,9 @@ export function ExpenseForm({
   const [amount, setAmount] = useState(
     expense ? String(expense.amount) : ""
   );
-  const [paidBy, setPaidBy] = useState(expense?.paidBy ?? (participants[0] ?? ""));
+  const [paidBy, setPaidBy] = useState(
+    expense?.paidBy ?? (participants[0] ?? "")
+  );
   const [sharedBy, setSharedBy] = useState<string[]>(
     expense?.sharedBy ?? [...participants]
   );
@@ -68,7 +72,7 @@ export function ExpenseForm({
 
   const allSelected =
     participants.length > 0 && participants.every((p) => sharedBy.includes(p));
-  const isLastStep = step === STEPS.length - 1;
+  const isLastStep = step === LAST_STEP_INDEX;
 
   function handleToggleParticipant(participant: string) {
     setSharedBy((prev) =>
@@ -88,8 +92,8 @@ export function ExpenseForm({
     if (sharedByError) setSharedByError("");
   }
 
-  function validateCurrentStep(): boolean {
-    if (step === 1) {
+  function validateStep(stepIndex: number): boolean {
+    if (stepIndex === 1) {
       const parsedAmount = parseFloat(amount);
       if (!parsedAmount || parsedAmount <= 0) {
         setAmountError("Amount must be greater than $0.00");
@@ -99,7 +103,7 @@ export function ExpenseForm({
       return true;
     }
 
-    if (step === 2) {
+    if (stepIndex === 2) {
       if (!paidBy) {
         setPaidByError("Please select who paid");
         return false;
@@ -108,7 +112,7 @@ export function ExpenseForm({
       return true;
     }
 
-    if (step === 3) {
+    if (stepIndex === 3) {
       if (sharedBy.length === 0) {
         setSharedByError("At least one participant must be selected");
         return false;
@@ -121,23 +125,16 @@ export function ExpenseForm({
   }
 
   function handleNext() {
-    if (!validateCurrentStep()) return;
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (!validateStep(step)) return;
+    setStep((s) => Math.min(s + 1, LAST_STEP_INDEX));
   }
 
   function handleBack() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    // Enter key / accidental submit on intermediate steps → advance only
-    if (!isLastStep) {
-      handleNext();
-      return;
-    }
-
+  /** Save only when user explicitly clicks Save on the Receipt step */
+  function handleSave() {
     const parsedAmount = parseFloat(amount);
     let hasError = false;
 
@@ -187,8 +184,18 @@ export function ExpenseForm({
     }
   }
 
+  // Block native form submit (Enter key, accidental submit buttons)
+  function handleFormSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (isLastStep) {
+      handleSave();
+    } else {
+      handleNext();
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleFormSubmit} className="space-y-4">
       {/* Step indicator */}
       <div className="flex items-center gap-1.5">
         {STEPS.map((s, i) => (
@@ -225,7 +232,7 @@ export function ExpenseForm({
         />
       </div>
 
-      {/* Step 1: Description + Date */}
+      {/* Step 0: Description + Date */}
       {step === 0 && (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -261,7 +268,7 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 2: Amount */}
+      {/* Step 1: Amount */}
       {step === 1 && (
         <div className="space-y-2">
           <label
@@ -299,7 +306,7 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 3: Paid by */}
+      {/* Step 2: Paid by */}
       {step === 2 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Paid by</label>
@@ -327,14 +334,13 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 4: Shared by */}
+      {/* Step 3: Shared by */}
       {step === 3 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Shared by</label>
           <div
             className="space-y-2 rounded-lg border border-input p-3"
             role="group"
-            aria-labelledby="shared-by-label"
             aria-describedby={
               sharedByError ? "expense-shared-by-error" : undefined
             }
@@ -377,7 +383,7 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 5: Summary + Receipt attachment */}
+      {/* Step 4: Summary + Receipt (MUST show before save) */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
@@ -411,7 +417,7 @@ export function ExpenseForm({
             </div>
           </div>
 
-          {tripId && (
+          {tripId ? (
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none">
                 Receipt / Document (optional)
@@ -422,11 +428,15 @@ export function ExpenseForm({
                 onChange={setAttachment}
               />
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No trip selected — receipt upload unavailable.
+            </p>
           )}
         </div>
       )}
 
-      {/* Navigation */}
+      {/* Navigation — all buttons are type="button" so nothing auto-submits */}
       <div className="flex justify-between gap-2 pt-2">
         <div className="flex gap-2">
           {onCancel && step === 0 && (
@@ -454,7 +464,7 @@ export function ExpenseForm({
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           ) : (
-            <Button type="submit">
+            <Button type="button" onClick={handleSave}>
               {isEditMode ? "Save Changes" : "Add Expense"}
             </Button>
           )}
