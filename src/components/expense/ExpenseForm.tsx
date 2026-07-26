@@ -132,6 +132,12 @@ export function ExpenseForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Enter key / accidental submit on intermediate steps → advance only
+    if (!isLastStep) {
+      handleNext();
+      return;
+    }
+
     const parsedAmount = parseFloat(amount);
     let hasError = false;
 
@@ -371,7 +377,7 @@ export function ExpenseForm({
         </div>
       )}
 
-      {/* Step 5: Summary + Attachment */}
+      {/* Step 5: Summary + Receipt attachment */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
