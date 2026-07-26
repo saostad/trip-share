@@ -17,11 +17,13 @@ import {
   Camera,
   Keyboard,
   Receipt,
+  Loader2,
 } from "lucide-react";
 import {
   EXPENSE_CATEGORIES,
   resolveExpenseCategory,
 } from "@/lib/expenseCategories";
+import { parseReceiptFromUrl } from "@/lib/parseReceipt";
 import type { Expense, FileAttachment } from "@/types";
 
 interface ExpenseFormProps {
@@ -67,7 +69,6 @@ export function ExpenseForm({
   const today = format(new Date(), "yyyy-MM-dd");
   const isEditMode = !!expense;
 
-  // New expenses start at optional receipt gateway; edit skips it
   const [phase, setPhase] = useState<"start" | "form">(
     isEditMode ? "form" : "start"
   );
@@ -92,6 +93,10 @@ export function ExpenseForm({
   const [amountError, setAmountError] = useState("");
   const [paidByError, setPaidByError] = useState("");
   const [sharedByError, setSharedByError] = useState("");
+  const [ocrStatus, setOcrStatus] = useState<
+    "idle" | "running" | "done" | "failed"
+  >("idle");
+  const [ocrNote, setOcrNote] = useState<string | null>(null);
 
   const allSelected =
     participants.length > 0 && participants.every((p) => sharedBy.includes(p));
@@ -118,11 +123,8 @@ export function ExpenseForm({
   }
 
   function handleSelectAll() {
-    if (allSelected) {
-      setSharedBy([]);
-    } else {
-      setSharedBy([...participants]);
-    }
+    if (allSelected) setSharedBy([]);
+    else setSharedBy([...participants]);
     if (sharedByError) setSharedByError("");
   }
 
@@ -136,7 +138,6 @@ export function ExpenseForm({
       setAmountError("");
       return true;
     }
-
     if (stepIndex === 2) {
       if (!paidBy) {
         setPaidByError("Please select who paid");
@@ -145,7 +146,6 @@ export function ExpenseForm({
       setPaidByError("");
       return true;
     }
-
     if (stepIndex === 3) {
       if (sharedBy.length === 0) {
         setSharedByError("At least one participant must be selected");
@@ -154,7 +154,6 @@ export function ExpenseForm({
       setSharedByError("");
       return true;
     }
-
     return true;
   }
 
@@ -176,12 +175,53 @@ export function ExpenseForm({
     setStep(0);
   }
 
+  async function applyGeminiOcr(file: FileAttachment) {
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      setOcrNote("OCR supports images (and PDF). Enter details manually.");
+      setOcrStatus("failed");
+      return;
+    }
+
+    setOcrStatus("running");
+    setOcrNote(null);
+
+    try {
+      const result = await parseReceiptFromUrl(file.url, file.type);
+      const filled: string[] = [];
+
+      if (result.amount != null) {
+        setAmount(String(result.amount));
+        filled.push(`$${result.amount.toFixed(2)}`);
+      }
+      if (result.date) {
+        setDate(result.date);
+        filled.push(result.date);
+      }
+      if (result.merchant && !description.trim()) {
+        setDescription(result.merchant);
+        filled.push(result.merchant);
+      }
+
+      if (filled.length) {
+        setOcrStatus("done");
+        setOcrNote(`From receipt: ${filled.join(" · ")} — please verify.`);
+      } else {
+        setOcrStatus("failed");
+        setOcrNote("Couldn't read amount/date. Enter details manually.");
+      }
+    } catch (err) {
+      console.error(err);
+      setOcrStatus("failed");
+      setOcrNote("Scan failed. Enter details manually.");
+    }
+  }
+
   function handleStartAttachment(file: FileAttachment | null) {
     setAttachment(file);
-    // Once a receipt is attached from the gate, move into the form
     if (file) {
       setPhase("form");
       setStep(0);
+      void applyGeminiOcr(file);
     }
   }
 
@@ -193,25 +233,19 @@ export function ExpenseForm({
       setAmountError("Amount must be greater than $0.00");
       setStep(1);
       hasError = true;
-    } else {
-      setAmountError("");
-    }
+    } else setAmountError("");
 
     if (!paidBy) {
       setPaidByError("Please select who paid");
       if (!hasError) setStep(2);
       hasError = true;
-    } else {
-      setPaidByError("");
-    }
+    } else setPaidByError("");
 
     if (sharedBy.length === 0) {
       setSharedByError("At least one participant must be selected");
       if (!hasError) setStep(3);
       hasError = true;
-    } else {
-      setSharedByError("");
-    }
+    } else setSharedByError("");
 
     if (hasError) return;
 
@@ -235,42 +269,39 @@ export function ExpenseForm({
       setAttachment(null);
       setStep(0);
       setPhase("start");
+      setOcrStatus("idle");
+      setOcrNote(null);
     }
   }
 
   function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (phase !== "form") return;
-    if (isLastStep) {
-      handleSave();
-    } else {
-      handleNext();
-    }
+    if (isLastStep) handleSave();
+    else handleNext();
   }
 
-  // ── Optional start gate (add mode only) ──────────────────────────
   if (phase === "start") {
     return (
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div className="space-y-1 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Receipt className="h-6 w-6" />
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Receipt className="h-5 w-5" />
           </div>
-          <h3 className="text-base font-semibold">Add an expense</h3>
+          <h3 className="text-base font-semibold">Add expense</h3>
           <p className="text-sm text-muted-foreground">
-            Start from a receipt, or enter details manually.
+            Upload a receipt to auto-fill, or enter manually.
           </p>
         </div>
 
         {tripId ? (
-          <div className="space-y-2 rounded-lg border border-input p-4">
+          <div className="space-y-2 rounded-lg border border-input p-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Camera className="h-4 w-4 text-muted-foreground" />
-              Scan or upload receipt
+              Upload receipt
             </div>
             <p className="text-xs text-muted-foreground">
-              Optional. We’ll keep the file with this expense. Auto-fill from OCR
-              can come later.
+              Gemini will try to read amount, date, and store name.
             </p>
             <FileUpload
               storagePath={`trips/${tripId}/expenses`}
@@ -278,20 +309,7 @@ export function ExpenseForm({
               onChange={handleStartAttachment}
             />
           </div>
-        ) : (
-          <p className="rounded-lg border border-dashed border-input p-3 text-center text-sm text-muted-foreground">
-            Receipt upload needs a trip context.
-          </p>
-        )}
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">or</span>
-          </div>
-        </div>
+        ) : null}
 
         <Button
           type="button"
@@ -304,12 +322,7 @@ export function ExpenseForm({
         </Button>
 
         {onCancel && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={onCancel}
-          >
+          <Button type="button" variant="ghost" className="w-full" onClick={onCancel}>
             Cancel
           </Button>
         )}
@@ -317,7 +330,6 @@ export function ExpenseForm({
     );
   }
 
-  // ── Main wizard ──────────────────────────────────────────────────
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4">
       <div className="flex items-center gap-1.5">
@@ -354,19 +366,22 @@ export function ExpenseForm({
         />
       </div>
 
-      {attachment && step === 0 && (
+      {ocrStatus === "running" && (
+        <div className="flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Reading receipt with Gemini…
+        </div>
+      )}
+      {ocrNote && ocrStatus !== "running" && (
         <p className="rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
-          Receipt attached: {attachment.name}. Fill in the details below.
+          {ocrNote}
         </p>
       )}
 
-      {/* Step 0: Details */}
       {step === 0 && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">
-              What was it for?
-            </label>
+            <label className="text-sm font-medium leading-none">What was it for?</label>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {EXPENSE_CATEGORIES.map((c) => {
                 const Icon = c.icon;
@@ -384,9 +399,7 @@ export function ExpenseForm({
                     }
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    <span className="text-[11px] font-medium leading-tight">
-                      {c.label}
-                    </span>
+                    <span className="text-[11px] font-medium leading-tight">{c.label}</span>
                   </button>
                 );
               })}
@@ -394,10 +407,7 @@ export function ExpenseForm({
           </div>
 
           <div className="space-y-2">
-            <label
-              htmlFor="expense-description"
-              className="text-sm font-medium leading-none"
-            >
+            <label htmlFor="expense-description" className="text-sm font-medium leading-none">
               Description
             </label>
             <Input
@@ -406,16 +416,10 @@ export function ExpenseForm({
               onChange={(e) => handleDescriptionChange(e.target.value)}
               placeholder="Or type your own description"
             />
-            <p className="text-xs text-muted-foreground">
-              Tap a category above or type a custom description.
-            </p>
           </div>
 
           <div className="space-y-2">
-            <label
-              htmlFor="expense-date"
-              className="text-sm font-medium leading-none"
-            >
+            <label htmlFor="expense-date" className="text-sm font-medium leading-none">
               Date
             </label>
             <Input
@@ -430,10 +434,7 @@ export function ExpenseForm({
 
       {step === 1 && (
         <div className="space-y-2">
-          <label
-            htmlFor="expense-amount"
-            className="text-sm font-medium leading-none"
-          >
+          <label htmlFor="expense-amount" className="text-sm font-medium leading-none">
             Amount
           </label>
           <div className="relative">
@@ -453,15 +454,10 @@ export function ExpenseForm({
               placeholder="0.00"
               className="pl-6"
               aria-invalid={!!amountError}
-              aria-describedby={amountError ? "expense-amount-error" : undefined}
               autoFocus
             />
           </div>
-          {amountError && (
-            <p id="expense-amount-error" className="text-sm text-destructive">
-              {amountError}
-            </p>
-          )}
+          {amountError && <p className="text-sm text-destructive">{amountError}</p>}
         </div>
       )}
 
@@ -486,32 +482,17 @@ export function ExpenseForm({
               ))}
             </SelectContent>
           </Select>
-          {paidByError && (
-            <p className="text-sm text-destructive">{paidByError}</p>
-          )}
+          {paidByError && <p className="text-sm text-destructive">{paidByError}</p>}
         </div>
       )}
 
       {step === 3 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Shared by</label>
-          <div
-            className="space-y-2 rounded-lg border border-input p-3"
-            role="group"
-            aria-describedby={
-              sharedByError ? "expense-shared-by-error" : undefined
-            }
-          >
+          <div className="space-y-2 rounded-lg border border-input p-3" role="group">
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="select-all"
-                checked={allSelected}
-                onCheckedChange={handleSelectAll}
-              />
-              <label
-                htmlFor="select-all"
-                className="text-sm font-medium cursor-pointer"
-              >
+              <Checkbox id="select-all" checked={allSelected} onCheckedChange={handleSelectAll} />
+              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
                 Select All
               </label>
             </div>
@@ -523,24 +504,16 @@ export function ExpenseForm({
                   checked={sharedBy.includes(participant)}
                   onCheckedChange={() => handleToggleParticipant(participant)}
                 />
-                <label
-                  htmlFor={`shared-${participant}`}
-                  className="text-sm cursor-pointer"
-                >
+                <label htmlFor={`shared-${participant}`} className="text-sm cursor-pointer">
                   {participant}
                 </label>
               </div>
             ))}
           </div>
-          {sharedByError && (
-            <p id="expense-shared-by-error" className="text-sm text-destructive">
-              {sharedByError}
-            </p>
-          )}
+          {sharedByError && <p className="text-sm text-destructive">{sharedByError}</p>}
         </div>
       )}
 
-      {/* Step 4: Confirm + receipt */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
@@ -574,50 +547,34 @@ export function ExpenseForm({
             </div>
           </div>
 
-          {tripId ? (
+          {tripId && (
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none">
-                Receipt / Document (optional)
-              </label>
+              <label className="text-sm font-medium leading-none">Receipt (optional)</label>
               <FileUpload
                 storagePath={`trips/${tripId}/expenses`}
                 value={attachment}
                 onChange={setAttachment}
               />
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No trip selected — receipt upload unavailable.
-            </p>
           )}
         </div>
       )}
 
       <div className="flex justify-between gap-2 pt-2">
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleBack}
-            className="gap-1"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            Back
+        <Button type="button" variant="outline" onClick={handleBack} className="gap-1">
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Back
+        </Button>
+        {!isLastStep ? (
+          <Button type="button" onClick={handleNext} className="gap-1">
+            Next
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
-        </div>
-
-        <div className="flex gap-2">
-          {!isLastStep ? (
-            <Button type="button" onClick={handleNext} className="gap-1">
-              Next
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <Button type="button" onClick={handleSave}>
-              {isEditMode ? "Save Changes" : "Add Expense"}
-            </Button>
-          )}
-        </div>
+        ) : (
+          <Button type="button" onClick={handleSave}>
+            {isEditMode ? "Save Changes" : "Add Expense"}
+          </Button>
+        )}
       </div>
     </form>
   );
