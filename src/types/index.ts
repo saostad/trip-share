@@ -21,6 +21,8 @@ export interface FileAttachment {
 export interface Expense {
   id: string;
   description: string;
+  /** Optional preset category id (e.g. "food", "hotel") for icons */
+  category?: string | null;
   date: string; // YYYY-MM-DD
   amount: number; // positive, in dollars
   paidBy: string; // must be in parent trip's participants
