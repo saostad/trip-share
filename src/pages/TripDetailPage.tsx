@@ -12,6 +12,7 @@ import { EditTripDialog } from "@/components/trip/EditTripDialog";
 import { DeleteTripDialog } from "@/components/trip/DeleteTripDialog";
 import { BalanceSummary } from "@/components/balance/BalanceSummary";
 import { SettlementList } from "@/components/balance/SettlementList";
+import { SettlementReportDialog } from "@/components/balance/SettlementReportDialog";
 import { PaymentForm } from "@/components/balance/PaymentForm";
 import { PaymentList } from "@/components/balance/PaymentList";
 import { EditPaymentForm } from "@/components/balance/EditPaymentForm";
@@ -37,7 +38,7 @@ import { AvatarGroup } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShareLinkSection } from "@/components/trip/ShareLinkSection";
 import { CollaboratorList } from "@/components/trip/CollaboratorList";
-import { ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, FileText } from "lucide-react";
 import {
   collection,
   addDoc,
@@ -72,6 +73,7 @@ export function TripDetailPage() {
   const [deleteTripOpen, setDeleteTripOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addPaymentOpen, setAddPaymentOpen] = useState(false);
+  const [settlementReportOpen, setSettlementReportOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
@@ -376,8 +378,17 @@ export function TripDetailPage() {
           </Card>
 
           <Card className="rounded-xl shadow-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>Balances</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSettlementReportOpen(true)}
+                className="gap-1.5"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Settlement report
+              </Button>
             </CardHeader>
             <CardContent>
               <BalanceSummary expenses={expenses} participants={trip.participants} payments={payments} />
@@ -428,6 +439,15 @@ export function TripDetailPage() {
           )}
         </div>
       </div>
+
+      <SettlementReportDialog
+        open={settlementReportOpen}
+        onOpenChange={setSettlementReportOpen}
+        tripName={trip.name}
+        participants={trip.participants}
+        expenses={expenses}
+        payments={payments}
+      />
 
       {isOwner && (
         <EditTripDialog
