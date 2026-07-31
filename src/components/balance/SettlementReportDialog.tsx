@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,8 @@ export function SettlementReportDialog({
   expenses,
   payments,
 }: SettlementReportDialogProps) {
+  const [showLedger, setShowLedger] = useState(true);
+
   const report = useMemo(
     () => buildSettlementReport(tripName, participants, expenses, payments),
     [tripName, participants, expenses, payments],
@@ -48,19 +50,53 @@ export function SettlementReportDialog({
     window.print();
   }
 
+  function balanceLabel(n: number): string {
+    if (n > 0.01) return `owed ${formatCurrency(n)}`;
+    if (n < -0.01) return `owes ${formatCurrency(n)}`;
+    return "settled";
+  }
+
+  function balanceClass(n: number): string {
+    if (n > 0.01) return "text-emerald-600";
+    if (n < -0.01) return "text-destructive";
+    return "text-muted-foreground";
+  }
+
+  function deltaClass(n: number): string {
+    if (n > 0.01) return "text-emerald-600";
+    if (n < -0.01) return "text-destructive";
+    return "text-muted-foreground";
+  }
+
+  function formatDelta(n: number): string {
+    if (Math.abs(n) < 0.005) return "0.00";
+    const sign = n > 0 ? "+" : "−";
+    return `${sign}${formatCurrency(n)}`;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 border-b px-4 py-3 print:hidden">
-          <div className="flex items-center justify-between gap-2 pr-8">
+          <div className="flex flex-wrap items-center justify-between gap-2 pr-8">
             <DialogTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
               Settlement report
             </DialogTitle>
-            <Button type="button" size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
-              <Printer className="h-3.5 w-3.5" />
-              Print / PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={showLedger ? "default" : "outline"}
+                onClick={() => setShowLedger((v) => !v)}
+              >
+                {showLedger ? "Hide step detail" : "Show step detail"}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
+                <Printer className="h-3.5 w-3.5" />
+                Print / PDF
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -68,7 +104,6 @@ export function SettlementReportDialog({
           id="settlement-report-print"
           className="min-h-0 flex-1 overflow-y-auto px-4 py-4 text-sm print:max-h-none print:overflow-visible print:px-0 print:py-0"
         >
-          {/* Title block */}
           <div className="mb-4 border-b pb-3">
             <h2 className="text-lg font-bold">{report.tripName}</h2>
             <p className="text-xs text-muted-foreground">
@@ -79,7 +114,6 @@ export function SettlementReportDialog({
             </p>
           </div>
 
-          {/* Trip totals */}
           <section className="mb-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Trip summary
@@ -101,7 +135,6 @@ export function SettlementReportDialog({
             </div>
           </section>
 
-          {/* Per person */}
           <section className="mb-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Per-person summary
@@ -128,21 +161,8 @@ export function SettlementReportDialog({
                       <td className="px-2 py-1.5 text-right">
                         {formatCurrency(p.paymentsReceived)}
                       </td>
-                      <td
-                        className={
-                          "px-2 py-1.5 text-right font-semibold " +
-                          (p.netBalance > 0.01
-                            ? "text-emerald-600"
-                            : p.netBalance < -0.01
-                              ? "text-destructive"
-                              : "text-muted-foreground")
-                        }
-                      >
-                        {p.netBalance > 0.01
-                          ? `owed ${formatCurrency(p.netBalance)}`
-                          : p.netBalance < -0.01
-                            ? `owes ${formatCurrency(p.netBalance)}`
-                            : "settled"}
+                      <td className={`px-2 py-1.5 text-right font-semibold ${balanceClass(p.netBalance)}`}>
+                        {balanceLabel(p.netBalance)}
                       </td>
                     </tr>
                   ))}
@@ -155,7 +175,6 @@ export function SettlementReportDialog({
             </p>
           </section>
 
-          {/* Remaining settlements */}
           <section className="mb-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Remaining settlements
@@ -181,7 +200,93 @@ export function SettlementReportDialog({
             )}
           </section>
 
-          {/* Expenses */}
+          {/* Step-by-step ledger */}
+          {(showLedger || true) && (
+            <section className={`mb-5 ${showLedger ? "" : "print:block hidden"}`}>
+              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Transaction detail (step by step)
+              </h3>
+              <p className="mb-3 text-[11px] text-muted-foreground">
+                Starting balances are $0. Each expense or payment updates every member.
+                Final nets match the summary above.
+              </p>
+
+              {report.ledger.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No transactions yet.</p>
+              ) : (
+                <ol className="space-y-3">
+                  {report.ledger.map((step) => (
+                    <li
+                      key={`${step.kind}-${step.id}`}
+                      className="rounded-lg border p-3 text-xs"
+                    >
+                      <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold">
+                          #{step.index}
+                        </span>
+                        <span
+                          className={
+                            "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase " +
+                            (step.kind === "expense"
+                              ? "bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                              : "bg-amber-500/10 text-amber-700 dark:text-amber-400")
+                          }
+                        >
+                          {step.kind}
+                        </span>
+                        <span className="text-muted-foreground">{formatDate(step.date)}</span>
+                        <span className="font-semibold">{step.title}</span>
+                        <span className="ml-auto font-semibold">{formatCurrency(step.amount)}</span>
+                      </div>
+
+                      <p className="mb-2 text-muted-foreground">{step.summary}</p>
+
+                      <div className="overflow-x-auto rounded border">
+                        <table className="w-full min-w-[20rem] text-left">
+                          <thead className="border-b bg-muted/40">
+                            <tr>
+                              <th className="px-2 py-1.5 font-medium">Person</th>
+                              <th className="px-2 py-1.5 font-medium">What happened</th>
+                              <th className="px-2 py-1.5 font-medium text-right">Change</th>
+                              <th className="px-2 py-1.5 font-medium text-right">Balance after</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {step.effects.map((fx) => (
+                              <tr key={fx.name} className="border-b last:border-0">
+                                <td className="px-2 py-1 font-medium">{fx.name}</td>
+                                <td className="px-2 py-1 text-muted-foreground">{fx.note}</td>
+                                <td className={`px-2 py-1 text-right font-mono ${deltaClass(fx.delta)}`}>
+                                  {formatDelta(fx.delta)}
+                                </td>
+                                <td className={`px-2 py-1 text-right font-medium ${balanceClass(fx.balanceAfter)}`}>
+                                  {balanceLabel(fx.balanceAfter)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t pt-2 text-[10px] text-muted-foreground">
+                        <span className="font-medium text-foreground">Running balances:</span>
+                        {participants.map((name) => {
+                          const b = step.balancesAfter[name] ?? 0;
+                          return (
+                            <span key={name}>
+                              {name}:{" "}
+                              <span className={balanceClass(b)}>{balanceLabel(b)}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          )}
+
           <section className="mb-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               All expenses ({report.expenseCount})
@@ -203,12 +308,8 @@ export function SettlementReportDialog({
                   <tbody>
                     {report.expenses.map((e) => (
                       <tr key={e.id} className="border-b last:border-0">
-                        <td className="whitespace-nowrap px-2 py-1.5">
-                          {formatDate(e.date)}
-                        </td>
-                        <td className="max-w-[10rem] truncate px-2 py-1.5">
-                          {e.description}
-                        </td>
+                        <td className="whitespace-nowrap px-2 py-1.5">{formatDate(e.date)}</td>
+                        <td className="max-w-[10rem] truncate px-2 py-1.5">{e.description}</td>
                         <td className="px-2 py-1.5">{e.paidBy}</td>
                         <td className="max-w-[12rem] truncate px-2 py-1.5 text-muted-foreground">
                           {e.sharedBy.length === participants.length
@@ -223,9 +324,7 @@ export function SettlementReportDialog({
                   </tbody>
                   <tfoot>
                     <tr className="border-t bg-muted/30">
-                      <td colSpan={4} className="px-2 py-1.5 font-medium">
-                        Total
-                      </td>
+                      <td colSpan={4} className="px-2 py-1.5 font-medium">Total</td>
                       <td className="px-2 py-1.5 text-right font-semibold">
                         {formatCurrency(report.totalSpent)}
                       </td>
@@ -236,7 +335,6 @@ export function SettlementReportDialog({
             )}
           </section>
 
-          {/* Payments */}
           <section className="mb-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Recorded payments ({report.paymentCount})
@@ -258,9 +356,7 @@ export function SettlementReportDialog({
                   <tbody>
                     {report.payments.map((p) => (
                       <tr key={p.id} className="border-b last:border-0">
-                        <td className="whitespace-nowrap px-2 py-1.5">
-                          {formatDate(p.date)}
-                        </td>
+                        <td className="whitespace-nowrap px-2 py-1.5">{formatDate(p.date)}</td>
                         <td className="px-2 py-1.5">{p.from}</td>
                         <td className="px-2 py-1.5">{p.to}</td>
                         <td className="max-w-[8rem] truncate px-2 py-1.5 text-muted-foreground">
@@ -277,7 +373,6 @@ export function SettlementReportDialog({
             )}
           </section>
 
-          {/* Validation footer */}
           <section className="rounded-lg border bg-muted/20 px-3 py-3">
             <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Validation
@@ -296,8 +391,8 @@ export function SettlementReportDialog({
                 )}
               </li>
               <li className="text-muted-foreground">
-                This report is a snapshot of trip data at generation time. Use Print / PDF to save a
-                permanent copy for records.
+                Step detail final balances should match the per-person summary nets.
+                Use Print / PDF to keep a permanent copy.
               </li>
             </ul>
           </section>
