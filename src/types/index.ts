@@ -6,6 +6,12 @@ export interface Trip {
   name: string;
   participants: string[];
   collaboratorIds: string[]; // UIDs of users who joined via share link
+  /**
+   * Optional map: participant display name → Firebase Auth uid.
+   * Used to pre-select payers and (later) notify linked accounts.
+   * Names not in the map are unlinked “cash” participants.
+   */
+  participantLinks?: Record<string, string>;
   shareToken: string | null; // random token for share link; null = revoked/disabled
   createdAt: Timestamp;
   updatedAt: Timestamp;
