@@ -215,7 +215,7 @@ export function TripDetailPage() {
       toast.success(
         data.length > 1
           ? "Payments recorded successfully"
-          : "Payment recorded successfully"
+          : "Payment recorded successfully",
       );
       setAddPaymentOpen(false);
     } catch {
@@ -366,17 +366,8 @@ export function TripDetailPage() {
           </Card>
 
           <Card className="rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardHeader>
               <CardTitle>Balances</CardTitle>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setSettlementReportOpen(true)}
-                className="gap-1.5"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                Settlement report
-              </Button>
             </CardHeader>
             <CardContent>
               <BalanceSummary
@@ -388,8 +379,17 @@ export function TripDetailPage() {
           </Card>
 
           <Card className="rounded-xl shadow-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>Settle Up</CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSettlementReportOpen(true)}
+                className="gap-1.5"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Settlement report
+              </Button>
             </CardHeader>
             <CardContent>
               <SettlementList
