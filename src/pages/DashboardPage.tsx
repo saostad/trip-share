@@ -44,6 +44,7 @@ export function DashboardPage() {
   async function handleCreateTrip(data: {
     name: string;
     participants: string[];
+    participantLinks: Record<string, string>;
   }) {
     if (!user) return;
 
@@ -52,6 +53,7 @@ export function DashboardPage() {
         ownerId: user.uid,
         name: data.name,
         participants: data.participants,
+        participantLinks: data.participantLinks ?? {},
         collaboratorIds: [],
         shareToken: null,
         createdAt: serverTimestamp(),
@@ -140,6 +142,17 @@ export function DashboardPage() {
             <DialogTitle>Create New Trip</DialogTitle>
           </DialogHeader>
           <TripForm
+            accountOptions={
+              user
+                ? [
+                    {
+                      uid: user.uid,
+                      label: user.displayName || "Me (owner)",
+                      email: user.email,
+                    },
+                  ]
+                : []
+            }
             onSubmit={handleCreateTrip}
             onCancel={() => setShowCreateDialog(false)}
           />

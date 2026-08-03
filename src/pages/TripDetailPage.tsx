@@ -50,6 +50,10 @@ import {
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import type { Expense, Payment, FileAttachment } from "@/types";
+import {
+  buildAccountOptions,
+  linkedParticipantName,
+} from "@/lib/useLinkedParticipant";
 
 type ExpenseFormData = {
   description: string;
@@ -83,6 +87,9 @@ export function TripDetailPage() {
   const isOwner = user?.uid === trip?.ownerId;
   const loading = tripLoading || expensesLoading || paymentsLoading;
 
+  const accountOptions = buildAccountOptions(trip, user, members);
+  const myParticipantName = linkedParticipantName(trip, user?.uid);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -92,35 +99,6 @@ export function TripDetailPage() {
             <div className="mb-4 flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-muted" />
               <div className="h-7 w-48 rounded bg-muted" />
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-8 w-8 rounded-full bg-muted ring-2 ring-background" />
-                ))}
-              </div>
-              <div className="h-5 w-24 rounded bg-muted" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <div className="rounded-xl bg-card p-6 shadow-sm">
-                <div className="mb-4 h-5 w-24 rounded bg-muted" />
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse rounded-lg border border-muted p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-2">
-                          <div className="h-4 w-32 rounded bg-muted" />
-                          <div className="h-3 w-24 rounded bg-muted/50" />
-                        </div>
-                        <div className="h-5 w-16 rounded bg-muted" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -135,7 +113,7 @@ export function TripDetailPage() {
         <div className="container mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-16">
           <h2 className="mb-2 text-xl font-semibold">Trip not found</h2>
           <p className="mb-6 text-muted-foreground">
-            This trip doesn&apos;t exist or you don&apos;t have access to it.
+            This trip doesn't exist or you don't have access to it.
           </p>
           <Link
             to="/"
@@ -234,7 +212,11 @@ export function TripDetailPage() {
           createdAt: serverTimestamp(),
         });
       }
-      toast.success(data.length > 1 ? "Payments recorded successfully" : "Payment recorded successfully");
+      toast.success(
+        data.length > 1
+          ? "Payments recorded successfully"
+          : "Payment recorded successfully"
+      );
       setAddPaymentOpen(false);
     } catch {
       toast.error("Failed to record payment. Please try again.");
@@ -328,7 +310,13 @@ export function TripDetailPage() {
               )}
             </div>
 
-            <CollaboratorList tripId={trip.id} collaboratorIds={trip.collaboratorIds} members={members} isOwner={isOwner} />
+            <CollaboratorList
+              tripId={trip.id}
+              collaboratorIds={trip.collaboratorIds}
+              members={members}
+              isOwner={isOwner}
+              trip={trip}
+            />
 
             {isOwner && (
               <div className="ml-auto flex gap-2">
@@ -391,7 +379,11 @@ export function TripDetailPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <BalanceSummary expenses={expenses} participants={trip.participants} payments={payments} />
+              <BalanceSummary
+                expenses={expenses}
+                participants={trip.participants}
+                payments={payments}
+              />
             </CardContent>
           </Card>
 
@@ -400,7 +392,11 @@ export function TripDetailPage() {
               <CardTitle>Settle Up</CardTitle>
             </CardHeader>
             <CardContent>
-              <SettlementList expenses={expenses} participants={trip.participants} payments={payments} />
+              <SettlementList
+                expenses={expenses}
+                participants={trip.participants}
+                payments={payments}
+              />
             </CardContent>
           </Card>
 
@@ -455,6 +451,8 @@ export function TripDetailPage() {
           expenses={expenses}
           open={editTripOpen}
           onOpenChange={setEditTripOpen}
+          accountOptions={accountOptions}
+          members={members}
         />
       )}
 
@@ -475,13 +473,17 @@ export function TripDetailPage() {
           <ExpenseForm
             participants={trip.participants}
             tripId={tripId}
+            defaultPaidBy={myParticipantName ?? undefined}
             onSubmit={handleAddExpense}
             onCancel={() => setAddExpenseOpen(false)}
           />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
+      <Dialog
+        open={!!editingExpense}
+        onOpenChange={(open) => !open && setEditingExpense(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Expense</DialogTitle>
@@ -506,7 +508,7 @@ export function TripDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Expense</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deletingExpense?.description}&quot;?
+              Are you sure you want to delete "{deletingExpense?.description}"?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -531,13 +533,17 @@ export function TripDetailPage() {
           <PaymentForm
             participants={trip.participants}
             tripId={tripId}
+            defaultFrom={myParticipantName ?? undefined}
             onSubmit={handleAddPayment}
             onCancel={() => setAddPaymentOpen(false)}
           />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editingPayment} onOpenChange={(open) => !open && setEditingPayment(null)}>
+      <Dialog
+        open={!!editingPayment}
+        onOpenChange={(open) => !open && setEditingPayment(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Payment</DialogTitle>
@@ -562,7 +568,9 @@ export function TripDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Payment</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this payment of {deletingPayment ? `$${deletingPayment.amount.toFixed(2)}` : ""} from {deletingPayment?.from} to {deletingPayment?.to}?
+              Are you sure you want to delete this payment of{" "}
+              {deletingPayment ? `$${deletingPayment.amount.toFixed(2)}` : ""} from{" "}
+              {deletingPayment?.from} to {deletingPayment?.to}?
               This will readjust the settlement amounts.
             </AlertDialogDescription>
           </AlertDialogHeader>

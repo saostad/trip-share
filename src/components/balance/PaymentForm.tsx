@@ -25,16 +25,21 @@ export interface PaymentSubmitData {
 interface PaymentFormProps {
   participants: string[];
   tripId?: string;
+  /** Pre-select payer when linked to current user */
+  defaultFrom?: string;
   onSubmit: (payments: PaymentSubmitData[]) => void;
   onCancel: () => void;
 }
 
-export function PaymentForm({ participants, tripId, onSubmit, onCancel }: PaymentFormProps) {
+export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCancel }: PaymentFormProps) {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const [onBehalfMode, setOnBehalfMode] = useState(false);
   const [customAmounts, setCustomAmounts] = useState(false);
-  const [from, setFrom] = useState(participants[0] ?? "");
+  const [from, setFrom] = useState(() => {
+    if (defaultFrom && participants.includes(defaultFrom)) return defaultFrom;
+    return participants[0] ?? "";
+  });
   const [to, setTo] = useState(participants[1] ?? "");
   const [onBehalfOf, setOnBehalfOf] = useState<string[]>([]);
   const [personAmounts, setPersonAmounts] = useState<Record<string, string>>({});
@@ -48,7 +53,6 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
   const [behalfError, setBehalfError] = useState("");
   const [splitError, setSplitError] = useState("");
 
-  // People who can be selected as "on behalf of" (everyone except "from" and "to")
   const behalfOptions = participants.filter((p) => p !== from && p !== to);
 
   const allPayers = onBehalfMode ? [from, ...onBehalfOf] : [from];
@@ -95,7 +99,6 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
       setBehalfError("");
     }
 
-    // Validate custom amounts sum up to total
     if (onBehalfMode && customAmounts) {
       const total = allPayers.reduce((sum, p) => {
         const val = parseFloat(personAmounts[p] ?? "0");
@@ -113,10 +116,8 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
     if (hasError) return;
 
     if (!onBehalfMode) {
-      // Single payment: from pays to
       onSubmit([{ from, to, amount: parsedAmount, date, note: note.trim(), attachment }]);
     } else if (customAmounts) {
-      // Custom split: each person has their own amount
       const payments: PaymentSubmitData[] = allPayers
         .map((person, idx) => {
           const personAmount = Math.round(parseFloat(personAmounts[person] ?? "0") * 100) / 100;
@@ -135,7 +136,6 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
 
       onSubmit(payments);
     } else {
-      // Equal split among "from" + selected people
       const perPerson = Math.round((parsedAmount / allPayers.length) * 100) / 100;
 
       const payments: PaymentSubmitData[] = allPayers.map((person, idx) => ({
@@ -219,7 +219,6 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
         )}
       </div>
 
-      {/* On behalf of toggle */}
       <div className="space-y-2 rounded-lg border border-input p-3">
         <div className="flex items-center gap-2">
           <Checkbox
@@ -263,7 +262,6 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
               <p className="text-sm text-destructive">{behalfError}</p>
             )}
 
-            {/* Custom amounts toggle */}
             {onBehalfOf.length > 0 && (
               <div className="mt-2 space-y-2 border-t pt-2">
                 <div className="flex items-center gap-2">
@@ -353,7 +351,6 @@ export function PaymentForm({ participants, tripId, onSubmit, onCancel }: Paymen
         />
       </div>
 
-      {/* File attachment */}
       {tripId && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Receipt / Document (optional)</label>

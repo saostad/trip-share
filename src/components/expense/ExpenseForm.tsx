@@ -28,6 +28,8 @@ interface ExpenseFormProps {
   expense?: Expense;
   participants: string[];
   tripId?: string;
+  /** When adding, pre-select this participant as payer (e.g. linked to current user) */
+  defaultPaidBy?: string;
   onSubmit: (data: {
     description: string;
     category?: string | null;
@@ -61,13 +63,13 @@ export function ExpenseForm({
   expense,
   participants,
   tripId,
+  defaultPaidBy,
   onSubmit,
   onCancel,
 }: ExpenseFormProps) {
   const today = format(new Date(), "yyyy-MM-dd");
   const isEditMode = !!expense;
 
-  // New expenses start at optional receipt gateway; edit skips it
   const [phase, setPhase] = useState<"start" | "form">(
     isEditMode ? "form" : "start"
   );
@@ -79,9 +81,11 @@ export function ExpenseForm({
   const [description, setDescription] = useState(expense?.description ?? "");
   const [date, setDate] = useState(expense?.date ?? today);
   const [amount, setAmount] = useState(expense ? String(expense.amount) : "");
-  const [paidBy, setPaidBy] = useState(
-    expense?.paidBy ?? (participants[0] ?? "")
-  );
+  const [paidBy, setPaidBy] = useState(() => {
+    if (expense?.paidBy) return expense.paidBy;
+    if (defaultPaidBy && participants.includes(defaultPaidBy)) return defaultPaidBy;
+    return participants[0] ?? "";
+  });
   const [sharedBy, setSharedBy] = useState<string[]>(
     expense?.sharedBy ?? [...participants]
   );
@@ -178,7 +182,6 @@ export function ExpenseForm({
 
   function handleStartAttachment(file: FileAttachment | null) {
     setAttachment(file);
-    // Once a receipt is attached from the gate, move into the form
     if (file) {
       setPhase("form");
       setStep(0);
@@ -230,7 +233,11 @@ export function ExpenseForm({
       setDescription("");
       setDate(today);
       setAmount("");
-      setPaidBy(participants[0] ?? "");
+      setPaidBy(
+        defaultPaidBy && participants.includes(defaultPaidBy)
+          ? defaultPaidBy
+          : participants[0] ?? ""
+      );
       setSharedBy([...participants]);
       setAttachment(null);
       setStep(0);
@@ -248,7 +255,6 @@ export function ExpenseForm({
     }
   }
 
-  // ── Optional start gate (add mode only) ──────────────────────────
   if (phase === "start") {
     return (
       <div className="space-y-5">
@@ -269,8 +275,7 @@ export function ExpenseForm({
               Scan or upload receipt
             </div>
             <p className="text-xs text-muted-foreground">
-              Optional. We’ll keep the file with this expense. Auto-fill from OCR
-              can come later.
+              Optional. We will keep the file with this expense.
             </p>
             <FileUpload
               storagePath={`trips/${tripId}/expenses`}
@@ -317,7 +322,6 @@ export function ExpenseForm({
     );
   }
 
-  // ── Main wizard ──────────────────────────────────────────────────
   return (
     <form onSubmit={handleFormSubmit} className="space-y-4">
       <div className="flex items-center gap-1.5">
@@ -360,7 +364,6 @@ export function ExpenseForm({
         </p>
       )}
 
-      {/* Step 0: Details */}
       {step === 0 && (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -453,14 +456,11 @@ export function ExpenseForm({
               placeholder="0.00"
               className="pl-6"
               aria-invalid={!!amountError}
-              aria-describedby={amountError ? "expense-amount-error" : undefined}
               autoFocus
             />
           </div>
           {amountError && (
-            <p id="expense-amount-error" className="text-sm text-destructive">
-              {amountError}
-            </p>
+            <p className="text-sm text-destructive">{amountError}</p>
           )}
         </div>
       )}
@@ -495,23 +495,14 @@ export function ExpenseForm({
       {step === 3 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Shared by</label>
-          <div
-            className="space-y-2 rounded-lg border border-input p-3"
-            role="group"
-            aria-describedby={
-              sharedByError ? "expense-shared-by-error" : undefined
-            }
-          >
+          <div className="space-y-2 rounded-lg border border-input p-3">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="select-all"
                 checked={allSelected}
                 onCheckedChange={handleSelectAll}
               />
-              <label
-                htmlFor="select-all"
-                className="text-sm font-medium cursor-pointer"
-              >
+              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
                 Select All
               </label>
             </div>
@@ -523,24 +514,18 @@ export function ExpenseForm({
                   checked={sharedBy.includes(participant)}
                   onCheckedChange={() => handleToggleParticipant(participant)}
                 />
-                <label
-                  htmlFor={`shared-${participant}`}
-                  className="text-sm cursor-pointer"
-                >
+                <label htmlFor={`shared-${participant}`} className="text-sm cursor-pointer">
                   {participant}
                 </label>
               </div>
             ))}
           </div>
           {sharedByError && (
-            <p id="expense-shared-by-error" className="text-sm text-destructive">
-              {sharedByError}
-            </p>
+            <p className="text-sm text-destructive">{sharedByError}</p>
           )}
         </div>
       )}
 
-      {/* Step 4: Confirm + receipt */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
@@ -585,26 +570,15 @@ export function ExpenseForm({
                 onChange={setAttachment}
               />
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No trip selected — receipt upload unavailable.
-            </p>
-          )}
+          ) : null}
         </div>
       )}
 
       <div className="flex justify-between gap-2 pt-2">
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleBack}
-            className="gap-1"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            Back
-          </Button>
-        </div>
+        <Button type="button" variant="outline" onClick={handleBack} className="gap-1">
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Back
+        </Button>
 
         <div className="flex gap-2">
           {!isLastStep ? (
