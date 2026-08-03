@@ -6,23 +6,28 @@ import {
   type SettlementExplanation,
 } from "@/lib/balances";
 import { formatCurrency } from "@/lib/formatters";
-import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
+import { SettlementLineReportDialog } from "@/components/balance/SettlementLineReportDialog";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import type { Expense, Payment } from "@/types";
 
 interface SettlementListProps {
   expenses: Expense[];
   participants: string[];
   payments?: Payment[];
+  tripName?: string;
 }
 
 export function SettlementList({
   expenses,
   participants,
   payments = [],
+  tripName = "Trip",
 }: SettlementListProps) {
   const balances = calculateBalances(expenses, participants, payments);
   const transactions = simplifyDebtsWithDetails(balances);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [reportTx, setReportTx] = useState<SettlementExplanation | null>(null);
 
   if (transactions.length === 0) {
     return (
@@ -33,50 +38,63 @@ export function SettlementList({
   }
 
   return (
-    <ul className="space-y-2">
-      {transactions.map((transaction) => {
-        const key = `${transaction.step}-${transaction.from}-${transaction.to}`;
-        const isOpen = openKey === key;
+    <>
+      <ul className="space-y-2">
+        {transactions.map((transaction) => {
+          const key = `${transaction.step}-${transaction.from}-${transaction.to}`;
+          const isOpen = openKey === key;
 
-        return (
-          <li
-            key={key}
-            className="rounded-lg border border-border bg-card text-sm"
-          >
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 p-3 text-left"
-              onClick={() => setOpenKey(isOpen ? null : key)}
-              aria-expanded={isOpen}
+          return (
+            <li
+              key={key}
+              className="rounded-lg border border-border bg-card text-sm"
             >
-              {isOpen ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              )}
-              <span className="min-w-0 truncate font-medium text-destructive">
-                {transaction.from}
-              </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 truncate font-medium text-emerald-600 dark:text-emerald-400">
-                {transaction.to}
-              </span>
-              <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
-                {formatCurrency(transaction.amount)}
-              </span>
-            </button>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 p-3 text-left"
+                onClick={() => setOpenKey(isOpen ? null : key)}
+                aria-expanded={isOpen}
+              >
+                {isOpen ? (
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
+                <span className="min-w-0 truncate font-medium text-destructive">
+                  {transaction.from}
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 truncate font-medium text-emerald-600 dark:text-emerald-400">
+                  {transaction.to}
+                </span>
+                <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
+                  {formatCurrency(transaction.amount)}
+                </span>
+              </button>
 
-            {isOpen && (
-              <SettlementRowDetail
-                transaction={transaction}
-                expenses={expenses}
-                payments={payments}
-              />
-            )}
-          </li>
-        );
-      })}
-    </ul>
+              {isOpen && (
+                <SettlementRowDetail
+                  transaction={transaction}
+                  expenses={expenses}
+                  payments={payments}
+                  onOpenReport={() => setReportTx(transaction)}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      <SettlementLineReportDialog
+        open={!!reportTx}
+        onOpenChange={(open) => !open && setReportTx(null)}
+        tripName={tripName}
+        transaction={reportTx}
+        expenses={expenses}
+        payments={payments}
+        participants={participants}
+      />
+    </>
   );
 }
 
@@ -84,10 +102,12 @@ function SettlementRowDetail({
   transaction,
   expenses,
   payments,
+  onOpenReport,
 }: {
   transaction: SettlementExplanation;
   expenses: Expense[];
   payments: Payment[];
+  onOpenReport: () => void;
 }) {
   const from = personBalanceBreakdown(transaction.from, expenses, payments);
   const to = personBalanceBreakdown(transaction.to, expenses, payments);
@@ -99,9 +119,24 @@ function SettlementRowDetail({
 
   return (
     <div className="space-y-3 border-t border-border px-3 pb-3 pt-2 text-xs text-muted-foreground">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-foreground/70">
-        How this line was calculated
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-foreground/70">
+          How this line was calculated
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1.5 text-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenReport();
+          }}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Detailed report
+        </Button>
+      </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
         <PersonCard
@@ -191,7 +226,9 @@ function PersonCard({
         </li>
         <li className="flex justify-between gap-2">
           <span>
-            {variant === "owes" ? "Still to pay (this step)" : "Still to receive (this step)"}
+            {variant === "owes"
+              ? "Still to pay (this step)"
+              : "Still to receive (this step)"}
           </span>
           <span className="font-medium text-foreground">
             {formatCurrency(remaining)}
