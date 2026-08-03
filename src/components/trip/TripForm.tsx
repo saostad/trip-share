@@ -1,20 +1,38 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ParticipantInput } from "@/components/trip/ParticipantInput";
+import {
+  ParticipantInput,
+  type AccountOption,
+} from "@/components/trip/ParticipantInput";
+import { sanitizeParticipantLinks } from "@/lib/participantLinks";
 import type { Trip, Expense } from "@/types";
 
 interface TripFormProps {
   trip?: Trip;
   expenses?: Expense[];
-  onSubmit: (data: { name: string; participants: string[] }) => void;
+  accountOptions?: AccountOption[];
+  onSubmit: (data: {
+    name: string;
+    participants: string[];
+    participantLinks: Record<string, string>;
+  }) => void;
   onCancel: () => void;
 }
 
-export function TripForm({ trip, expenses = [], onSubmit, onCancel }: TripFormProps) {
+export function TripForm({
+  trip,
+  expenses = [],
+  accountOptions = [],
+  onSubmit,
+  onCancel,
+}: TripFormProps) {
   const [name, setName] = useState(trip?.name ?? "");
   const [participants, setParticipants] = useState<string[]>(
-    trip?.participants ?? []
+    trip?.participants ?? [],
+  );
+  const [links, setLinks] = useState<Record<string, string>>(
+    trip?.participantLinks ?? {},
   );
   const [nameError, setNameError] = useState("");
 
@@ -30,7 +48,11 @@ export function TripForm({ trip, expenses = [], onSubmit, onCancel }: TripFormPr
     }
 
     setNameError("");
-    onSubmit({ name: trimmedName, participants });
+    onSubmit({
+      name: trimmedName,
+      participants,
+      participantLinks: sanitizeParticipantLinks(participants, links),
+    });
   }
 
   return (
@@ -63,6 +85,9 @@ export function TripForm({ trip, expenses = [], onSubmit, onCancel }: TripFormPr
           participants={participants}
           expenses={expenses}
           onChange={setParticipants}
+          accountOptions={accountOptions}
+          links={links}
+          onLinksChange={setLinks}
         />
       </div>
 
