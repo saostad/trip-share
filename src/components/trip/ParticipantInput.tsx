@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,13 @@ interface ParticipantInputProps {
   members?: Record<string, UserProfile>;
 }
 
+function formatAccountOption(opt: AccountOption): string {
+  if (opt.email && opt.label && opt.label !== opt.email) {
+    return `${opt.label} (${opt.email})`;
+  }
+  return opt.email || opt.label || opt.uid;
+}
+
 export function ParticipantInput({
   participants,
   expenses,
@@ -42,6 +49,19 @@ export function ParticipantInput({
   const { removable } = getRemovableParticipants(participants, expenses);
   const removableSet = new Set(removable);
   const canLink = accountOptions.length > 0 && !!onLinksChange;
+
+  const optionByUid = useMemo(() => {
+    const map = new Map<string, AccountOption>();
+    for (const opt of accountOptions) map.set(opt.uid, opt);
+    return map;
+  }, [accountOptions]);
+
+  function labelForUid(uid: string | null | undefined): string {
+    if (!uid) return "Not linked";
+    const opt = optionByUid.get(uid);
+    if (opt) return formatAccountOption(opt);
+    return "Unknown account";
+  }
 
   function handleAdd() {
     const trimmed = inputValue.trim();
@@ -70,7 +90,6 @@ export function ParticipantInput({
   function setLink(name: string, uid: string | null) {
     if (!onLinksChange) return;
     const next = { ...links };
-    // Drop this uid from any other participant (1:1)
     if (uid) {
       for (const [n, u] of Object.entries(next)) {
         if (u === uid && n !== name) delete next[n];
@@ -99,7 +118,8 @@ export function ParticipantInput({
 
       {canLink && (
         <p className="text-xs text-muted-foreground">
-          Optionally link a name to a collaborator account (for defaults and future notifications).
+          Optionally link a name to a collaborator account (for defaults and
+          future notifications).
         </p>
       )}
 
@@ -108,6 +128,8 @@ export function ParticipantInput({
           {participants.map((name) => {
             const isRemovable = removableSet.has(name);
             const linkedUid = links[name] ?? "";
+            const selectValue = linkedUid || "__none__";
+
             return (
               <li
                 key={name}
@@ -145,23 +167,33 @@ export function ParticipantInput({
                 </div>
 
                 {canLink && (
-                  <div className="flex min-w-0 items-center gap-1.5 sm:w-56">
+                  <div className="flex min-w-0 items-center gap-1.5 sm:w-64">
                     <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     <Select
-                      value={linkedUid || "__none__"}
-                      onValueChange={(val) =>
-                        setLink(name, !val || val === "__none__" ? null : val)
-                      }
+                      value={selectValue}
+                      onValueChange={(val) => {
+                        const next =
+                          typeof val === "string"
+                            ? val
+                            : (val as { value?: string } | null)?.value;
+                        setLink(
+                          name,
+                          !next || next === "__none__" ? null : next,
+                        );
+                      }}
                     >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Not linked" />
+                      <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
+                        {/* Base UI SelectValue shows raw value; render label ourselves */}
+                        <span className="truncate text-left">
+                          {labelForUid(linkedUid || null)}
+                        </span>
+                        <SelectValue className="sr-only" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">Not linked</SelectItem>
                         {accountOptions.map((opt) => (
                           <SelectItem key={opt.uid} value={opt.uid}>
-                            {opt.label}
-                            {opt.email ? ` (${opt.email})` : ""}
+                            {formatAccountOption(opt)}
                           </SelectItem>
                         ))}
                       </SelectContent>
