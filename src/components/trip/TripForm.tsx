@@ -143,9 +143,9 @@ export function TripForm({
           </Select>
           <p className="text-xs text-muted-foreground">
             {settlementMethod === "pairwise"
-              ? "Each person only settles with people they shared expenses with (after netting). May create more transfers."
-              : "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers."{" "}
-            Only the trip owner can change this; everyone sees the same Settle Up list."}
+              ? "Each person only settles with people they shared expenses with (after netting). May create more transfers. "
+              : "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers. "}
+            Only the trip owner can change this; everyone sees the same Settle Up list.
           </p>
         </div>
       )}

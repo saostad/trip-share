@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import type { SettlementMethod } from "@/types";
 
 function TripCardSkeleton() {
   return (
@@ -45,6 +46,7 @@ export function DashboardPage() {
     name: string;
     participants: string[];
     participantLinks: Record<string, string>;
+    settlementMethod: SettlementMethod;
   }) {
     if (!user) return;
 
@@ -54,13 +56,13 @@ export function DashboardPage() {
         name: data.name,
         participants: data.participants,
         participantLinks: data.participantLinks ?? {},
+        settlementMethod: data.settlementMethod ?? "greedy",
         collaboratorIds: [],
         shareToken: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
 
-      // Save owner's profile in members subcollection
       await setDoc(doc(db, "trips", tripRef.id, "members", user.uid), {
         uid: user.uid,
         displayName: user.displayName,
@@ -133,10 +135,7 @@ export function DashboardPage() {
         )}
       </main>
 
-      <Dialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      >
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Trip</DialogTitle>
@@ -153,6 +152,7 @@ export function DashboardPage() {
                   ]
                 : []
             }
+            showSettlementMethod
             onSubmit={handleCreateTrip}
             onCancel={() => setShowCreateDialog(false)}
           />

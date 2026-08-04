@@ -1,21 +1,23 @@
 import { useState } from "react";
 import {
-  calculateBalances,
+  computeSettlements,
+  normalizeSettlementMethod,
   personBalanceBreakdown,
-  simplifyDebtsWithDetails,
+  settlementMethodLabel,
   type SettlementExplanation,
 } from "@/lib/balances";
 import { formatCurrency } from "@/lib/formatters";
 import { SettlementLineReportDialog } from "@/components/balance/SettlementLineReportDialog";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown, ChevronRight, FileText } from "lucide-react";
-import type { Expense, Payment } from "@/types";
+import type { Expense, Payment, SettlementMethod } from "@/types";
 
 interface SettlementListProps {
   expenses: Expense[];
   participants: string[];
   payments?: Payment[];
   tripName?: string;
+  settlementMethod?: SettlementMethod | string | null;
 }
 
 export function SettlementList({
@@ -23,22 +25,39 @@ export function SettlementList({
   participants,
   payments = [],
   tripName = "Trip",
+  settlementMethod,
 }: SettlementListProps) {
-  const balances = calculateBalances(expenses, participants, payments);
-  const transactions = simplifyDebtsWithDetails(balances);
+  const method = normalizeSettlementMethod(settlementMethod);
+  const transactions = computeSettlements(
+    method,
+    expenses,
+    participants,
+    payments,
+  );
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [reportTx, setReportTx] = useState<SettlementExplanation | null>(null);
 
   if (transactions.length === 0) {
     return (
-      <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-400">
-        All settled! No payments needed.
-      </p>
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">
+          Method: {settlementMethodLabel(method)}
+        </p>
+        <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+          All settled! No payments needed.
+        </p>
+      </div>
     );
   }
 
   return (
     <>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Method: {settlementMethodLabel(method)}
+        {method === "pairwise"
+          ? " — transfers only between people who shared costs"
+          : " — fewest global transfers (largest first)"}
+      </p>
       <ul className="space-y-2">
         {transactions.map((transaction) => {
           const key = `${transaction.step}-${transaction.from}-${transaction.to}`;
@@ -111,11 +130,7 @@ function SettlementRowDetail({
 }) {
   const from = personBalanceBreakdown(transaction.from, expenses, payments);
   const to = personBalanceBreakdown(transaction.to, expenses, payments);
-
-  const amountReason =
-    transaction.fromRemainingBefore <= transaction.toRemainingBefore
-      ? `${transaction.from} still owed ${formatCurrency(transaction.fromRemainingBefore)} at this step, so the transfer is that full amount.`
-      : `${transaction.to} was still owed ${formatCurrency(transaction.toRemainingBefore)} at this step, so the transfer covers that full credit.`;
+  const isPairwise = transaction.method === "pairwise";
 
   return (
     <div className="space-y-3 border-t border-border px-3 pb-3 pt-2 text-xs text-muted-foreground">
@@ -144,12 +159,14 @@ function SettlementRowDetail({
           variant="owes"
           breakdown={from}
           remaining={transaction.fromRemainingBefore}
+          remainingLabel={isPairwise ? "Pairwise net to receiver" : "Still to pay (this step)"}
         />
         <PersonCard
           title={`${transaction.to} (receives)`}
           variant="owed"
           breakdown={to}
           remaining={transaction.toRemainingBefore}
+          remainingLabel={isPairwise ? "Pairwise net from payer" : "Still to receive (this step)"}
         />
       </div>
 
@@ -157,21 +174,33 @@ function SettlementRowDetail({
         <p className="font-medium text-foreground">
           Suggested transfer: {formatCurrency(transaction.amount)}
         </p>
-        <p>
-          Debt simplification pairs the largest remaining debt with the largest
-          remaining credit (step {transaction.step}).
-        </p>
-        <p>
-          min(
-          {formatCurrency(transaction.fromRemainingBefore)} still owed by{" "}
-          {transaction.from},{" "}
-          {formatCurrency(transaction.toRemainingBefore)} still due to{" "}
-          {transaction.to}) ={" "}
-          <span className="font-semibold text-foreground">
-            {formatCurrency(transaction.amount)}
-          </span>
-        </p>
-        <p>{amountReason}</p>
+        {isPairwise ? (
+          <>
+            <p>
+              Pairwise netting accumulates each person&apos;s share of expenses
+              owed to the payer, then nets recorded payments between the same
+              pair.
+            </p>
+            <p className="font-medium text-foreground">{transaction.note}</p>
+          </>
+        ) : (
+          <>
+            <p>
+              Debt simplification pairs the largest remaining debt with the
+              largest remaining credit (step {transaction.step}).
+            </p>
+            <p>
+              min(
+              {formatCurrency(transaction.fromRemainingBefore)} still owed by{" "}
+              {transaction.from},{" "}
+              {formatCurrency(transaction.toRemainingBefore)} still due to{" "}
+              {transaction.to}) ={" "}
+              <span className="font-semibold text-foreground">
+                {formatCurrency(transaction.amount)}
+              </span>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -182,11 +211,13 @@ function PersonCard({
   variant,
   breakdown,
   remaining,
+  remainingLabel,
 }: {
   title: string;
   variant: "owes" | "owed";
   breakdown: ReturnType<typeof personBalanceBreakdown>;
   remaining: number;
+  remainingLabel: string;
 }) {
   const tint =
     variant === "owes"
@@ -225,11 +256,7 @@ function PersonCard({
           </span>
         </li>
         <li className="flex justify-between gap-2">
-          <span>
-            {variant === "owes"
-              ? "Still to pay (this step)"
-              : "Still to receive (this step)"}
-          </span>
+          <span>{remainingLabel}</span>
           <span className="font-medium text-foreground">
             {formatCurrency(remaining)}
           </span>
