@@ -1,8 +1,10 @@
 import * as XLSX from "xlsx";
 import {
   calculateBalances,
+  computeSettlements,
+  normalizeSettlementMethod,
   personBalanceBreakdown,
-  simplifyDebtsWithDetails,
+  settlementMethodLabel,
 } from "@/lib/balances";
 import { buildSettlementReport } from "@/lib/settlementReport";
 import type { Expense, Payment, Trip } from "@/types";
@@ -27,23 +29,29 @@ function sheetFromAoA(rows: (string | number | null | undefined)[][]) {
   );
 }
 
-/**
- * Build and download a multi-sheet Excel workbook for one trip.
- * Intended for accountant / third-party review of data and calculations.
- */
 export function downloadTripExcel(
-  trip: Pick<Trip, "id" | "name" | "participants" | "participantLinks">,
+  trip: Pick<
+    Trip,
+    "id" | "name" | "participants" | "participantLinks" | "settlementMethod"
+  >,
   expenses: Expense[],
   payments: Payment[] = [],
 ): void {
   const participants = trip.participants;
+  const method = normalizeSettlementMethod(trip.settlementMethod);
   const balances = calculateBalances(expenses, participants, payments);
-  const settlements = simplifyDebtsWithDetails(balances);
+  const settlements = computeSettlements(
+    method,
+    expenses,
+    participants,
+    payments,
+  );
   const report = buildSettlementReport(
     trip.name,
     participants,
     expenses,
     payments,
+    method,
   );
 
   const generatedAt = new Date().toISOString();
@@ -54,13 +62,13 @@ export function downloadTripExcel(
 
   const wb = XLSX.utils.book_new();
 
-  // —— Summary ————————————————————————————————————————————————
   const summaryRows: (string | number)[][] = [
     ["Trip Share — Trip export for review"],
     [],
     ["Trip name", trip.name],
     ["Trip ID", trip.id],
     ["Generated at (UTC)", generatedAt],
+    ["Settlement method", settlementMethodLabel(method)],
     ["Participants", participants.join(", ")],
     ["Expense count", expenses.length],
     ["Payment count", payments.length],
@@ -88,12 +96,13 @@ export function downloadTripExcel(
       "Net balance = paid − fair share + payments sent − payments received. Positive = is owed; negative = owes.",
     ],
     [
-      "Suggested settlements pair largest remaining debt with largest remaining credit (greedy simplification).",
+      method === "pairwise"
+        ? "Suggested settlements: pairwise netting from expense shares between each pair, then net recorded payments."
+        : "Suggested settlements: greedy — pair largest remaining debt with largest remaining credit.",
     ],
   ];
   XLSX.utils.book_append_sheet(wb, sheetFromAoA(summaryRows), "Summary");
 
-  // —— Participants ———————————————————————————————————————————
   const participantRows: (string | number)[][] = [
     ["Name", "Linked account UID (if any)"],
     ...participants.map((name) => [
@@ -107,7 +116,6 @@ export function downloadTripExcel(
     "Participants",
   );
 
-  // —— Expenses ———————————————————————————————————————————————
   const expenseRows: (string | number)[][] = [
     [
       "ID",
@@ -145,7 +153,6 @@ export function downloadTripExcel(
   ];
   XLSX.utils.book_append_sheet(wb, sheetFromAoA(expenseRows), "Expenses");
 
-  // —— Payments ———————————————————————————————————————————————
   const paymentRows: (string | number)[][] = [
     ["ID", "Date", "From", "To", "Amount", "Note", "Attachment file", "Attachment URL"],
     ...[...payments]
@@ -163,7 +170,6 @@ export function downloadTripExcel(
   ];
   XLSX.utils.book_append_sheet(wb, sheetFromAoA(paymentRows), "Payments");
 
-  // —— Balances ———————————————————————————————————————————————
   const balanceRows: (string | number)[][] = [
     [
       "Person",
@@ -197,33 +203,29 @@ export function downloadTripExcel(
   ];
   XLSX.utils.book_append_sheet(wb, sheetFromAoA(balanceRows), "Balances");
 
-  // —— Settle Up (suggested) ———————————————————————————————————
   const settleRows: (string | number)[][] = [
     [
       "Step",
       "From (pays)",
       "To (receives)",
       "Amount",
-      "From still owed before",
-      "To still due before",
-      "Calculation note",
+      "Method",
+      "Note",
     ],
     ...settlements.map((t) => [
       t.step,
       t.from,
       t.to,
       t.amount,
-      t.fromRemainingBefore,
-      t.toRemainingBefore,
-      `min(${t.fromRemainingBefore}, ${t.toRemainingBefore}) = ${t.amount}`,
+      t.method,
+      t.note,
     ]),
   ];
   if (settlements.length === 0) {
-    settleRows.push(["—", "(none)", "All settled", 0, "", "", ""]);
+    settleRows.push(["—", "(none)", "All settled", 0, method, ""]);
   }
   XLSX.utils.book_append_sheet(wb, sheetFromAoA(settleRows), "Settle Up");
 
-  // —— Ledger (chronological) ————————————————————————————————
   const ledgerRows: (string | number)[][] = [
     [
       "Step",
