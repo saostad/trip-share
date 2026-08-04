@@ -1,7 +1,7 @@
 import type { Timestamp } from "firebase/firestore";
 
 /** How suggested Settle Up transfers are computed */
-export type SettlementMethod = "greedy" | "pairwise" | "smallest";
+export type SettlementMethod = "greedy" | "minimize" | "pairwise" | "smallest";
 
 export interface Trip {
   id: string;
