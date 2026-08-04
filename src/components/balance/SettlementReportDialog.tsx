@@ -22,6 +22,20 @@ interface SettlementReportDialogProps {
   settlementMethod?: string | null;
 }
 
+/** Escape text for HTML without embedding entity literals in source. */
+function esc(s: string): string {
+  let out = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "&") out += "&" + "amp;";
+    else if (ch === "<") out += "&" + "lt;";
+    else if (ch === ">") out += "&" + "gt;";
+    else if (ch === '"') out += "&" + "quot;";
+    else out += ch;
+  }
+  return out;
+}
+
 export function SettlementReportDialog({
   open,
   onOpenChange,
@@ -69,8 +83,7 @@ export function SettlementReportDialog({
   }
 
   function handlePrint() {
-    const html = buildReportHtml(report, generatedLabel);
-    printHtml(html);
+    printHtml(buildReportHtml(report, generatedLabel));
   }
 
   function handleDownload() {
@@ -274,14 +287,6 @@ export function SettlementReportDialog({
   );
 }
 
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """);
-}
-
 function buildReportHtml(
   report: SettlementReportData,
   generatedLabel: string,
@@ -307,13 +312,13 @@ function buildReportHtml(
   return (
     "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>" +
     esc(report.tripName) +
-    " — Settlement</title></head><body>" +
+    " - Settlement</title></head><body>" +
     "<h2>" +
     esc(report.tripName) +
     "</h2>" +
     "<p>Generated " +
     esc(generatedLabel) +
-    " · Method: " +
+    " - Method: " +
     esc(report.settlementMethodLabel) +
     "</p>" +
     "<p>Participants: " +
