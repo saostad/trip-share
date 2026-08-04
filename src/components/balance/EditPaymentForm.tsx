@@ -9,40 +9,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileUpload } from "@/components/expense/FileUpload";
+import { FileUpload } from "@/components/ui/FileUpload";
 import type { Payment, FileAttachment } from "@/types";
 
 interface EditPaymentFormProps {
   payment: Payment;
   participants: string[];
   tripId?: string;
-  onSubmit: (data: {
-    from: string;
-    to: string;
-    amount: number;
-    date: string;
-    note: string;
-    attachment?: FileAttachment | null;
-  }) => void | Promise<void>;
+  onSubmit: (data: { from: string; to: string; amount: number; date: string; note: string; attachment?: FileAttachment | null }) => void | Promise<void>;
   onCancel: () => void;
 }
 
-export function EditPaymentForm({
-  payment,
-  participants,
-  tripId,
-  onSubmit,
-  onCancel,
-}: EditPaymentFormProps) {
+export function EditPaymentForm({ payment, participants, tripId, onSubmit, onCancel }: EditPaymentFormProps) {
   const [from, setFrom] = useState(payment.from);
   const [to, setTo] = useState(payment.to);
   const [amount, setAmount] = useState(String(payment.amount));
   const [date, setDate] = useState(payment.date);
   const [note, setNote] = useState(payment.note ?? "");
-  const [attachment, setAttachment] = useState<FileAttachment | null>(
-    payment.attachment ?? null,
-  );
   const [submitting, setSubmitting] = useState(false);
+  const [attachment, setAttachment] = useState<FileAttachment | null>(payment.attachment ?? null);
+
   const [amountError, setAmountError] = useState("");
   const [personError, setPersonError] = useState("");
 
@@ -84,61 +70,71 @@ export function EditPaymentForm({
     }
   }
 
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From</label>
-          <Select value={from} onValueChange={(v) => setFrom(String(v))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {participants.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">To</label>
-          <Select value={to} onValueChange={(v) => setTo(String(v))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {participants.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium leading-none">From (who paid)</label>
+        <Select value={from} onValueChange={(val) => { setFrom(val ?? ""); if (personError) setPersonError(""); }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select who paid" />
+          </SelectTrigger>
+          <SelectContent>
+            {participants.map((p) => (
+              <SelectItem key={p} value={p}>{p}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      {personError && (
-        <p className="text-sm text-destructive">{personError}</p>
-      )}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Amount</label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
+        <label className="text-sm font-medium leading-none">To (who received)</label>
+        <Select value={to} onValueChange={(val) => { setTo(val ?? ""); if (personError) setPersonError(""); }}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select who received" />
+          </SelectTrigger>
+          <SelectContent>
+            {participants.map((p) => (
+              <SelectItem key={p} value={p}>{p}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {personError && (
+          <p className="text-sm text-destructive">{personError}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="edit-payment-amount" className="text-sm font-medium leading-none">
+          Amount
+        </label>
+        <div className="relative">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            $
+          </span>
+          <Input
+            id="edit-payment-amount"
+            type="number"
+            step="0.01"
+            min="0"
+            value={amount}
+            onChange={(e) => { setAmount(e.target.value); if (amountError) setAmountError(""); }}
+            placeholder="0.00"
+            className="pl-6"
+            aria-invalid={!!amountError}
+          />
+        </div>
         {amountError && (
           <p className="text-sm text-destructive">{amountError}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Date</label>
+        <label htmlFor="edit-payment-date" className="text-sm font-medium leading-none">
+          Date
+        </label>
         <Input
+          id="edit-payment-date"
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
@@ -146,32 +142,31 @@ export function EditPaymentForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Note</label>
+        <label htmlFor="edit-payment-note" className="text-sm font-medium leading-none">
+          Note (optional)
+        </label>
         <Input
+          id="edit-payment-note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Optional note"
+          placeholder="e.g. Venmo transfer"
         />
       </div>
 
-      {tripId ? (
+      {/* File attachment */}
+      {tripId && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Attachment</label>
+          <label className="text-sm font-medium leading-none">Receipt / Document (optional)</label>
           <FileUpload
             storagePath={`trips/${tripId}/payments`}
             value={attachment}
             onChange={setAttachment}
           />
         </div>
-      ) : null}
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={submitting}
-        >
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Cancel
         </Button>
         <Button type="submit" disabled={submitting} className="gap-1.5">
