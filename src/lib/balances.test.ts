@@ -1,7 +1,12 @@
 import { Timestamp } from "firebase/firestore";
 import { describe, expect, it } from "vitest";
 import type { Expense } from "@/types";
-import { calculateBalances } from "./balances";
+import {
+  calculateBalances,
+  computeSettlements,
+  minimizeTransactionsWithDetails,
+  simplifyDebtsWithDetails,
+} from "./balances";
 
 const makeExpense = (
   overrides: Partial<Expense> & Pick<Expense, "amount" | "paidBy" | "sharedBy">,
@@ -60,5 +65,58 @@ describe("calculateBalances", () => {
     const result = calculateBalances(expenses, ["Alice"]);
     // Alice paid 50, shares 50 -> net 0
     expect(result.Alice).toBeCloseTo(0);
+  });
+});
+
+describe("minimizeTransactionsWithDetails", () => {
+  it("settles a simple two-person debt in one transfer", () => {
+    const balances = { Alice: 50, Bob: -50 };
+    const result = minimizeTransactionsWithDetails(balances);
+    expect(result).toHaveLength(1);
+    expect(result[0].from).toBe("Bob");
+    expect(result[0].to).toBe("Alice");
+    expect(result[0].amount).toBeCloseTo(50);
+    expect(result[0].method).toBe("minimize");
+  });
+
+  it("uses fewer transfers than greedy on the classic counterexample", () => {
+    // [-3,-2,-2,+3,+4] — greedy largest-first needs 4; optimal needs 3
+    const balances = {
+      A: -3,
+      B: -2,
+      C: -2,
+      D: 3,
+      E: 4,
+    };
+    const greedy = simplifyDebtsWithDetails(balances);
+    const optimal = minimizeTransactionsWithDetails(balances);
+    expect(optimal.length).toBeLessThanOrEqual(greedy.length);
+    expect(optimal.length).toBe(3);
+
+    // All balances must be fully settled
+    const remaining: Record<string, number> = { ...balances };
+    for (const t of optimal) {
+      remaining[t.from] = (remaining[t.from] ?? 0) + t.amount;
+      remaining[t.to] = (remaining[t.to] ?? 0) - t.amount;
+    }
+    for (const v of Object.values(remaining)) {
+      expect(Math.abs(v)).toBeLessThan(0.01);
+    }
+  });
+
+  it("computeSettlements dispatches minimize", () => {
+    const expenses = [
+      makeExpense({ amount: 100, paidBy: "Alice", sharedBy: ["Alice", "Bob"] }),
+    ];
+    const result = computeSettlements(
+      "minimize",
+      expenses,
+      ["Alice", "Bob"],
+      [],
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].method).toBe("minimize");
+    expect(result[0].from).toBe("Bob");
+    expect(result[0].to).toBe("Alice");
   });
 });

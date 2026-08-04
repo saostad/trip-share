@@ -4,6 +4,7 @@ import type {
   SettlementMethod,
   Transaction,
 } from "@/types";
+import { minimizeTransactionsWithDetails as minimizeTx } from "@/lib/minimizeTransactions";
 
 export const DEFAULT_SETTLEMENT_METHOD: SettlementMethod = "greedy";
 
@@ -12,12 +13,14 @@ export function normalizeSettlementMethod(
 ): SettlementMethod {
   if (method === "pairwise") return "pairwise";
   if (method === "smallest") return "smallest";
+  if (method === "minimize") return "minimize";
   return "greedy";
 }
 
 export function settlementMethodLabel(method: SettlementMethod): string {
   if (method === "pairwise") return "Pairwise netting";
   if (method === "smallest") return "Smallest first (clear one person)";
+  if (method === "minimize") return "Minimize transactions";
   return "Greedy (largest first)";
 }
 
@@ -119,6 +122,12 @@ export interface SettlementExplanation extends Transaction {
 /**
  * Compute suggested settlements for the trip using the owner-selected method.
  */
+export function minimizeTransactionsWithDetails(
+  balances: Record<string, number>,
+): SettlementExplanation[] {
+  return minimizeTx(balances, simplifyDebtsWithDetails);
+}
+
 export function computeSettlements(
   method: SettlementMethod | string | null | undefined,
   expenses: Expense[],
@@ -132,6 +141,9 @@ export function computeSettlements(
   const balances = calculateBalances(expenses, participants, payments);
   if (m === "smallest") {
     return smallestFirstWithDetails(balances);
+  }
+  if (m === "minimize") {
+    return minimizeTransactionsWithDetails(balances);
   }
   return simplifyDebtsWithDetails(balances);
 }

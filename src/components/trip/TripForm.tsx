@@ -43,6 +43,9 @@ function methodHelp(method: SettlementMethod): string {
   if (method === "smallest") {
     return "Always clears the person with the smallest remaining balance first. Easy to follow; may need more transfers. ";
   }
+  if (method === "minimize") {
+    return "Finds the fewest possible transfers that zero every balance (optimal search). ";
+  }
   return "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers. ";
 }
 
@@ -148,6 +151,7 @@ export function TripForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="greedy">Greedy (largest first)</SelectItem>
+              <SelectItem value="minimize">Minimize transactions</SelectItem>
               <SelectItem value="smallest">
                 Smallest first (clear one person)
               </SelectItem>
