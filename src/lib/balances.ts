@@ -5,6 +5,10 @@ import type {
   Transaction,
 } from "@/types";
 import { minimizeTransactionsWithDetails as minimizeTx } from "@/lib/minimizeTransactions";
+import {
+  pickTreasurer as pickTreasurerImpl,
+  treasurerWithDetails as treasurerTx,
+} from "@/lib/treasurerSettlement";
 
 export const DEFAULT_SETTLEMENT_METHOD: SettlementMethod = "greedy";
 
@@ -14,6 +18,7 @@ export function normalizeSettlementMethod(
   if (method === "pairwise") return "pairwise";
   if (method === "smallest") return "smallest";
   if (method === "minimize") return "minimize";
+  if (method === "treasurer") return "treasurer";
   return "greedy";
 }
 
@@ -21,6 +26,7 @@ export function settlementMethodLabel(method: SettlementMethod): string {
   if (method === "pairwise") return "Pairwise netting";
   if (method === "smallest") return "Smallest first (clear one person)";
   if (method === "minimize") return "Minimize transactions";
+  if (method === "treasurer") return "Central pot (auto treasurer)";
   return "Greedy (largest first)";
 }
 
@@ -128,6 +134,20 @@ export function minimizeTransactionsWithDetails(
   return minimizeTx(balances, simplifyDebtsWithDetails);
 }
 
+export function pickTreasurer(
+  balances: Record<string, number>,
+  expenses: Expense[] = [],
+): string | null {
+  return pickTreasurerImpl(balances, expenses);
+}
+
+export function treasurerWithDetails(
+  balances: Record<string, number>,
+  expenses: Expense[] = [],
+): SettlementExplanation[] {
+  return treasurerTx(balances, expenses);
+}
+
 export function computeSettlements(
   method: SettlementMethod | string | null | undefined,
   expenses: Expense[],
@@ -144,6 +164,9 @@ export function computeSettlements(
   }
   if (m === "minimize") {
     return minimizeTransactionsWithDetails(balances);
+  }
+  if (m === "treasurer") {
+    return treasurerWithDetails(balances, expenses);
   }
   return simplifyDebtsWithDetails(balances);
 }

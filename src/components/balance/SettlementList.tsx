@@ -27,6 +27,12 @@ function methodHint(method: SettlementMethod): string {
   if (method === "smallest") {
     return " — clears smallest remaining balance first";
   }
+  if (method === "treasurer") {
+    return " — everyone settles only with the auto-picked treasurer";
+  }
+  if (method === "minimize") {
+    return " — fewest possible transfers (optimal search)";
+  }
   return " — fewest global transfers (largest first)";
 }
 
@@ -211,6 +217,21 @@ function SettlementRowDetail({
               min(
               {formatCurrency(transaction.fromRemainingBefore)},{" "}
               {formatCurrency(transaction.toRemainingBefore)}) ={" "}
+              <span className="font-semibold text-foreground">
+                {formatCurrency(transaction.amount)}
+              </span>
+            </p>
+          </>
+        ) : method === "treasurer" ? (
+          <>
+            <p>
+              Central pot auto-picks a treasurer (person owed the most, or who
+              paid the most if tied). Everyone pays or is paid only by that
+              person (step {transaction.step}).
+            </p>
+            <p className="font-medium text-foreground">{transaction.note}</p>
+            <p>
+              Transfer amount ={" "}
               <span className="font-semibold text-foreground">
                 {formatCurrency(transaction.amount)}
               </span>
