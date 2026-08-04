@@ -46,6 +46,9 @@ function methodHelp(method: SettlementMethod): string {
   if (method === "minimize") {
     return "Finds the fewest possible transfers that zero every balance (optimal search). ";
   }
+  if (method === "treasurer") {
+    return "Auto-picks a treasurer (most owed, else most paid). Everyone pays or is paid by that person only. ";
+  }
   return "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers. ";
 }
 
@@ -152,6 +155,9 @@ export function TripForm({
             <SelectContent>
               <SelectItem value="greedy">Greedy (largest first)</SelectItem>
               <SelectItem value="minimize">Minimize transactions</SelectItem>
+              <SelectItem value="treasurer">
+                Central pot (auto treasurer)
+              </SelectItem>
               <SelectItem value="smallest">
                 Smallest first (clear one person)
               </SelectItem>

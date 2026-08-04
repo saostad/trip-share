@@ -98,7 +98,13 @@ export function downloadTripExcel(
     [
       method === "pairwise"
         ? "Suggested settlements: pairwise netting from expense shares between each pair, then net recorded payments."
-        : "Suggested settlements: greedy — pair largest remaining debt with largest remaining credit.",
+        : method === "treasurer"
+          ? "Suggested settlements: central pot — auto-picked treasurer; everyone pays or is paid by that person only."
+          : method === "minimize"
+            ? "Suggested settlements: minimize transactions — fewest transfers that zero every balance."
+            : method === "smallest"
+              ? "Suggested settlements: smallest-first — clear the person with the smallest remaining balance first."
+              : "Suggested settlements: greedy — pair largest remaining debt with largest remaining credit.",
     ],
   ];
   XLSX.utils.book_append_sheet(wb, sheetFromAoA(summaryRows), "Summary");
