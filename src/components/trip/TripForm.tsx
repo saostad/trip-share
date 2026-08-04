@@ -2,20 +2,34 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ParticipantInput,
   type AccountOption,
 } from "@/components/trip/ParticipantInput";
 import { sanitizeParticipantLinks } from "@/lib/participantLinks";
-import type { Trip, Expense } from "@/types";
+import {
+  DEFAULT_SETTLEMENT_METHOD,
+  normalizeSettlementMethod,
+} from "@/lib/balances";
+import type { Trip, Expense, SettlementMethod } from "@/types";
 
 interface TripFormProps {
   trip?: Trip;
   expenses?: Expense[];
   accountOptions?: AccountOption[];
+  /** When true, show settlement method (owner create/edit). */
+  showSettlementMethod?: boolean;
   onSubmit: (data: {
     name: string;
     participants: string[];
     participantLinks: Record<string, string>;
+    settlementMethod: SettlementMethod;
   }) => void;
   onCancel: () => void;
 }
@@ -24,6 +38,7 @@ export function TripForm({
   trip,
   expenses = [],
   accountOptions = [],
+  showSettlementMethod = true,
   onSubmit,
   onCancel,
 }: TripFormProps) {
@@ -33,6 +48,9 @@ export function TripForm({
   );
   const [links, setLinks] = useState<Record<string, string>>(
     trip?.participantLinks ?? {},
+  );
+  const [settlementMethod, setSettlementMethod] = useState<SettlementMethod>(
+    normalizeSettlementMethod(trip?.settlementMethod),
   );
   const [nameError, setNameError] = useState("");
 
@@ -52,6 +70,10 @@ export function TripForm({
       name: trimmedName,
       participants,
       participantLinks: sanitizeParticipantLinks(participants, links),
+      settlementMethod: showSettlementMethod
+        ? settlementMethod
+        : normalizeSettlementMethod(trip?.settlementMethod) ||
+          DEFAULT_SETTLEMENT_METHOD,
     });
   }
 
@@ -90,6 +112,43 @@ export function TripForm({
           onLinksChange={setLinks}
         />
       </div>
+
+      {showSettlementMethod && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none">
+            Settlement method
+          </label>
+          <Select
+            value={settlementMethod}
+            onValueChange={(val) => {
+              const v =
+                typeof val === "string"
+                  ? val
+                  : (val as { value?: string } | null)?.value;
+              setSettlementMethod(normalizeSettlementMethod(v));
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <span className="truncate text-left">
+                {settlementMethod === "pairwise"
+                  ? "Pairwise netting"
+                  : "Greedy (largest first)"}
+              </span>
+              <SelectValue className="sr-only" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="greedy">Greedy (largest first)</SelectItem>
+              <SelectItem value="pairwise">Pairwise netting</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {settlementMethod === "pairwise"
+              ? "Each person only settles with people they shared expenses with (after netting). May create more transfers."
+              : "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers."{" "}
+            Only the trip owner can change this; everyone sees the same Settle Up list."}
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>

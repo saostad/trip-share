@@ -1,18 +1,28 @@
-import type { Expense, Payment, Transaction } from "@/types";
+import type {
+  Expense,
+  Payment,
+  SettlementMethod,
+  Transaction,
+} from "@/types";
+
+export const DEFAULT_SETTLEMENT_METHOD: SettlementMethod = "greedy";
+
+export function normalizeSettlementMethod(
+  method: SettlementMethod | string | null | undefined,
+): SettlementMethod {
+  return method === "pairwise" ? "pairwise" : "greedy";
+}
+
+export function settlementMethodLabel(method: SettlementMethod): string {
+  return method === "pairwise"
+    ? "Pairwise netting"
+    : "Greedy (largest first)";
+}
 
 /**
  * Computes the net balance for each participant based on all expenses and payments.
  *
- * For each expense:
- * - The payer's balance increases by the full expense amount (they are owed money).
- * - Each sharer's balance decreases by their equal portion (amount / number of sharers).
- *
- * For each payment:
- * - The payer's (from) balance increases (they paid off debt).
- * - The receiver's (to) balance decreases (they received what they were owed).
- *
- * A positive balance means the participant is owed money.
- * A negative balance means the participant owes money.
+ * Positive balance = is owed money. Negative = owes money.
  */
 export function calculateBalances(
   expenses: Expense[],
@@ -90,16 +100,35 @@ export function personBalanceBreakdown(
 }
 
 export interface SettlementExplanation extends Transaction {
-  /** Debtor's full net balance before any suggested settlements */
+  method: SettlementMethod;
+  /** Debtor's full net balance (absolute amount they owe overall), if applicable */
   fromNet: number;
-  /** Creditor's full net balance before any suggested settlements */
+  /** Creditor's full net balance (amount they are owed overall), if applicable */
   toNet: number;
-  /** How much the debtor still owed at this step of simplification */
+  /** Remaining debt/credit used when choosing this transfer (greedy) or pairwise net */
   fromRemainingBefore: number;
-  /** How much the creditor was still owed at this step */
   toRemainingBefore: number;
   /** Index in the suggested settlement list (1-based) */
   step: number;
+  /** Short human explanation of why this edge exists */
+  note: string;
+}
+
+/**
+ * Compute suggested settlements for the trip using the owner-selected method.
+ */
+export function computeSettlements(
+  method: SettlementMethod | string | null | undefined,
+  expenses: Expense[],
+  participants: string[],
+  payments: Payment[] = [],
+): SettlementExplanation[] {
+  const m = normalizeSettlementMethod(method);
+  if (m === "pairwise") {
+    return pairwiseNettingWithDetails(expenses, payments);
+  }
+  const balances = calculateBalances(expenses, participants, payments);
+  return simplifyDebtsWithDetails(balances);
 }
 
 /**
@@ -114,10 +143,6 @@ export function simplifyDebts(
   );
 }
 
-/**
- * Same as simplifyDebts, but includes the intermediate amounts used to
- * choose each transfer so the UI can explain the line.
- */
 export function simplifyDebtsWithDetails(
   balances: Record<string, number>,
 ): SettlementExplanation[] {
@@ -157,11 +182,13 @@ export function simplifyDebtsWithDetails(
         from: debtor.name,
         to: creditor.name,
         amount: transferAmount,
+        method: "greedy",
         fromNet: round2(-(balances[debtor.name] ?? 0)),
         toNet: round2(balances[creditor.name] ?? 0),
         fromRemainingBefore,
         toRemainingBefore,
         step,
+        note: `Greedy step ${step}: min(${fromRemainingBefore}, ${toRemainingBefore}) = ${transferAmount}`,
       });
     }
 
@@ -171,6 +198,125 @@ export function simplifyDebtsWithDetails(
     if (debtor.amount <= THRESHOLD) i++;
     if (creditor.amount <= THRESHOLD) j++;
   }
+
+  return transactions;
+}
+
+/**
+ * Pairwise netting from raw expenses (and recorded payments).
+ *
+ * For each expense paid by P and shared by S:
+ *   each s in S (s ≠ P) owes P (amount / |S|).
+ * For each payment A → B of X:
+ *   reduce A's debt to B by X (netting).
+ * Then emit one transfer per directed pair with net > threshold.
+ *
+ * Transfers only appear between people who actually shared costs (or paid each other).
+ */
+export function pairwiseNettingWithDetails(
+  expenses: Expense[],
+  payments: Payment[] = [],
+): SettlementExplanation[] {
+  const THRESHOLD = 0.01;
+  /** Canonical key a|b with a < b; positive value means a owes b */
+  const net = new Map<string, number>();
+
+  function pairKey(a: string, b: string): { key: string; sign: 1 | -1 } {
+    if (a < b) return { key: `${a}\0${b}`, sign: 1 };
+    return { key: `${b}\0${a}`, sign: -1 };
+  }
+
+  /** debtor owes creditor `amount` more */
+  function addOwed(debtor: string, creditor: string, amount: number) {
+    if (!debtor || !creditor || debtor === creditor || amount === 0) return;
+    const { key, sign } = pairKey(debtor, creditor);
+    net.set(key, (net.get(key) ?? 0) + sign * amount);
+  }
+
+  for (const e of expenses) {
+    const sharers = e.sharedBy?.length ? e.sharedBy : [];
+    if (sharers.length === 0) continue;
+    const share = e.amount / sharers.length;
+    for (const person of sharers) {
+      if (person !== e.paidBy) {
+        addOwed(person, e.paidBy, share);
+      }
+    }
+  }
+
+  for (const p of payments) {
+    // A paid B: reduces what A owes B
+    addOwed(p.from, p.to, -p.amount);
+  }
+
+  const balances = calculateBalances(expenses, [], payments);
+  // rebuild balances including all names seen
+  const names = new Set<string>();
+  for (const e of expenses) {
+    names.add(e.paidBy);
+    for (const s of e.sharedBy) names.add(s);
+  }
+  for (const p of payments) {
+    names.add(p.from);
+    names.add(p.to);
+  }
+  const fullBalances = calculateBalances(
+    expenses,
+    [...names],
+    payments,
+  );
+
+  const transactions: SettlementExplanation[] = [];
+  let step = 0;
+
+  const entries = [...net.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  for (const [key, raw] of entries) {
+    const amount = round2(raw);
+    if (Math.abs(amount) < THRESHOLD) continue;
+
+    const [a, b] = key.split("\0");
+    step += 1;
+
+    if (amount > 0) {
+      // a owes b
+      transactions.push({
+        from: a,
+        to: b,
+        amount: Math.abs(amount),
+        method: "pairwise",
+        fromNet: round2(-(fullBalances[a] ?? 0)),
+        toNet: round2(fullBalances[b] ?? 0),
+        fromRemainingBefore: Math.abs(amount),
+        toRemainingBefore: Math.abs(amount),
+        step,
+        note: `Pairwise net: ${a} owes ${b} after expense shares and recorded payments`,
+      });
+    } else {
+      // b owes a
+      transactions.push({
+        from: b,
+        to: a,
+        amount: Math.abs(amount),
+        method: "pairwise",
+        fromNet: round2(-(fullBalances[b] ?? 0)),
+        toNet: round2(fullBalances[a] ?? 0),
+        fromRemainingBefore: Math.abs(amount),
+        toRemainingBefore: Math.abs(amount),
+        step,
+        note: `Pairwise net: ${b} owes ${a} after expense shares and recorded payments`,
+      });
+    }
+  }
+
+  // Stable, readable order: larger amounts first
+  transactions.sort((x, y) => y.amount - x.amount || x.from.localeCompare(y.from));
+  transactions.forEach((t, idx) => {
+    t.step = idx + 1;
+  });
+
+  // silence unused if any
+  void balances;
 
   return transactions;
 }
