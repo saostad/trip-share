@@ -416,6 +416,7 @@ export function TripDetailPage() {
                 participants={trip.participants}
                 payments={payments}
                 tripName={trip.name}
+                settlementMethod={trip.settlementMethod}
               />
             </CardContent>
           </Card>
@@ -463,6 +464,7 @@ export function TripDetailPage() {
         participants={trip.participants}
         expenses={expenses}
         payments={payments}
+        settlementMethod={trip.settlementMethod}
       />
 
       {isOwner && (
