@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -33,15 +34,13 @@ export function DeleteTripDialog({
   async function handleDelete() {
     setDeleting(true);
     try {
-      // Delete all expenses in the subcollection
       const expensesRef = collection(db, "trips", tripId, "expenses");
       const expensesSnapshot = await getDocs(expensesRef);
       const deletePromises = expensesSnapshot.docs.map((expenseDoc) =>
-        deleteDoc(doc(db, "trips", tripId, "expenses", expenseDoc.id))
+        deleteDoc(doc(db, "trips", tripId, "expenses", expenseDoc.id)),
       );
       await Promise.all(deletePromises);
 
-      // Delete the trip document
       await deleteDoc(doc(db, "trips", tripId));
 
       toast.success("Trip deleted successfully");
@@ -71,6 +70,9 @@ export function DeleteTripDialog({
             onClick={handleDelete}
             disabled={deleting}
           >
+            {deleting && (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            )}
             {deleting ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
