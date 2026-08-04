@@ -18,23 +18,21 @@ import {
   normalizeSettlementMethod,
   settlementMethodLabel,
 } from "@/lib/balances";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import type { Trip, Expense, SettlementMethod } from "@/types";
 
 interface TripFormProps {
   trip?: Trip;
   expenses?: Expense[];
   accountOptions?: AccountOption[];
-  /** When true, show settlement method (owner create/edit). */
   showSettlementMethod?: boolean;
-  /** Start with participants section expanded (default true for create). */
   defaultParticipantsOpen?: boolean;
   onSubmit: (data: {
     name: string;
     participants: string[];
     participantLinks: Record<string, string>;
     settlementMethod: SettlementMethod;
-  }) => void;
+  }) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -71,12 +69,14 @@ export function TripForm({
   const [participantsOpen, setParticipantsOpen] = useState(
     defaultParticipantsOpen,
   );
+  const [submitting, setSubmitting] = useState(false);
 
   const isEditMode = !!trip;
   const linkedCount = participants.filter((p) => !!links[p]).length;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
 
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -85,15 +85,20 @@ export function TripForm({
     }
 
     setNameError("");
-    onSubmit({
-      name: trimmedName,
-      participants,
-      participantLinks: sanitizeParticipantLinks(participants, links),
-      settlementMethod: showSettlementMethod
-        ? settlementMethod
-        : normalizeSettlementMethod(trip?.settlementMethod) ||
-          DEFAULT_SETTLEMENT_METHOD,
-    });
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        name: trimmedName,
+        participants,
+        participantLinks: sanitizeParticipantLinks(participants, links),
+        settlementMethod: showSettlementMethod
+          ? settlementMethod
+          : normalizeSettlementMethod(trip?.settlementMethod) ||
+            DEFAULT_SETTLEMENT_METHOD,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -169,13 +174,11 @@ export function TripForm({
           ) : (
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
           )}
-          <span className="text-sm font-medium">Participants &amp; links</span>
+          <span className="text-sm font-medium">Participants and links</span>
           <span className="ml-auto text-xs text-muted-foreground">
             {participants.length} participant
             {participants.length === 1 ? "" : "s"}
-            {participants.length > 0
-              ? ` · ${linkedCount} linked`
-              : ""}
+            {participants.length > 0 ? ` · ${linkedCount} linked` : ""}
           </span>
         </button>
 
@@ -198,11 +201,23 @@ export function TripForm({
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={submitting}
+        >
           Cancel
         </Button>
-        <Button type="submit">
-          {isEditMode ? "Save Changes" : "Create Trip"}
+        <Button type="submit" disabled={submitting} className="gap-1.5">
+          {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {submitting
+            ? isEditMode
+              ? "Saving..."
+              : "Creating..."
+            : isEditMode
+              ? "Save Changes"
+              : "Create Trip"}
         </Button>
       </div>
     </form>

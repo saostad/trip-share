@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -71,6 +72,7 @@ export function DeleteTripDialog({
             onClick={handleDelete}
             disabled={deleting}
           >
+            {deleting && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
             {deleting ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>

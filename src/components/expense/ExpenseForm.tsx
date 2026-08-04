@@ -17,6 +17,7 @@ import {
   Camera,
   Keyboard,
   Receipt,
+  Loader2,
 } from "lucide-react";
 import {
   EXPENSE_CATEGORIES,
@@ -28,7 +29,6 @@ interface ExpenseFormProps {
   expense?: Expense;
   participants: string[];
   tripId?: string;
-  /** When adding, pre-select this participant as payer (e.g. linked to current user) */
   defaultPaidBy?: string;
   onSubmit: (data: {
     description: string;
@@ -38,7 +38,7 @@ interface ExpenseFormProps {
     paidBy: string;
     sharedBy: string[];
     attachment?: FileAttachment | null;
-  }) => void;
+  }) => void | Promise<void>;
   onCancel?: () => void;
 }
 
@@ -74,6 +74,7 @@ export function ExpenseForm({
     isEditMode ? "form" : "start"
   );
   const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
   const [category, setCategory] = useState<string | null>(
     initialCategory(expense)
@@ -140,7 +141,6 @@ export function ExpenseForm({
       setAmountError("");
       return true;
     }
-
     if (stepIndex === 2) {
       if (!paidBy) {
         setPaidByError("Please select who paid");
@@ -149,7 +149,6 @@ export function ExpenseForm({
       setPaidByError("");
       return true;
     }
-
     if (stepIndex === 3) {
       if (sharedBy.length === 0) {
         setSharedByError("At least one participant must be selected");
@@ -158,7 +157,6 @@ export function ExpenseForm({
       setSharedByError("");
       return true;
     }
-
     return true;
   }
 
@@ -188,7 +186,8 @@ export function ExpenseForm({
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
+    if (submitting) return;
     const parsedAmount = parseFloat(amount);
     let hasError = false;
 
@@ -199,7 +198,6 @@ export function ExpenseForm({
     } else {
       setAmountError("");
     }
-
     if (!paidBy) {
       setPaidByError("Please select who paid");
       if (!hasError) setStep(2);
@@ -207,7 +205,6 @@ export function ExpenseForm({
     } else {
       setPaidByError("");
     }
-
     if (sharedBy.length === 0) {
       setSharedByError("At least one participant must be selected");
       if (!hasError) setStep(3);
@@ -215,33 +212,36 @@ export function ExpenseForm({
     } else {
       setSharedByError("");
     }
-
     if (hasError) return;
 
-    onSubmit({
-      description: description.trim() || "Expense",
-      category,
-      date,
-      amount: parsedAmount,
-      paidBy,
-      sharedBy,
-      attachment,
-    });
-
-    if (!isEditMode) {
-      setCategory(null);
-      setDescription("");
-      setDate(today);
-      setAmount("");
-      setPaidBy(
-        defaultPaidBy && participants.includes(defaultPaidBy)
-          ? defaultPaidBy
-          : participants[0] ?? ""
-      );
-      setSharedBy([...participants]);
-      setAttachment(null);
-      setStep(0);
-      setPhase("start");
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        description: description.trim() || "Expense",
+        category,
+        date,
+        amount: parsedAmount,
+        paidBy,
+        sharedBy,
+        attachment,
+      });
+      if (!isEditMode) {
+        setCategory(null);
+        setDescription("");
+        setDate(today);
+        setAmount("");
+        setPaidBy(
+          defaultPaidBy && participants.includes(defaultPaidBy)
+            ? defaultPaidBy
+            : participants[0] ?? ""
+        );
+        setSharedBy([...participants]);
+        setAttachment(null);
+        setStep(0);
+        setPhase("start");
+      }
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -267,7 +267,6 @@ export function ExpenseForm({
             Start from a receipt, or enter details manually.
           </p>
         </div>
-
         {tripId ? (
           <div className="space-y-2 rounded-lg border border-input p-4">
             <div className="flex items-center gap-2 text-sm font-medium">
@@ -288,7 +287,6 @@ export function ExpenseForm({
             Receipt upload needs a trip context.
           </p>
         )}
-
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-border" />
@@ -297,24 +295,12 @@ export function ExpenseForm({
             <span className="bg-background px-2 text-muted-foreground">or</span>
           </div>
         </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full gap-2"
-          onClick={startManual}
-        >
+        <Button type="button" variant="outline" className="w-full gap-2" onClick={startManual}>
           <Keyboard className="h-4 w-4" />
           Enter manually
         </Button>
-
         {onCancel && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={onCancel}
-          >
+          <Button type="button" variant="ghost" className="w-full" onClick={onCancel}>
             Cancel
           </Button>
         )}
@@ -350,26 +336,21 @@ export function ExpenseForm({
           </div>
         ))}
       </div>
-
       <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full bg-primary transition-all duration-300"
           style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
         />
       </div>
-
       {attachment && step === 0 && (
         <p className="rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
           Receipt attached: {attachment.name}. Fill in the details below.
         </p>
       )}
-
       {step === 0 && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">
-              What was it for?
-            </label>
+            <label className="text-sm font-medium leading-none">What was it for?</label>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {EXPENSE_CATEGORIES.map((c) => {
                 const Icon = c.icon;
@@ -387,62 +368,33 @@ export function ExpenseForm({
                     }
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    <span className="text-[11px] font-medium leading-tight">
-                      {c.label}
-                    </span>
+                    <span className="text-[11px] font-medium leading-tight">{c.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-
           <div className="space-y-2">
-            <label
-              htmlFor="expense-description"
-              className="text-sm font-medium leading-none"
-            >
-              Description
-            </label>
+            <label htmlFor="expense-description" className="text-sm font-medium leading-none">Description</label>
             <Input
               id="expense-description"
               value={description}
               onChange={(e) => handleDescriptionChange(e.target.value)}
               placeholder="Or type your own description"
             />
-            <p className="text-xs text-muted-foreground">
-              Tap a category above or type a custom description.
-            </p>
+            <p className="text-xs text-muted-foreground">Tap a category above or type a custom description.</p>
           </div>
-
           <div className="space-y-2">
-            <label
-              htmlFor="expense-date"
-              className="text-sm font-medium leading-none"
-            >
-              Date
-            </label>
-            <Input
-              id="expense-date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <label htmlFor="expense-date" className="text-sm font-medium leading-none">Date</label>
+            <Input id="expense-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
         </div>
       )}
-
       {step === 1 && (
         <div className="space-y-2">
-          <label
-            htmlFor="expense-amount"
-            className="text-sm font-medium leading-none"
-          >
-            Amount
-          </label>
+          <label htmlFor="expense-amount" className="text-sm font-medium leading-none">Amount</label>
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              $
-            </span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
             <Input
               id="expense-amount"
               type="number"
@@ -459,12 +411,9 @@ export function ExpenseForm({
               autoFocus
             />
           </div>
-          {amountError && (
-            <p className="text-sm text-destructive">{amountError}</p>
-          )}
+          {amountError && <p className="text-sm text-destructive">{amountError}</p>}
         </div>
       )}
-
       {step === 2 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Paid by</label>
@@ -480,31 +429,20 @@ export function ExpenseForm({
             </SelectTrigger>
             <SelectContent>
               {participants.map((participant) => (
-                <SelectItem key={participant} value={participant}>
-                  {participant}
-                </SelectItem>
+                <SelectItem key={participant} value={participant}>{participant}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {paidByError && (
-            <p className="text-sm text-destructive">{paidByError}</p>
-          )}
+          {paidByError && <p className="text-sm text-destructive">{paidByError}</p>}
         </div>
       )}
-
       {step === 3 && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">Shared by</label>
           <div className="space-y-2 rounded-lg border border-input p-3">
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="select-all"
-                checked={allSelected}
-                onCheckedChange={handleSelectAll}
-              />
-              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
-                Select All
-              </label>
+              <Checkbox id="select-all" checked={allSelected} onCheckedChange={handleSelectAll} />
+              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">Select All</label>
             </div>
             <div className="h-px bg-border" />
             {participants.map((participant) => (
@@ -514,26 +452,19 @@ export function ExpenseForm({
                   checked={sharedBy.includes(participant)}
                   onCheckedChange={() => handleToggleParticipant(participant)}
                 />
-                <label htmlFor={`shared-${participant}`} className="text-sm cursor-pointer">
-                  {participant}
-                </label>
+                <label htmlFor={`shared-${participant}`} className="text-sm cursor-pointer">{participant}</label>
               </div>
             ))}
           </div>
-          {sharedByError && (
-            <p className="text-sm text-destructive">{sharedByError}</p>
-          )}
+          {sharedByError && <p className="text-sm text-destructive">{sharedByError}</p>}
         </div>
       )}
-
       {step === 4 && (
         <div className="space-y-4">
           <div className="rounded-lg border border-input bg-muted/30 p-3 text-sm space-y-1.5">
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Description</span>
-              <span className="font-medium text-right truncate max-w-[60%]">
-                {description.trim() || "—"}
-              </span>
+              <span className="font-medium text-right truncate max-w-[60%]">{description.trim() || "—"}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Date</span>
@@ -541,9 +472,7 @@ export function ExpenseForm({
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Amount</span>
-              <span className="font-medium">
-                ${parseFloat(amount || "0").toFixed(2)}
-              </span>
+              <span className="font-medium">${parseFloat(amount || "0").toFixed(2)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Paid by</span>
@@ -552,43 +481,39 @@ export function ExpenseForm({
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Shared by</span>
               <span className="font-medium text-right max-w-[60%]">
-                {sharedBy.length === participants.length
-                  ? "Everyone"
-                  : sharedBy.join(", ") || "—"}
+                {sharedBy.length === participants.length ? "Everyone" : sharedBy.join(", ") || "—"}
               </span>
             </div>
           </div>
-
           {tripId ? (
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none">
-                Receipt / Document (optional)
-              </label>
-              <FileUpload
-                storagePath={`trips/${tripId}/expenses`}
-                value={attachment}
-                onChange={setAttachment}
-              />
+              <label className="text-sm font-medium leading-none">Receipt / Document (optional)</label>
+              <FileUpload storagePath={`trips/${tripId}/expenses`} value={attachment} onChange={setAttachment} />
             </div>
           ) : null}
         </div>
       )}
-
       <div className="flex justify-between gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={handleBack} className="gap-1">
+        <Button type="button" variant="outline" onClick={handleBack} className="gap-1" disabled={submitting}>
           <ChevronLeft className="h-3.5 w-3.5" />
           Back
         </Button>
-
         <div className="flex gap-2">
           {!isLastStep ? (
-            <Button type="button" onClick={handleNext} className="gap-1">
+            <Button type="button" onClick={handleNext} className="gap-1" disabled={submitting}>
               Next
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           ) : (
-            <Button type="button" onClick={handleSave}>
-              {isEditMode ? "Save Changes" : "Add Expense"}
+            <Button type="button" onClick={handleSave} disabled={submitting} className="gap-1.5">
+              {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {submitting
+                ? isEditMode
+                  ? "Saving..."
+                  : "Adding..."
+                : isEditMode
+                  ? "Save Changes"
+                  : "Add Expense"}
             </Button>
           )}
         </div>

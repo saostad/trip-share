@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,7 @@ interface EditPaymentFormProps {
   payment: Payment;
   participants: string[];
   tripId?: string;
-  onSubmit: (data: { from: string; to: string; amount: number; date: string; note: string; attachment?: FileAttachment | null }) => void;
+  onSubmit: (data: { from: string; to: string; amount: number; date: string; note: string; attachment?: FileAttachment | null }) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -25,13 +26,15 @@ export function EditPaymentForm({ payment, participants, tripId, onSubmit, onCan
   const [amount, setAmount] = useState(String(payment.amount));
   const [date, setDate] = useState(payment.date);
   const [note, setNote] = useState(payment.note ?? "");
+  const [submitting, setSubmitting] = useState(false);
   const [attachment, setAttachment] = useState<FileAttachment | null>(payment.attachment ?? null);
 
   const [amountError, setAmountError] = useState("");
   const [personError, setPersonError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
 
     const parsedAmount = parseFloat(amount);
     let hasError = false;
@@ -52,8 +55,21 @@ export function EditPaymentForm({ payment, participants, tripId, onSubmit, onCan
 
     if (hasError) return;
 
-    onSubmit({ from, to, amount: parsedAmount, date, note: note.trim(), attachment });
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        from,
+        to,
+        amount: parsedAmount,
+        date,
+        note: note.trim(),
+        attachment,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -150,10 +166,13 @@ export function EditPaymentForm({ payment, participants, tripId, onSubmit, onCan
       )}
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Cancel
         </Button>
-        <Button type="submit">Save Changes</Button>
+        <Button type="submit" disabled={submitting} className="gap-1.5">
+          {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {submitting ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
     </form>
   );

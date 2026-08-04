@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
 import type { FileAttachment } from "@/types";
 
 export interface PaymentSubmitData {
@@ -27,7 +28,7 @@ interface PaymentFormProps {
   tripId?: string;
   /** Pre-select payer when linked to current user */
   defaultFrom?: string;
-  onSubmit: (payments: PaymentSubmitData[]) => void;
+  onSubmit: (payments: PaymentSubmitData[]) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -47,6 +48,7 @@ export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCan
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
   const [attachment, setAttachment] = useState<FileAttachment | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [amountError, setAmountError] = useState("");
   const [personError, setPersonError] = useState("");
@@ -72,8 +74,9 @@ export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCan
     if (splitError) setSplitError("");
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
 
     const parsedAmount = parseFloat(amount);
     let hasError = false;
@@ -115,41 +118,46 @@ export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCan
 
     if (hasError) return;
 
-    if (!onBehalfMode) {
-      onSubmit([{ from, to, amount: parsedAmount, date, note: note.trim(), attachment }]);
-    } else if (customAmounts) {
-      const payments: PaymentSubmitData[] = allPayers
-        .map((person, idx) => {
-          const personAmount = Math.round(parseFloat(personAmounts[person] ?? "0") * 100) / 100;
-          return {
-            from: person,
-            to,
-            amount: personAmount,
-            date,
-            note: note.trim()
-              ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
-              : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
-            attachment: idx === 0 ? attachment : null,
-          };
-        })
-        .filter((p) => p.amount > 0);
+    setSubmitting(true);
+    try {
+      if (!onBehalfMode) {
+        await onSubmit([{ from, to, amount: parsedAmount, date, note: note.trim(), attachment }]);
+      } else if (customAmounts) {
+        const payments: PaymentSubmitData[] = allPayers
+          .map((person, idx) => {
+            const personAmount = Math.round(parseFloat(personAmounts[person] ?? "0") * 100) / 100;
+            return {
+              from: person,
+              to,
+              amount: personAmount,
+              date,
+              note: note.trim()
+                ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
+                : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
+              attachment: idx === 0 ? attachment : null,
+            };
+          })
+          .filter((p) => p.amount > 0);
 
-      onSubmit(payments);
-    } else {
-      const perPerson = Math.round((parsedAmount / allPayers.length) * 100) / 100;
+        await onSubmit(payments);
+      } else {
+        const perPerson = Math.round((parsedAmount / allPayers.length) * 100) / 100;
 
-      const payments: PaymentSubmitData[] = allPayers.map((person, idx) => ({
-        from: person,
-        to,
-        amount: perPerson,
-        date,
-        note: note.trim()
-          ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
-          : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
-        attachment: idx === 0 ? attachment : null,
-      }));
+        const payments: PaymentSubmitData[] = allPayers.map((person, idx) => ({
+          from: person,
+          to,
+          amount: perPerson,
+          date,
+          note: note.trim()
+            ? `${note.trim()} (paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`
+            : `(paid $${parsedAmount.toFixed(2)} by ${from} on behalf of ${allPayers.join(", ")})`,
+          attachment: idx === 0 ? attachment : null,
+        }));
 
-      onSubmit(payments);
+        await onSubmit(payments);
+      }
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -363,10 +371,13 @@ export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCan
       )}
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Cancel
         </Button>
-        <Button type="submit">Record Payment</Button>
+        <Button type="submit" disabled={submitting} className="gap-1.5">
+          {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {submitting ? "Recording..." : "Record Payment"}
+        </Button>
       </div>
     </form>
   );
