@@ -10,13 +10,15 @@ export const DEFAULT_SETTLEMENT_METHOD: SettlementMethod = "greedy";
 export function normalizeSettlementMethod(
   method: SettlementMethod | string | null | undefined,
 ): SettlementMethod {
-  return method === "pairwise" ? "pairwise" : "greedy";
+  if (method === "pairwise") return "pairwise";
+  if (method === "smallest") return "smallest";
+  return "greedy";
 }
 
 export function settlementMethodLabel(method: SettlementMethod): string {
-  return method === "pairwise"
-    ? "Pairwise netting"
-    : "Greedy (largest first)";
+  if (method === "pairwise") return "Pairwise netting";
+  if (method === "smallest") return "Smallest first (clear one person)";
+  return "Greedy (largest first)";
 }
 
 /**
@@ -105,7 +107,7 @@ export interface SettlementExplanation extends Transaction {
   fromNet: number;
   /** Creditor's full net balance (amount they are owed overall), if applicable */
   toNet: number;
-  /** Remaining debt/credit used when choosing this transfer (greedy) or pairwise net */
+  /** Remaining debt/credit used when choosing this transfer */
   fromRemainingBefore: number;
   toRemainingBefore: number;
   /** Index in the suggested settlement list (1-based) */
@@ -128,6 +130,9 @@ export function computeSettlements(
     return pairwiseNettingWithDetails(expenses, payments);
   }
   const balances = calculateBalances(expenses, participants, payments);
+  if (m === "smallest") {
+    return smallestFirstWithDetails(balances);
+  }
   return simplifyDebtsWithDetails(balances);
 }
 
@@ -203,15 +208,119 @@ export function simplifyDebtsWithDetails(
 }
 
 /**
+ * Clear one person at a time, always the one with the smallest absolute
+ * remaining balance. That person settles against the largest opposite side,
+ * which usually finishes them in a single transfer.
+ */
+export function smallestFirstWithDetails(
+  balances: Record<string, number>,
+): SettlementExplanation[] {
+  const THRESHOLD = 0.01;
+  const remaining: Record<string, number> = {};
+  for (const [name, bal] of Object.entries(balances)) {
+    remaining[name] = bal;
+  }
+
+  const transactions: SettlementExplanation[] = [];
+  let step = 0;
+  const maxSteps = Object.keys(balances).length * 4 + 20;
+
+  while (step < maxSteps) {
+    const active = Object.entries(remaining)
+      .filter(([, bal]) => Math.abs(bal) > THRESHOLD)
+      .map(([name, amount]) => ({ name, amount }));
+
+    if (active.length < 2) break;
+
+    // Smallest absolute remaining balance first; stable by name
+    active.sort(
+      (a, b) =>
+        Math.abs(a.amount) - Math.abs(b.amount) || a.name.localeCompare(b.name),
+    );
+    const focus = active[0];
+
+    if (focus.amount < 0) {
+      // Focus person owes money — pay the largest creditor
+      const creditors = active
+        .filter((p) => p.amount > THRESHOLD)
+        .sort(
+          (a, b) => b.amount - a.amount || a.name.localeCompare(b.name),
+        );
+      if (creditors.length === 0) break;
+      const creditor = creditors[0];
+
+      const fromRemainingBefore = round2(Math.abs(focus.amount));
+      const toRemainingBefore = round2(creditor.amount);
+      const transferAmount = round2(
+        Math.min(fromRemainingBefore, toRemainingBefore),
+      );
+      if (transferAmount <= 0) break;
+
+      step += 1;
+      transactions.push({
+        from: focus.name,
+        to: creditor.name,
+        amount: transferAmount,
+        method: "smallest",
+        fromNet: round2(-(balances[focus.name] ?? 0)),
+        toNet: round2(balances[creditor.name] ?? 0),
+        fromRemainingBefore,
+        toRemainingBefore,
+        step,
+        note: `Smallest-first step ${step}: clear ${focus.name} (smallest |balance|) by paying ${creditor.name}`,
+      });
+
+      remaining[focus.name] = round2(
+        (remaining[focus.name] ?? 0) + transferAmount,
+      );
+      remaining[creditor.name] = round2(
+        (remaining[creditor.name] ?? 0) - transferAmount,
+      );
+    } else {
+      // Focus person is owed money — receive from the largest debtor
+      const debtors = active
+        .filter((p) => p.amount < -THRESHOLD)
+        .sort(
+          (a, b) => a.amount - b.amount || a.name.localeCompare(b.name),
+        );
+      if (debtors.length === 0) break;
+      const debtor = debtors[0];
+
+      const fromRemainingBefore = round2(Math.abs(debtor.amount));
+      const toRemainingBefore = round2(focus.amount);
+      const transferAmount = round2(
+        Math.min(fromRemainingBefore, toRemainingBefore),
+      );
+      if (transferAmount <= 0) break;
+
+      step += 1;
+      transactions.push({
+        from: debtor.name,
+        to: focus.name,
+        amount: transferAmount,
+        method: "smallest",
+        fromNet: round2(-(balances[debtor.name] ?? 0)),
+        toNet: round2(balances[focus.name] ?? 0),
+        fromRemainingBefore,
+        toRemainingBefore,
+        step,
+        note: `Smallest-first step ${step}: clear ${focus.name} (smallest |balance|) by receiving from ${debtor.name}`,
+      });
+
+      remaining[debtor.name] = round2(
+        (remaining[debtor.name] ?? 0) + transferAmount,
+      );
+      remaining[focus.name] = round2(
+        (remaining[focus.name] ?? 0) - transferAmount,
+      );
+    }
+  }
+
+  return transactions;
+}
+
+/**
  * Pairwise netting from raw expenses (and recorded payments).
- *
- * For each expense paid by P and shared by S:
- *   each s in S (s ≠ P) owes P (amount / |S|).
- * For each payment A → B of X:
- *   reduce A's debt to B by X (netting).
- * Then emit one transfer per directed pair with net > threshold.
- *
- * Transfers only appear between people who actually shared costs (or paid each other).
  */
 export function pairwiseNettingWithDetails(
   expenses: Expense[],
@@ -226,7 +335,6 @@ export function pairwiseNettingWithDetails(
     return { key: `${b}\0${a}`, sign: -1 };
   }
 
-  /** debtor owes creditor `amount` more */
   function addOwed(debtor: string, creditor: string, amount: number) {
     if (!debtor || !creditor || debtor === creditor || amount === 0) return;
     const { key, sign } = pairKey(debtor, creditor);
@@ -245,12 +353,9 @@ export function pairwiseNettingWithDetails(
   }
 
   for (const p of payments) {
-    // A paid B: reduces what A owes B
     addOwed(p.from, p.to, -p.amount);
   }
 
-  const balances = calculateBalances(expenses, [], payments);
-  // rebuild balances including all names seen
   const names = new Set<string>();
   for (const e of expenses) {
     names.add(e.paidBy);
@@ -260,14 +365,9 @@ export function pairwiseNettingWithDetails(
     names.add(p.from);
     names.add(p.to);
   }
-  const fullBalances = calculateBalances(
-    expenses,
-    [...names],
-    payments,
-  );
+  const fullBalances = calculateBalances(expenses, [...names], payments);
 
   const transactions: SettlementExplanation[] = [];
-  let step = 0;
 
   const entries = [...net.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -276,10 +376,8 @@ export function pairwiseNettingWithDetails(
     if (Math.abs(amount) < THRESHOLD) continue;
 
     const [a, b] = key.split("\0");
-    step += 1;
 
     if (amount > 0) {
-      // a owes b
       transactions.push({
         from: a,
         to: b,
@@ -289,11 +387,10 @@ export function pairwiseNettingWithDetails(
         toNet: round2(fullBalances[b] ?? 0),
         fromRemainingBefore: Math.abs(amount),
         toRemainingBefore: Math.abs(amount),
-        step,
+        step: 0,
         note: `Pairwise net: ${a} owes ${b} after expense shares and recorded payments`,
       });
     } else {
-      // b owes a
       transactions.push({
         from: b,
         to: a,
@@ -303,20 +400,18 @@ export function pairwiseNettingWithDetails(
         toNet: round2(fullBalances[a] ?? 0),
         fromRemainingBefore: Math.abs(amount),
         toRemainingBefore: Math.abs(amount),
-        step,
+        step: 0,
         note: `Pairwise net: ${b} owes ${a} after expense shares and recorded payments`,
       });
     }
   }
 
-  // Stable, readable order: larger amounts first
-  transactions.sort((x, y) => y.amount - x.amount || x.from.localeCompare(y.from));
+  transactions.sort(
+    (x, y) => y.amount - x.amount || x.from.localeCompare(y.from),
+  );
   transactions.forEach((t, idx) => {
     t.step = idx + 1;
   });
-
-  // silence unused if any
-  void balances;
 
   return transactions;
 }
