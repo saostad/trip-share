@@ -90,40 +90,6 @@ export function TripForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="trip-name" className="text-sm font-medium leading-none">
-          Trip Name
-        </label>
-        <Input
-          id="trip-name"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            if (nameError) setNameError("");
-          }}
-          placeholder="Enter trip name"
-          aria-invalid={!!nameError}
-          aria-describedby={nameError ? "trip-name-error" : undefined}
-        />
-        {nameError && (
-          <p id="trip-name-error" className="text-sm text-destructive">
-            {nameError}
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium leading-none">Participants</label>
-        <ParticipantInput
-          participants={participants}
-          expenses={expenses}
-          onChange={setParticipants}
-          accountOptions={accountOptions}
-          links={links}
-          onLinksChange={setLinks}
-        />
-      </div>
-
       {showSettlementMethod && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">
@@ -160,6 +126,40 @@ export function TripForm({
           </p>
         </div>
       )}
+
+      <div className="space-y-2">
+        <label htmlFor="trip-name" className="text-sm font-medium leading-none">
+          Trip Name
+        </label>
+        <Input
+          id="trip-name"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (nameError) setNameError("");
+          }}
+          placeholder="Enter trip name"
+          aria-invalid={!!nameError}
+          aria-describedby={nameError ? "trip-name-error" : undefined}
+        />
+        {nameError && (
+          <p id="trip-name-error" className="text-sm text-destructive">
+            {nameError}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium leading-none">Participants</label>
+        <ParticipantInput
+          participants={participants}
+          expenses={expenses}
+          onChange={setParticipants}
+          accountOptions={accountOptions}
+          links={links}
+          onLinksChange={setLinks}
+        />
+      </div>
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
