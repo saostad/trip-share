@@ -18,6 +18,7 @@ import {
   normalizeSettlementMethod,
   settlementMethodLabel,
 } from "@/lib/balances";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { Trip, Expense, SettlementMethod } from "@/types";
 
 interface TripFormProps {
@@ -26,6 +27,8 @@ interface TripFormProps {
   accountOptions?: AccountOption[];
   /** When true, show settlement method (owner create/edit). */
   showSettlementMethod?: boolean;
+  /** Start with participants section expanded (default true for create). */
+  defaultParticipantsOpen?: boolean;
   onSubmit: (data: {
     name: string;
     participants: string[];
@@ -50,6 +53,7 @@ export function TripForm({
   expenses = [],
   accountOptions = [],
   showSettlementMethod = true,
+  defaultParticipantsOpen = true,
   onSubmit,
   onCancel,
 }: TripFormProps) {
@@ -64,8 +68,12 @@ export function TripForm({
     normalizeSettlementMethod(trip?.settlementMethod),
   );
   const [nameError, setNameError] = useState("");
+  const [participantsOpen, setParticipantsOpen] = useState(
+    defaultParticipantsOpen,
+  );
 
   const isEditMode = !!trip;
+  const linkedCount = participants.filter((p) => !!links[p]).length;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,6 +98,28 @@ export function TripForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="trip-name" className="text-sm font-medium leading-none">
+          Trip Name
+        </label>
+        <Input
+          id="trip-name"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (nameError) setNameError("");
+          }}
+          placeholder="Enter trip name"
+          aria-invalid={!!nameError}
+          aria-describedby={nameError ? "trip-name-error" : undefined}
+        />
+        {nameError && (
+          <p id="trip-name-error" className="text-sm text-destructive">
+            {nameError}
+          </p>
+        )}
+      </div>
+
       {showSettlementMethod && (
         <div className="space-y-2">
           <label className="text-sm font-medium leading-none">
@@ -127,41 +157,47 @@ export function TripForm({
         </div>
       )}
 
-      <div className="space-y-2">
-        <label htmlFor="trip-name" className="text-sm font-medium leading-none">
-          Trip Name
-        </label>
-        <Input
-          id="trip-name"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            if (nameError) setNameError("");
-          }}
-          placeholder="Enter trip name"
-          aria-invalid={!!nameError}
-          aria-describedby={nameError ? "trip-name-error" : undefined}
-        />
-        {nameError && (
-          <p id="trip-name-error" className="text-sm text-destructive">
-            {nameError}
-          </p>
+      <div className="overflow-hidden rounded-lg border border-border">
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/40"
+          onClick={() => setParticipantsOpen((v) => !v)}
+          aria-expanded={participantsOpen}
+        >
+          {participantsOpen ? (
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          )}
+          <span className="text-sm font-medium">Participants &amp; links</span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {participants.length} participant
+            {participants.length === 1 ? "" : "s"}
+            {participants.length > 0
+              ? ` · ${linkedCount} linked`
+              : ""}
+          </span>
+        </button>
+
+        {participantsOpen && (
+          <div className="space-y-2 border-t border-border px-3 py-3">
+            <p className="text-xs text-muted-foreground">
+              Optionally link a name to a collaborator account (for defaults and
+              notifications).
+            </p>
+            <ParticipantInput
+              participants={participants}
+              expenses={expenses}
+              onChange={setParticipants}
+              accountOptions={accountOptions}
+              links={links}
+              onLinksChange={setLinks}
+            />
+          </div>
         )}
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium leading-none">Participants</label>
-        <ParticipantInput
-          participants={participants}
-          expenses={expenses}
-          onChange={setParticipants}
-          accountOptions={accountOptions}
-          links={links}
-          onLinksChange={setLinks}
-        />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
