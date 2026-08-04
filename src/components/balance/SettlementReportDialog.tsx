@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { buildSettlementReport } from "@/lib/settlementReport";
 import type { SettlementReportData } from "@/lib/settlementReport";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { Download, FileText, Printer } from "lucide-react";
 import type { Expense, Payment } from "@/types";
 
@@ -68,25 +68,13 @@ export function SettlementReportDialog({
     return "text-muted-foreground";
   }
 
-  function deltaClass(n: number): string {
-    if (n > 0.01) return "text-emerald-600";
-    if (n < -0.01) return "text-destructive";
-    return "text-muted-foreground";
-  }
-
-  function formatDelta(n: number): string {
-    if (Math.abs(n) < 0.005) return "0.00";
-    const sign = n > 0 ? "+" : "−";
-    return `${sign}${formatCurrency(n)}`;
-  }
-
   function handlePrint() {
-    const html = buildReportHtml(report, participants, generatedLabel, true);
+    const html = buildReportHtml(report, generatedLabel);
     printHtml(html);
   }
 
   function handleDownload() {
-    const html = buildReportHtml(report, participants, generatedLabel, true);
+    const html = buildReportHtml(report, generatedLabel);
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -269,13 +257,13 @@ export function SettlementReportDialog({
               <li>
                 Balance checksum:{" "}
                 <span className="font-mono font-medium">
-                  {report.balanceChecksum >= 0 ? "+" : "−"}
+                  {report.balanceChecksum >= 0 ? "+" : "-"}
                   {formatCurrency(report.balanceChecksum)}
                 </span>
                 {report.isBalanced ? (
-                  <span className="ml-2 text-emerald-600">✓ balanced</span>
+                  <span className="ml-2 text-emerald-600">balanced</span>
                 ) : (
-                  <span className="ml-2 text-destructive">⚠ not zero</span>
+                  <span className="ml-2 text-destructive">not zero</span>
                 )}
               </li>
             </ul>
@@ -296,28 +284,48 @@ function esc(s: string): string {
 
 function buildReportHtml(
   report: SettlementReportData,
-  participants: string[],
   generatedLabel: string,
-  _includeLedger: boolean,
 ): string {
   const remaining =
     report.remainingSettlements.length === 0
       ? "<p>All settled.</p>"
-      : `<ul>${report.remainingSettlements
+      : "<ul>" +
+        report.remainingSettlements
           .map(
             (t) =>
-              `<li><strong>${esc(t.from)}</strong> pays <strong>${esc(t.to)}</strong> ${formatCurrency(t.amount)}</li>`,
+              "<li><strong>" +
+              esc(t.from) +
+              "</strong> pays <strong>" +
+              esc(t.to) +
+              "</strong> " +
+              formatCurrency(t.amount) +
+              "</li>",
           )
-          .join("")}</ul>`;
+          .join("") +
+        "</ul>";
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${esc(report.tripName)} — Settlement</title></head><body>
-  <h2>${esc(report.tripName)}</h2>
-  <p>Generated ${esc(generatedLabel)} · Method: ${esc(report.settlementMethodLabel)}</p>
-  <p>Participants: ${esc(report.participants.join(", "))}</p>
-  <h3>Remaining settlements</h3>
-  ${remaining}
-  <p>Checksum: ${formatCurrency(report.balanceChecksum)} ${report.isBalanced ? "(balanced)" : "(check data)"}</p>
-  </body></html>`;
+  return (
+    "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>" +
+    esc(report.tripName) +
+    " — Settlement</title></head><body>" +
+    "<h2>" +
+    esc(report.tripName) +
+    "</h2>" +
+    "<p>Generated " +
+    esc(generatedLabel) +
+    " · Method: " +
+    esc(report.settlementMethodLabel) +
+    "</p>" +
+    "<p>Participants: " +
+    esc(report.participants.join(", ")) +
+    "</p>" +
+    "<h3>Remaining settlements</h3>" +
+    remaining +
+    "<p>Checksum: " +
+    formatCurrency(report.balanceChecksum) +
+    (report.isBalanced ? " (balanced)" : " (check data)") +
+    "</p></body></html>"
+  );
 }
 
 function printHtml(html: string) {
