@@ -38,7 +38,8 @@ import { AvatarGroup } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShareLinkSection } from "@/components/trip/ShareLinkSection";
 import { CollaboratorList } from "@/components/trip/CollaboratorList";
-import { ArrowLeft, Pencil, Trash2, Plus, FileText } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, FileText, Sheet } from "lucide-react";
+import { downloadTripExcel } from "@/lib/exportTripExcel";
 import {
   collection,
   addDoc,
@@ -379,17 +380,35 @@ export function TripDetailPage() {
           </Card>
 
           <Card className="rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle>Settle Up</CardTitle>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setSettlementReportOpen(true)}
-                className="gap-1.5"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                Settlement report
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    try {
+                      downloadTripExcel(trip, expenses, payments);
+                      toast.success("Excel file downloaded");
+                    } catch {
+                      toast.error("Failed to export Excel. Please try again.");
+                    }
+                  }}
+                  className="gap-1.5"
+                >
+                  <Sheet className="h-3.5 w-3.5" />
+                  Download Excel
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSettlementReportOpen(true)}
+                  className="gap-1.5"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Settlement report
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <SettlementList
