@@ -10,14 +10,13 @@ import type { AccountOption } from "@/components/trip/ParticipantInput";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
-import type { Trip, Expense, UserProfile } from "@/types";
+import type { Trip, Expense, UserProfile, SettlementMethod } from "@/types";
 
 interface EditTripDialogProps {
   trip: Trip;
   expenses: Expense[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Owner + collaborators available to link */
   accountOptions?: AccountOption[];
   members?: Record<string, UserProfile>;
 }
@@ -37,6 +36,7 @@ export function EditTripDialog({
     name: string;
     participants: string[];
     participantLinks: Record<string, string>;
+    settlementMethod: SettlementMethod;
   }) {
     setSubmitting(true);
     try {
@@ -45,6 +45,7 @@ export function EditTripDialog({
         name: data.name,
         participants: data.participants,
         participantLinks: data.participantLinks,
+        settlementMethod: data.settlementMethod,
         updatedAt: serverTimestamp(),
       });
       toast.success("Trip updated successfully");
@@ -58,17 +59,21 @@ export function EditTripDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] w-full max-w-[calc(100%-2rem)] flex-col gap-4 overflow-hidden sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Edit Trip</DialogTitle>
         </DialogHeader>
-        <TripForm
-          trip={trip}
-          expenses={expenses}
-          accountOptions={options}
-          onSubmit={handleSubmit}
-          onCancel={() => onOpenChange(false)}
-        />
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <TripForm
+            trip={trip}
+            expenses={expenses}
+            accountOptions={options}
+            showSettlementMethod
+            defaultParticipantsOpen={false}
+            onSubmit={handleSubmit}
+            onCancel={() => onOpenChange(false)}
+          />
+        </div>
         {submitting && (
           <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/50">
             <div className="text-sm text-muted-foreground">Saving...</div>

@@ -1,5 +1,8 @@
 import type { Timestamp } from "firebase/firestore";
 
+/** How suggested Settle Up transfers are computed */
+export type SettlementMethod = "greedy" | "pairwise" | "smallest";
+
 export interface Trip {
   id: string;
   ownerId: string;
@@ -12,6 +15,11 @@ export interface Trip {
    * Names not in the map are unlinked “cash” participants.
    */
   participantLinks?: Record<string, string>;
+  /**
+   * How Settle Up suggestions are computed. Owner-only setting.
+   * Defaults to "greedy" when missing (existing trips).
+   */
+  settlementMethod?: SettlementMethod;
   shareToken: string | null; // random token for share link; null = revoked/disabled
   createdAt: Timestamp;
   updatedAt: Timestamp;

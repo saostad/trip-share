@@ -1,49 +1,42 @@
-import { calculateBalances, simplifyDebts } from "@/lib/balances";
-import type { Expense, Payment, Transaction } from "@/types";
+import {
+  calculateBalances,
+  computeSettlements,
+  normalizeSettlementMethod,
+  settlementMethodLabel,
+} from "@/lib/balances";
+import type { Expense, Payment, SettlementMethod, Transaction } from "@/types";
 
 export interface PersonSummary {
   name: string;
-  /** Sum of expenses this person paid for */
   totalPaid: number;
-  /** Sum of their fair shares across expenses */
   totalShare: number;
-  /** Settlement payments they sent */
   paymentsSent: number;
-  /** Settlement payments they received */
   paymentsReceived: number;
-  /** Net after expenses + payments (positive = owed, negative = owes) */
   netBalance: number;
 }
 
-/** How one person's balance moved in a single ledger step */
 export interface PersonDelta {
   name: string;
-  /** Change this step (signed) */
   delta: number;
-  /** Running balance after this step */
   balanceAfter: number;
-  /** Human explanation, e.g. "share of $40 ÷ 4" */
   note: string;
 }
 
 export interface LedgerStep {
-  index: number; // 1-based
+  index: number;
   kind: "expense" | "payment";
   id: string;
   date: string;
   title: string;
   amount: number;
-  /** Short narrative of the transaction */
   summary: string;
-  /** Per-person impact this step */
   effects: PersonDelta[];
-  /** Snapshot of all participants after this step */
   balancesAfter: Record<string, number>;
 }
 
 export interface SettlementReportData {
   tripName: string;
-  generatedAt: string; // ISO
+  generatedAt: string;
   participants: string[];
   expenseCount: number;
   paymentCount: number;
@@ -53,9 +46,9 @@ export interface SettlementReportData {
   expenses: Expense[];
   payments: Payment[];
   remainingSettlements: Transaction[];
-  /** Chronological walk-through of every expense & payment */
+  settlementMethod: SettlementMethod;
+  settlementMethodLabel: string;
   ledger: LedgerStep[];
-  /** Sum of all net balances — should be ~0 if math is consistent */
   balanceChecksum: number;
   isBalanced: boolean;
 }
@@ -65,9 +58,16 @@ export function buildSettlementReport(
   participants: string[],
   expenses: Expense[],
   payments: Payment[] = [],
+  settlementMethod?: SettlementMethod | string | null,
 ): SettlementReportData {
+  const method = normalizeSettlementMethod(settlementMethod);
   const balances = calculateBalances(expenses, participants, payments);
-  const remainingSettlements = simplifyDebts(balances);
+  const remainingSettlements = computeSettlements(
+    method,
+    expenses,
+    participants,
+    payments,
+  ).map(({ from, to, amount }) => ({ from, to, amount }));
   const ledger = buildLedger(participants, expenses, payments);
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
@@ -96,15 +96,13 @@ export function buildSettlementReport(
       if (p.to === name) paymentsReceived += p.amount;
     }
 
-    const netBalance = balances[name] ?? 0;
-
     return {
       name,
       totalPaid: round2(totalPaid),
       totalShare: round2(totalShare),
       paymentsSent: round2(paymentsSent),
       paymentsReceived: round2(paymentsReceived),
-      netBalance: round2(netBalance),
+      netBalance: round2(balances[name] ?? 0),
     };
   });
 
@@ -124,17 +122,14 @@ export function buildSettlementReport(
     expenses: [...expenses].sort((a, b) => a.date.localeCompare(b.date)),
     payments: [...payments].sort((a, b) => a.date.localeCompare(b.date)),
     remainingSettlements,
+    settlementMethod: method,
+    settlementMethodLabel: settlementMethodLabel(method),
     ledger,
     balanceChecksum,
     isBalanced: Math.abs(balanceChecksum) < 0.02,
   };
 }
 
-/**
- * Walk expenses and payments in chronological order and record how each
- * event changes every participant's running balance.
- * Same rules as calculateBalances, applied one event at a time.
- */
 export function buildLedger(
   participants: string[],
   expenses: Expense[],
@@ -151,7 +146,6 @@ export function buildLedger(
     ...expenses.map((expense) => ({
       kind: "expense" as const,
       date: expense.date,
-      // date + createdAt-ish + id for stable order
       sortKey: `${expense.date}\0${expense.createdAt?.toMillis?.() ?? 0}\0${expense.id}`,
       expense,
     })),
@@ -177,10 +171,8 @@ export function buildLedger(
       const sharers = e.sharedBy.length > 0 ? e.sharedBy : [];
       const share = sharers.length > 0 ? e.amount / sharers.length : 0;
 
-      // Payer is credited full amount
       running[e.paidBy] = (running[e.paidBy] ?? 0) + e.amount;
 
-      // Each sharer is debited their portion
       for (const person of sharers) {
         running[person] = (running[person] ?? 0) - share;
       }
