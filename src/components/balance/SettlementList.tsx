@@ -20,6 +20,16 @@ interface SettlementListProps {
   settlementMethod?: SettlementMethod | string | null;
 }
 
+function methodHint(method: SettlementMethod): string {
+  if (method === "pairwise") {
+    return " — transfers only between people who shared costs";
+  }
+  if (method === "smallest") {
+    return " — clears smallest remaining balance first";
+  }
+  return " — fewest global transfers (largest first)";
+}
+
 export function SettlementList({
   expenses,
   participants,
@@ -54,9 +64,7 @@ export function SettlementList({
     <>
       <p className="mb-2 text-xs text-muted-foreground">
         Method: {settlementMethodLabel(method)}
-        {method === "pairwise"
-          ? " — transfers only between people who shared costs"
-          : " — fewest global transfers (largest first)"}
+        {methodHint(method)}
       </p>
       <ul className="space-y-2">
         {transactions.map((transaction) => {
@@ -130,7 +138,7 @@ function SettlementRowDetail({
 }) {
   const from = personBalanceBreakdown(transaction.from, expenses, payments);
   const to = personBalanceBreakdown(transaction.to, expenses, payments);
-  const isPairwise = transaction.method === "pairwise";
+  const method = transaction.method;
 
   return (
     <div className="space-y-3 border-t border-border px-3 pb-3 pt-2 text-xs text-muted-foreground">
@@ -159,22 +167,30 @@ function SettlementRowDetail({
           variant="owes"
           breakdown={from}
           remaining={transaction.fromRemainingBefore}
-          remainingLabel={isPairwise ? "Pairwise net to receiver" : "Still to pay (this step)"}
+          remainingLabel={
+            method === "pairwise"
+              ? "Pairwise net to receiver"
+              : "Still to pay (this step)"
+          }
         />
         <PersonCard
           title={`${transaction.to} (receives)`}
           variant="owed"
           breakdown={to}
           remaining={transaction.toRemainingBefore}
-          remainingLabel={isPairwise ? "Pairwise net from payer" : "Still to receive (this step)"}
+          remainingLabel={
+            method === "pairwise"
+              ? "Pairwise net from payer"
+              : "Still to receive (this step)"
+          }
         />
       </div>
 
-      <div className="rounded-md border border-border bg-muted/30 px-2.5 py-2 space-y-1.5">
+      <div className="space-y-1.5 rounded-md border border-border bg-muted/30 px-2.5 py-2">
         <p className="font-medium text-foreground">
           Suggested transfer: {formatCurrency(transaction.amount)}
         </p>
-        {isPairwise ? (
+        {method === "pairwise" ? (
           <>
             <p>
               Pairwise netting accumulates each person&apos;s share of expenses
@@ -182,6 +198,23 @@ function SettlementRowDetail({
               pair.
             </p>
             <p className="font-medium text-foreground">{transaction.note}</p>
+          </>
+        ) : method === "smallest" ? (
+          <>
+            <p>
+              Smallest-first always settles the person with the smallest absolute
+              remaining balance against the largest opposite side (step{" "}
+              {transaction.step}).
+            </p>
+            <p className="font-medium text-foreground">{transaction.note}</p>
+            <p>
+              min(
+              {formatCurrency(transaction.fromRemainingBefore)},{" "}
+              {formatCurrency(transaction.toRemainingBefore)}) ={" "}
+              <span className="font-semibold text-foreground">
+                {formatCurrency(transaction.amount)}
+              </span>
+            </p>
           </>
         ) : (
           <>
@@ -225,7 +258,7 @@ function PersonCard({
       : "border-emerald-500/20 bg-emerald-500/5";
 
   return (
-    <div className={`rounded-md border px-2.5 py-2 space-y-1 ${tint}`}>
+    <div className={`space-y-1 rounded-md border px-2.5 py-2 ${tint}`}>
       <p className="font-medium text-foreground">{title}</p>
       <ul className="space-y-0.5 tabular-nums">
         <li className="flex justify-between gap-2">
@@ -234,7 +267,7 @@ function PersonCard({
         </li>
         <li className="flex justify-between gap-2">
           <span>Fair share of expenses</span>
-          <span>−{formatCurrency(breakdown.totalShare)}</span>
+          <span>-{formatCurrency(breakdown.totalShare)}</span>
         </li>
         {breakdown.paymentsSent > 0 && (
           <li className="flex justify-between gap-2">
@@ -245,7 +278,7 @@ function PersonCard({
         {breakdown.paymentsReceived > 0 && (
           <li className="flex justify-between gap-2">
             <span>Settlements already received</span>
-            <span>−{formatCurrency(breakdown.paymentsReceived)}</span>
+            <span>-{formatCurrency(breakdown.paymentsReceived)}</span>
           </li>
         )}
         <li className="flex justify-between gap-2 border-t border-border/60 pt-1 font-medium text-foreground">
@@ -263,7 +296,7 @@ function PersonCard({
         </li>
       </ul>
       <p className="pt-0.5 text-[11px] leading-snug">
-        Net = paid − share + settlements sent − settlements received
+        Net = paid - share + settlements sent - settlements received
       </p>
     </div>
   );

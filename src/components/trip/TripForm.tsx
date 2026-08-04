@@ -16,6 +16,7 @@ import { sanitizeParticipantLinks } from "@/lib/participantLinks";
 import {
   DEFAULT_SETTLEMENT_METHOD,
   normalizeSettlementMethod,
+  settlementMethodLabel,
 } from "@/lib/balances";
 import type { Trip, Expense, SettlementMethod } from "@/types";
 
@@ -32,6 +33,16 @@ interface TripFormProps {
     settlementMethod: SettlementMethod;
   }) => void;
   onCancel: () => void;
+}
+
+function methodHelp(method: SettlementMethod): string {
+  if (method === "pairwise") {
+    return "Each person only settles with people they shared expenses with (after netting). May create more transfers. ";
+  }
+  if (method === "smallest") {
+    return "Always clears the person with the smallest remaining balance first. Easy to follow; may need more transfers. ";
+  }
+  return "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers. ";
 }
 
 export function TripForm({
@@ -130,22 +141,22 @@ export function TripForm({
           >
             <SelectTrigger className="w-full">
               <span className="truncate text-left">
-                {settlementMethod === "pairwise"
-                  ? "Pairwise netting"
-                  : "Greedy (largest first)"}
+                {settlementMethodLabel(settlementMethod)}
               </span>
               <SelectValue className="sr-only" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="greedy">Greedy (largest first)</SelectItem>
+              <SelectItem value="smallest">
+                Smallest first (clear one person)
+              </SelectItem>
               <SelectItem value="pairwise">Pairwise netting</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            {settlementMethod === "pairwise"
-              ? "Each person only settles with people they shared expenses with (after netting). May create more transfers. "
-              : "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers. "}
-            Only the trip owner can change this; everyone sees the same Settle Up list.
+            {methodHelp(settlementMethod)}
+            Only the trip owner can change this; everyone sees the same Settle Up
+            list.
           </p>
         </div>
       )}
