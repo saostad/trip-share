@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Receipt, Filter, X, ArrowUpDown } from "lucide-react";
 import { ExpenseItem } from "@/components/expense/ExpenseItem";
+import { ExpenseDetailDialog } from "@/components/expense/ExpenseDetailDialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -50,6 +51,7 @@ export function ExpenseList({
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date-desc");
+  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
 
   const hasActiveFilters =
     filterPaidBy !== "all" ||
@@ -272,6 +274,7 @@ export function ExpenseList({
             <ExpenseItem
               key={expense.id}
               expense={expense}
+              onView={setViewingExpense}
               onEdit={onEdit}
               onDelete={onDelete}
               readOnly={readOnly}
@@ -279,6 +282,16 @@ export function ExpenseList({
           ))}
         </ul>
       )}
+
+      <ExpenseDetailDialog
+        expense={viewingExpense}
+        open={!!viewingExpense}
+        onOpenChange={(open) => {
+          if (!open) setViewingExpense(null);
+        }}
+        onEdit={onEdit}
+        readOnly={readOnly}
+      />
     </div>
   );
 }
