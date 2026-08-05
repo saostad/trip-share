@@ -38,7 +38,16 @@ import { AvatarGroup } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShareLinkSection } from "@/components/trip/ShareLinkSection";
 import { CollaboratorList } from "@/components/trip/CollaboratorList";
-import { ArrowLeft, Pencil, Trash2, Plus, FileText, Sheet } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Plus,
+  FileText,
+  Sheet,
+  Archive,
+  ArchiveRestore,
+} from "lucide-react";
 import { downloadTripExcel } from "@/lib/exportTripExcel";
 import {
   collection,
@@ -84,8 +93,10 @@ export function TripDetailPage() {
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   const isOwner = user?.uid === trip?.ownerId;
+  const isArchived = Boolean(trip?.archived);
   const loading = tripLoading || expensesLoading || paymentsLoading;
 
   const accountOptions = buildAccountOptions(trip, user, members);
@@ -128,8 +139,34 @@ export function TripDetailPage() {
     );
   }
 
+  function guardArchived(): boolean {
+    if (isArchived) {
+      toast.error("This trip is archived and cannot be modified");
+      return true;
+    }
+    return false;
+  }
+
+  async function handleToggleArchive() {
+    if (!tripId || !isOwner) return;
+    setArchiving(true);
+    try {
+      await updateDoc(doc(db, "trips", tripId), {
+        archived: !isArchived,
+        updatedAt: serverTimestamp(),
+      });
+      toast.success(
+        isArchived ? "Trip unarchived — editing is enabled again" : "Trip archived — all edits locked",
+      );
+    } catch {
+      toast.error("Failed to update archive status. Please try again.");
+    } finally {
+      setArchiving(false);
+    }
+  }
+
   async function handleAddExpense(data: ExpenseFormData) {
-    if (!tripId) return;
+    if (!tripId || guardArchived()) return;
     setSubmitting(true);
     try {
       const expensesRef = collection(db, "trips", tripId, "expenses");
@@ -153,7 +190,7 @@ export function TripDetailPage() {
   }
 
   async function handleEditExpense(data: ExpenseFormData) {
-    if (!tripId || !editingExpense) return;
+    if (!tripId || !editingExpense || guardArchived()) return;
     setSubmitting(true);
     try {
       const expenseRef = doc(db, "trips", tripId, "expenses", editingExpense.id);
@@ -176,7 +213,7 @@ export function TripDetailPage() {
   }
 
   async function handleDeleteExpense() {
-    if (!tripId || !deletingExpense) return;
+    if (!tripId || !deletingExpense || guardArchived()) return;
     setSubmitting(true);
     try {
       const expenseRef = doc(db, "trips", tripId, "expenses", deletingExpense.id);
@@ -198,7 +235,7 @@ export function TripDetailPage() {
     note: string;
     attachment?: FileAttachment | null;
   }[]) {
-    if (!tripId) return;
+    if (!tripId || guardArchived()) return;
     setSubmitting(true);
     try {
       const paymentsRef = collection(db, "trips", tripId, "payments");
@@ -227,7 +264,7 @@ export function TripDetailPage() {
   }
 
   async function handleDeletePayment() {
-    if (!tripId || !deletingPayment) return;
+    if (!tripId || !deletingPayment || guardArchived()) return;
     setSubmitting(true);
     try {
       const paymentRef = doc(db, "trips", tripId, "payments", deletingPayment.id);
@@ -249,7 +286,7 @@ export function TripDetailPage() {
     note: string;
     attachment?: FileAttachment | null;
   }) {
-    if (!tripId || !editingPayment) return;
+    if (!tripId || !editingPayment || guardArchived()) return;
     setSubmitting(true);
     try {
       const paymentRef = doc(db, "trips", tripId, "payments", editingPayment.id);
@@ -284,7 +321,7 @@ export function TripDetailPage() {
       <Header />
       <div className="container mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6">
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <Link
               to="/"
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted"
@@ -293,7 +330,19 @@ export function TripDetailPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold">{trip.name}</h1>
+            {isArchived && (
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                Archived
+              </span>
+            )}
           </div>
+
+          {isArchived && (
+            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-100">
+              This trip is archived. Expenses, payments, and trip settings cannot be changed.
+              {isOwner && " You can unarchive it to allow edits again."}
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
@@ -315,20 +364,42 @@ export function TripDetailPage() {
               tripId={trip.id}
               collaboratorIds={trip.collaboratorIds}
               members={members}
-              isOwner={isOwner}
+              isOwner={isOwner && !isArchived}
               trip={trip}
             />
 
             {isOwner && (
-              <div className="ml-auto flex gap-2">
+              <div className="ml-auto flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setEditTripOpen(true)}
+                  onClick={handleToggleArchive}
+                  disabled={archiving}
+                  className="gap-1.5"
                 >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
-                  Edit Trip
+                  {isArchived ? (
+                    <ArchiveRestore className="h-3.5 w-3.5" />
+                  ) : (
+                    <Archive className="h-3.5 w-3.5" />
+                  )}
+                  {archiving
+                    ? isArchived
+                      ? "Unarchiving..."
+                      : "Archiving..."
+                    : isArchived
+                      ? "Unarchive"
+                      : "Archive"}
                 </Button>
+                {!isArchived && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditTripOpen(true)}
+                  >
+                    <Pencil className="mr-1 h-3.5 w-3.5" />
+                    Edit Trip
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -347,21 +418,30 @@ export function TripDetailPage() {
           <Card className="rounded-xl shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Expenses</CardTitle>
-              <Button
-                size="sm"
-                onClick={() => setAddExpenseOpen(true)}
-                className="gap-1.5"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Expense
-              </Button>
+              {!isArchived && (
+                <Button
+                  size="sm"
+                  onClick={() => setAddExpenseOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Expense
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <ExpenseList
                 expenses={expenses}
                 participants={trip.participants}
-                onEdit={(expense) => setEditingExpense(expense)}
-                onDelete={(expense) => setDeletingExpense(expense)}
+                readOnly={isArchived}
+                onEdit={
+                  isArchived ? undefined : (expense) => setEditingExpense(expense)
+                }
+                onDelete={
+                  isArchived
+                    ? undefined
+                    : (expense) => setDeletingExpense(expense)
+                }
               />
             </CardContent>
           </Card>
@@ -425,22 +505,31 @@ export function TripDetailPage() {
           <Card className="rounded-xl shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Payments</CardTitle>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setAddPaymentOpen(true)}
-                className="gap-1.5"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Record Payment
-              </Button>
+              {!isArchived && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAddPaymentOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Record Payment
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <PaymentList
                 payments={payments}
                 participants={trip.participants}
-                onEdit={(payment) => setEditingPayment(payment)}
-                onDelete={(payment) => setDeletingPayment(payment)}
+                readOnly={isArchived}
+                onEdit={
+                  isArchived ? undefined : (payment) => setEditingPayment(payment)
+                }
+                onDelete={
+                  isArchived
+                    ? undefined
+                    : (payment) => setDeletingPayment(payment)
+                }
               />
             </CardContent>
           </Card>
@@ -468,7 +557,7 @@ export function TripDetailPage() {
         settlementMethod={trip.settlementMethod}
       />
 
-      {isOwner && (
+      {isOwner && !isArchived && (
         <EditTripDialog
           trip={trip}
           expenses={expenses}
