@@ -1,5 +1,14 @@
 import { useState, useMemo } from "react";
-import { ArrowRight, Trash2, Pencil, Banknote, Filter, X, Paperclip } from "lucide-react";
+import {
+  ArrowRight,
+  Trash2,
+  Pencil,
+  Banknote,
+  Filter,
+  X,
+  Paperclip,
+  ArrowUpDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +21,23 @@ import {
 import { formatCurrency } from "@/lib/formatters";
 import type { Payment } from "@/types";
 
+type SortKey =
+  | "date-desc"
+  | "date-asc"
+  | "amount-desc"
+  | "amount-asc"
+  | "from"
+  | "to";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  "date-desc": "Date (newest)",
+  "date-asc": "Date (oldest)",
+  "amount-desc": "Amount (high → low)",
+  "amount-asc": "Amount (low → high)",
+  from: "From A–Z",
+  to: "To A–Z",
+};
+
 interface PaymentListProps {
   payments: Payment[];
   participants?: string[];
@@ -19,24 +45,58 @@ interface PaymentListProps {
   onDelete: (payment: Payment) => void;
 }
 
-export function PaymentList({ payments, participants = [], onEdit, onDelete }: PaymentListProps) {
+export function PaymentList({
+  payments,
+  participants = [],
+  onEdit,
+  onDelete,
+}: PaymentListProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filterFrom, setFilterFrom] = useState("all");
   const [filterTo, setFilterTo] = useState("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("date-desc");
 
-  const hasActiveFilters = filterFrom !== "all" || filterTo !== "all" || filterDateFrom || filterDateTo;
+  const hasActiveFilters =
+    filterFrom !== "all" || filterTo !== "all" || !!filterDateFrom || !!filterDateTo;
 
   const filteredPayments = useMemo(() => {
-    return payments.filter((payment) => {
+    const list = payments.filter((payment) => {
       if (filterFrom !== "all" && payment.from !== filterFrom) return false;
       if (filterTo !== "all" && payment.to !== filterTo) return false;
       if (filterDateFrom && payment.date < filterDateFrom) return false;
       if (filterDateTo && payment.date > filterDateTo) return false;
       return true;
     });
-  }, [payments, filterFrom, filterTo, filterDateFrom, filterDateTo]);
+
+    list.sort((a, b) => {
+      switch (sortKey) {
+        case "date-desc":
+          return b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
+        case "date-asc":
+          return a.date.localeCompare(b.date) || a.id.localeCompare(b.id);
+        case "amount-desc":
+          return b.amount - a.amount || b.date.localeCompare(a.date);
+        case "amount-asc":
+          return a.amount - b.amount || a.date.localeCompare(b.date);
+        case "from":
+          return (
+            a.from.localeCompare(b.from, undefined, { sensitivity: "base" }) ||
+            b.date.localeCompare(a.date)
+          );
+        case "to":
+          return (
+            a.to.localeCompare(b.to, undefined, { sensitivity: "base" }) ||
+            b.date.localeCompare(a.date)
+          );
+        default:
+          return 0;
+      }
+    });
+
+    return list;
+  }, [payments, filterFrom, filterTo, filterDateFrom, filterDateTo, sortKey]);
 
   function clearFilters() {
     setFilterFrom("all");
@@ -49,17 +109,14 @@ export function PaymentList({ payments, participants = [], onEdit, onDelete }: P
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
         <Banknote className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          No payments recorded yet.
-        </p>
+        <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {/* Filter toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={showFilters ? "secondary" : "ghost"}
           size="sm"
@@ -74,57 +131,95 @@ export function PaymentList({ payments, participants = [], onEdit, onDelete }: P
             </span>
           )}
         </Button>
+
+        <Select
+          value={sortKey}
+          onValueChange={(val) => {
+            const v =
+              typeof val === "string"
+                ? val
+                : (val as { value?: string } | null)?.value;
+            if (v && v in SORT_LABELS) setSortKey(v as SortKey);
+          }}
+        >
+          <SelectTrigger className="h-8 w-auto min-w-[9.5rem] gap-1.5 text-xs">
+            <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{SORT_LABELS[sortKey]}</span>
+            <SelectValue className="sr-only" />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                {SORT_LABELS[key]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-xs">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="ml-auto gap-1 text-xs"
+          >
             <X className="h-3 w-3" />
             Clear
           </Button>
         )}
       </div>
 
-      {/* Filter controls */}
       {showFilters && (
         <div className="flex flex-col gap-2 rounded-lg border border-input bg-muted/30 p-3">
-          {/* From filter */}
           {participants.length > 0 && (
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">From</label>
-              <Select value={filterFrom} onValueChange={(val) => setFilterFrom(val ?? "all")}>
+              <Select
+                value={filterFrom}
+                onValueChange={(val) => setFilterFrom(val ?? "all")}
+              >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Anyone" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Anyone</SelectItem>
                   {participants.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {/* To filter */}
           {participants.length > 0 && (
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">To</label>
-              <Select value={filterTo} onValueChange={(val) => setFilterTo(val ?? "all")}>
+              <Select
+                value={filterTo}
+                onValueChange={(val) => setFilterTo(val ?? "all")}
+              >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Anyone" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Anyone</SelectItem>
                   {participants.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
 
-          {/* Date range */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">From date</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                From date
+              </label>
               <Input
                 type="date"
                 value={filterDateFrom}
@@ -133,7 +228,9 @@ export function PaymentList({ payments, participants = [], onEdit, onDelete }: P
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">To date</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                To date
+              </label>
               <Input
                 type="date"
                 value={filterDateTo}
@@ -145,14 +242,12 @@ export function PaymentList({ payments, participants = [], onEdit, onDelete }: P
         </div>
       )}
 
-      {/* Results info */}
       {hasActiveFilters && (
         <p className="text-xs text-muted-foreground">
           Showing {filteredPayments.length} of {payments.length} payments
         </p>
       )}
 
-      {/* Payment items */}
       {filteredPayments.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
           <p className="text-sm text-muted-foreground">
