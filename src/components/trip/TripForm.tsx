@@ -90,9 +90,7 @@ export function TripForm({
   const [participantsOpen, setParticipantsOpen] = useState(
     defaultParticipantsOpen,
   );
-  const [groupsOpen, setGroupsOpen] = useState(
-    (trip?.settlementGroups?.length ?? 0) > 0,
-  );
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const isEditMode = !!trip;
