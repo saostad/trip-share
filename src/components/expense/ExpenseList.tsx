@@ -32,8 +32,9 @@ const SORT_LABELS: Record<SortKey, string> = {
 interface ExpenseListProps {
   expenses: Expense[];
   participants?: string[];
-  onEdit: (expense: Expense) => void;
-  onDelete: (expense: Expense) => void;
+  onEdit?: (expense: Expense) => void;
+  onDelete?: (expense: Expense) => void;
+  readOnly?: boolean;
 }
 
 export function ExpenseList({
@@ -41,6 +42,7 @@ export function ExpenseList({
   participants = [],
   onEdit,
   onDelete,
+  readOnly = false,
 }: ExpenseListProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filterPaidBy, setFilterPaidBy] = useState<string>("all");
@@ -114,7 +116,9 @@ export function ExpenseList({
       <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
         <Receipt className="h-10 w-10 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          No expenses yet. Add your first expense to get started.
+          {readOnly
+            ? "No expenses on this trip."
+            : "No expenses yet. Add your first expense to get started."}
         </p>
       </div>
     );
@@ -270,6 +274,7 @@ export function ExpenseList({
               expense={expense}
               onEdit={onEdit}
               onDelete={onDelete}
+              readOnly={readOnly}
             />
           ))}
         </ul>
