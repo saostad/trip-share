@@ -7,8 +7,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { resolveExpenseCategory } from "@/lib/expenseCategories";
-import { Paperclip, Pencil, Receipt } from "lucide-react";
-import type { Expense } from "@/types";
+import { ExternalLink, FileText, Paperclip, Pencil, Receipt } from "lucide-react";
+import type { Expense, FileAttachment } from "@/types";
 
 interface ExpenseDetailDialogProps {
   expense: Expense | null;
@@ -33,6 +33,74 @@ function DetailRow({
   );
 }
 
+function attachmentKind(
+  attachment: FileAttachment,
+): "image" | "pdf" | "file" {
+  const type = (attachment.type || "").toLowerCase();
+  const name = (attachment.name || attachment.url || "").toLowerCase();
+
+  if (type.startsWith("image/")) return "image";
+  if (type === "application/pdf" || type.includes("pdf")) return "pdf";
+
+  if (/\.(jpe?g|png|gif|webp|bmp|heic|heif|avif)(\?|$)/i.test(name)) {
+    return "image";
+  }
+  if (/\.pdf(\?|$)/i.test(name)) return "pdf";
+
+  return "file";
+}
+
+function AttachmentPreview({ attachment }: { attachment: FileAttachment }) {
+  const kind = attachmentKind(attachment);
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted-foreground">Attachment</p>
+
+      {kind === "image" && (
+        <a
+          href={attachment.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block overflow-hidden rounded-lg border border-border bg-muted/20"
+        >
+          <img
+            src={attachment.url}
+            alt={attachment.name}
+            className="max-h-64 w-full object-contain"
+            loading="lazy"
+          />
+        </a>
+      )}
+
+      {kind === "pdf" && (
+        <div className="overflow-hidden rounded-lg border border-border bg-muted/20">
+          <iframe
+            src={`${attachment.url}#view=FitH`}
+            title={attachment.name}
+            className="h-64 w-full bg-white"
+          />
+        </div>
+      )}
+
+      <a
+        href={attachment.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-sm text-blue-600 hover:bg-muted/40 hover:underline dark:text-blue-400"
+      >
+        {kind === "image" ? (
+          <Paperclip className="h-3.5 w-3.5 shrink-0" />
+        ) : (
+          <FileText className="h-3.5 w-3.5 shrink-0" />
+        )}
+        <span className="truncate">{attachment.name}</span>
+        <ExternalLink className="h-3 w-3 shrink-0 opacity-70" />
+      </a>
+    </div>
+  );
+}
+
 export function ExpenseDetailDialog({
   expense,
   open,
@@ -50,7 +118,7 @@ export function ExpenseDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="pr-6">Expense details</DialogTitle>
         </DialogHeader>
@@ -98,28 +166,13 @@ export function ExpenseDetailDialog({
             </DetailRow>
             <DetailRow label="Shared by">
               <span className="whitespace-pre-wrap break-words">
-                {shareCount === 0
-                  ? "—"
-                  : expense.sharedBy.join(", ")}
+                {shareCount === 0 ? "—" : expense.sharedBy.join(", ")}
               </span>
             </DetailRow>
           </div>
 
           {expense.attachment && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Attachment
-              </p>
-              <a
-                href={expense.attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-sm text-blue-600 hover:bg-muted/40 hover:underline dark:text-blue-400"
-              >
-                <Paperclip className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{expense.attachment.name}</span>
-              </a>
-            </div>
+            <AttachmentPreview attachment={expense.attachment} />
           )}
 
           <div className="flex justify-end gap-2 pt-1">
