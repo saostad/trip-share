@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Receipt, Filter, X } from "lucide-react";
+import { Receipt, Filter, X, ArrowUpDown } from "lucide-react";
 import { ExpenseItem } from "@/components/expense/ExpenseItem";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +11,23 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import type { Expense } from "@/types";
+
+type SortKey =
+  | "date-desc"
+  | "date-asc"
+  | "amount-desc"
+  | "amount-asc"
+  | "description"
+  | "paidBy";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  "date-desc": "Date (newest)",
+  "date-asc": "Date (oldest)",
+  "amount-desc": "Amount (high → low)",
+  "amount-asc": "Amount (low → high)",
+  description: "Description A–Z",
+  paidBy: "Paid by A–Z",
+};
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -30,6 +47,7 @@ export function ExpenseList({
   const [filterSharedBy, setFilterSharedBy] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("date-desc");
 
   const hasActiveFilters =
     filterPaidBy !== "all" ||
@@ -38,7 +56,7 @@ export function ExpenseList({
     !!filterDateTo;
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter((expense) => {
+    const list = expenses.filter((expense) => {
       if (filterPaidBy !== "all" && expense.paidBy !== filterPaidBy) return false;
       if (filterSharedBy !== "all" && !expense.sharedBy.includes(filterSharedBy))
         return false;
@@ -46,7 +64,43 @@ export function ExpenseList({
       if (filterDateTo && expense.date > filterDateTo) return false;
       return true;
     });
-  }, [expenses, filterPaidBy, filterSharedBy, filterDateFrom, filterDateTo]);
+
+    list.sort((a, b) => {
+      switch (sortKey) {
+        case "date-desc":
+          return b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
+        case "date-asc":
+          return a.date.localeCompare(b.date) || a.id.localeCompare(b.id);
+        case "amount-desc":
+          return b.amount - a.amount || b.date.localeCompare(a.date);
+        case "amount-asc":
+          return a.amount - b.amount || a.date.localeCompare(b.date);
+        case "description":
+          return (
+            a.description.localeCompare(b.description, undefined, {
+              sensitivity: "base",
+            }) || b.date.localeCompare(a.date)
+          );
+        case "paidBy":
+          return (
+            a.paidBy.localeCompare(b.paidBy, undefined, {
+              sensitivity: "base",
+            }) || b.date.localeCompare(a.date)
+          );
+        default:
+          return 0;
+      }
+    });
+
+    return list;
+  }, [
+    expenses,
+    filterPaidBy,
+    filterSharedBy,
+    filterDateFrom,
+    filterDateTo,
+    sortKey,
+  ]);
 
   function clearFilters() {
     setFilterPaidBy("all");
@@ -68,7 +122,7 @@ export function ExpenseList({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={showFilters ? "secondary" : "ghost"}
           size="sm"
@@ -83,12 +137,37 @@ export function ExpenseList({
             </span>
           )}
         </Button>
+
+        <Select
+          value={sortKey}
+          onValueChange={(val) => {
+            const v =
+              typeof val === "string"
+                ? val
+                : (val as { value?: string } | null)?.value;
+            if (v && v in SORT_LABELS) setSortKey(v as SortKey);
+          }}
+        >
+          <SelectTrigger className="h-8 w-auto min-w-[9.5rem] gap-1.5 text-xs">
+            <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{SORT_LABELS[sortKey]}</span>
+            <SelectValue className="sr-only" />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+              <SelectItem key={key} value={key}>
+                {SORT_LABELS[key]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {hasActiveFilters && (
           <Button
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="gap-1 text-xs"
+            className="ml-auto gap-1 text-xs"
           >
             <X className="h-3 w-3" />
             Clear
