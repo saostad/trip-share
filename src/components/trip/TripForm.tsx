@@ -19,7 +19,7 @@ import {
   settlementMethodLabel,
 } from "@/lib/balances";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import type { Trip, Expense, SettlementMethod } from "@/types";
+import type { Trip, Expense, SettlementMethod, SettlementGroup } from "@/types";
 
 interface TripFormProps {
   trip?: Trip;
@@ -32,6 +32,7 @@ interface TripFormProps {
     participants: string[];
     participantLinks: Record<string, string>;
     settlementMethod: SettlementMethod;
+    settlementGroups: SettlementGroup[];
   }) => void | Promise<void>;
   onCancel: () => void;
 }
@@ -101,6 +102,8 @@ export function TripForm({
           ? settlementMethod
           : normalizeSettlementMethod(trip?.settlementMethod) ||
             DEFAULT_SETTLEMENT_METHOD,
+        // Preserve existing groups until the groups editor UI lands
+        settlementGroups: trip?.settlementGroups ?? [],
       });
     } finally {
       setSubmitting(false);
