@@ -6,11 +6,17 @@ import type { Expense } from "@/types";
 
 interface ExpenseItemProps {
   expense: Expense;
-  onEdit: (expense: Expense) => void;
-  onDelete: (expense: Expense) => void;
+  onEdit?: (expense: Expense) => void;
+  onDelete?: (expense: Expense) => void;
+  readOnly?: boolean;
 }
 
-export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
+export function ExpenseItem({
+  expense,
+  onEdit,
+  onDelete,
+  readOnly = false,
+}: ExpenseItemProps) {
   const category = resolveExpenseCategory(expense.category, expense.description);
   const Icon = category?.icon ?? Receipt;
   const shareCount = expense.sharedBy.length;
@@ -53,24 +59,26 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
           )}
         </div>
       </div>
-      <div className="flex shrink-0 gap-0.5">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onEdit(expense)}
-          aria-label={`Edit ${expense.description}`}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onDelete(expense)}
-          aria-label={`Delete ${expense.description}`}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      {!readOnly && onEdit && onDelete && (
+        <div className="flex shrink-0 gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onEdit(expense)}
+            aria-label={`Edit ${expense.description}`}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onDelete(expense)}
+            aria-label={`Delete ${expense.description}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
     </li>
   );
 }
