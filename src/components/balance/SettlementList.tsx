@@ -6,11 +6,18 @@ import {
   settlementMethodLabel,
   type SettlementExplanation,
 } from "@/lib/balances";
+import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
 import { formatCurrency } from "@/lib/formatters";
 import { SettlementLineReportDialog } from "@/components/balance/SettlementLineReportDialog";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown, ChevronRight, FileText } from "lucide-react";
-import type { Expense, Payment, SettlementMethod } from "@/types";
+import type {
+  Expense,
+  Payment,
+  SettlementMethod,
+  SettlementGroup,
+  SettlementViewMode,
+} from "@/types";
 
 interface SettlementListProps {
   expenses: Expense[];
@@ -18,6 +25,7 @@ interface SettlementListProps {
   payments?: Payment[];
   tripName?: string;
   settlementMethod?: SettlementMethod | string | null;
+  settlementGroups?: SettlementGroup[];
 }
 
 function methodHint(method: SettlementMethod): string {
@@ -42,81 +50,112 @@ export function SettlementList({
   payments = [],
   tripName = "Trip",
   settlementMethod,
+  settlementGroups = [],
 }: SettlementListProps) {
   const method = normalizeSettlementMethod(settlementMethod);
+  const hasGroups = hasUsableSettlementGroups(settlementGroups);
+  const [viewMode, setViewMode] = useState<SettlementViewMode>(
+    hasGroups ? "group" : "person",
+  );
+  const groupMode = hasGroups && viewMode === "group";
+
   const transactions = computeSettlements(
     method,
     expenses,
     participants,
     payments,
+    { groupMode, groups: settlementGroups },
   );
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [reportTx, setReportTx] = useState<SettlementExplanation | null>(null);
 
-  if (transactions.length === 0) {
-    return (
-      <div className="space-y-2">
+  return (
+    <>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           Method: {settlementMethodLabel(method)}
+          {methodHint(method)}
+          {groupMode && " · group mode"}
         </p>
+        {hasGroups && (
+          <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
+            <button
+              type="button"
+              className={`rounded px-2.5 py-1 transition-colors ${
+                viewMode === "group"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setViewMode("group")}
+            >
+              By group
+            </button>
+            <button
+              type="button"
+              className={`rounded px-2.5 py-1 transition-colors ${
+                viewMode === "person"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setViewMode("person")}
+            >
+              By person
+            </button>
+          </div>
+        )}
+      </div>
+
+      {transactions.length === 0 ? (
         <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-400">
           All settled! No payments needed.
         </p>
-      </div>
-    );
-  }
+      ) : (
+        <ul className="space-y-2">
+          {transactions.map((transaction) => {
+            const key = `${transaction.step}-${transaction.from}-${transaction.to}`;
+            const isOpen = openKey === key;
 
-  return (
-    <>
-      <p className="mb-2 text-xs text-muted-foreground">
-        Method: {settlementMethodLabel(method)}
-        {methodHint(method)}
-      </p>
-      <ul className="space-y-2">
-        {transactions.map((transaction) => {
-          const key = `${transaction.step}-${transaction.from}-${transaction.to}`;
-          const isOpen = openKey === key;
-
-          return (
-            <li
-              key={key}
-              className="rounded-lg border border-border bg-card text-sm"
-            >
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 p-3 text-left"
-                onClick={() => setOpenKey(isOpen ? null : key)}
-                aria-expanded={isOpen}
+            return (
+              <li
+                key={key}
+                className="rounded-lg border border-border bg-card text-sm"
               >
-                {isOpen ? (
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-                <span className="min-w-0 truncate font-medium text-destructive">
-                  {transaction.from}
-                </span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 truncate font-medium text-emerald-600 dark:text-emerald-400">
-                  {transaction.to}
-                </span>
-                <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
-                  {formatCurrency(transaction.amount)}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 p-3 text-left"
+                  onClick={() => setOpenKey(isOpen ? null : key)}
+                  aria-expanded={isOpen}
+                >
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className="min-w-0 truncate font-medium text-destructive">
+                    {transaction.from}
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 truncate font-medium text-emerald-600 dark:text-emerald-400">
+                    {transaction.to}
+                  </span>
+                  <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
+                    {formatCurrency(transaction.amount)}
+                  </span>
+                </button>
 
-              {isOpen && (
-                <SettlementRowDetail
-                  transaction={transaction}
-                  expenses={expenses}
-                  payments={payments}
-                  onOpenReport={() => setReportTx(transaction)}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                {isOpen && (
+                  <SettlementRowDetail
+                    transaction={transaction}
+                    expenses={expenses}
+                    payments={payments}
+                    onOpenReport={() => setReportTx(transaction)}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <SettlementLineReportDialog
         open={!!reportTx}
@@ -199,7 +238,7 @@ function SettlementRowDetail({
         {method === "pairwise" ? (
           <>
             <p>
-              Pairwise netting accumulates each person&apos;s share of expenses
+              Pairwise netting accumulates each person's share of expenses
               owed to the payer, then nets recorded payments between the same
               pair.
             </p>

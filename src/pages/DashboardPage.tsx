@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import type { SettlementMethod } from "@/types";
+import type { SettlementMethod, SettlementGroup } from "@/types";
 
 function TripCardSkeleton() {
   return (
@@ -47,6 +47,7 @@ export function DashboardPage() {
     participants: string[];
     participantLinks: Record<string, string>;
     settlementMethod: SettlementMethod;
+    settlementGroups: SettlementGroup[];
   }) {
     if (!user) return;
 
@@ -57,6 +58,7 @@ export function DashboardPage() {
         participants: data.participants,
         participantLinks: data.participantLinks ?? {},
         settlementMethod: data.settlementMethod ?? "greedy",
+        settlementGroups: data.settlementGroups ?? [],
         collaboratorIds: [],
         shareToken: null,
         createdAt: serverTimestamp(),

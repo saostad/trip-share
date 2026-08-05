@@ -417,6 +417,7 @@ export function TripDetailPage() {
                 payments={payments}
                 tripName={trip.name}
                 settlementMethod={trip.settlementMethod}
+                settlementGroups={trip.settlementGroups}
               />
             </CardContent>
           </Card>

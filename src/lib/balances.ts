@@ -2,6 +2,7 @@ import type {
   Expense,
   Payment,
   SettlementMethod,
+  SettlementGroup,
   Transaction,
 } from "@/types";
 import { minimizeTransactionsWithDetails as minimizeTx } from "@/lib/minimizeTransactions";
@@ -9,6 +10,11 @@ import {
   pickTreasurer as pickTreasurerImpl,
   treasurerWithDetails as treasurerTx,
 } from "@/lib/treasurerSettlement";
+import {
+  collapseBalancesForGroups,
+  buildRepresentativeMap,
+  collapseTransfersToRepresentatives,
+} from "@/lib/settlementGroups";
 
 export const DEFAULT_SETTLEMENT_METHOD: SettlementMethod = "greedy";
 
@@ -148,17 +154,61 @@ export function treasurerWithDetails(
   return treasurerTx(balances, expenses);
 }
 
+export interface ComputeSettlementsOptions {
+  /** When true and groups are provided, collapse member balances onto representatives first */
+  groupMode?: boolean;
+  groups?: SettlementGroup[];
+}
+
+/**
+ * Compute suggested settlements for the trip using the owner-selected method.
+ * Optional groupMode collapses family/household members onto their representative
+ * before running the algorithm (so outsiders only settle with the representative).
+ */
 export function computeSettlements(
   method: SettlementMethod | string | null | undefined,
   expenses: Expense[],
   participants: string[],
   payments: Payment[] = [],
+  options?: ComputeSettlementsOptions,
 ): SettlementExplanation[] {
   const m = normalizeSettlementMethod(method);
+  const groups = options?.groups ?? [];
+  const useGroups = Boolean(options?.groupMode && groups.length > 0);
+
+  // Pairwise is expense-graph based; in group mode we compute individual pairwise
+  // then collapse the resulting transfers onto representatives.
   if (m === "pairwise") {
-    return pairwiseNettingWithDetails(expenses, payments);
+    const individual = pairwiseNettingWithDetails(expenses, payments);
+    if (!useGroups) return individual;
+
+    const repMap = buildRepresentativeMap(groups, participants);
+    const collapsed = collapseTransfersToRepresentatives(
+      individual.map(({ from, to, amount }) => ({ from, to, amount })),
+      repMap,
+    );
+    const fullBalances = calculateBalances(expenses, participants, payments);
+    const collapsedBalances = collapseBalancesForGroups(fullBalances, groups);
+
+    return collapsed.map((t, idx) => ({
+      from: t.from,
+      to: t.to,
+      amount: t.amount,
+      method: "pairwise" as const,
+      fromNet: round2(-(collapsedBalances[t.from] ?? 0)),
+      toNet: round2(collapsedBalances[t.to] ?? 0),
+      fromRemainingBefore: t.amount,
+      toRemainingBefore: t.amount,
+      step: idx + 1,
+      note: `Group pairwise: ${t.from} ↔ ${t.to} after collapsing members onto representatives`,
+    }));
   }
-  const balances = calculateBalances(expenses, participants, payments);
+
+  let balances = calculateBalances(expenses, participants, payments);
+  if (useGroups) {
+    balances = collapseBalancesForGroups(balances, groups);
+  }
+
   if (m === "smallest") {
     return smallestFirstWithDetails(balances);
   }
