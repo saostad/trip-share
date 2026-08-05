@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Receipt, Filter, X, ArrowUpDown } from "lucide-react";
+import { Receipt, Filter, X, ArrowUpDown, Search } from "lucide-react";
 import { ExpenseItem } from "@/components/expense/ExpenseItem";
 import { ExpenseDetailDialog } from "@/components/expense/ExpenseDetailDialog";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,26 @@ interface ExpenseListProps {
   readOnly?: boolean;
 }
 
+function matchesSearch(expense: Expense, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+
+  const haystack = [
+    expense.description,
+    expense.paidBy,
+    expense.category ?? "",
+    expense.date,
+    String(expense.amount),
+    expense.amount.toFixed(2),
+    ...expense.sharedBy,
+    expense.attachment?.name ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(q);
+}
+
 export function ExpenseList({
   expenses,
   participants = [],
@@ -45,6 +65,7 @@ export function ExpenseList({
   onDelete,
   readOnly = false,
 }: ExpenseListProps) {
+  const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filterPaidBy, setFilterPaidBy] = useState<string>("all");
   const [filterSharedBy, setFilterSharedBy] = useState<string>("all");
@@ -59,8 +80,11 @@ export function ExpenseList({
     !!filterDateFrom ||
     !!filterDateTo;
 
+  const hasSearch = search.trim().length > 0;
+
   const filteredExpenses = useMemo(() => {
     const list = expenses.filter((expense) => {
+      if (!matchesSearch(expense, search)) return false;
       if (filterPaidBy !== "all" && expense.paidBy !== filterPaidBy) return false;
       if (filterSharedBy !== "all" && !expense.sharedBy.includes(filterSharedBy))
         return false;
@@ -99,6 +123,7 @@ export function ExpenseList({
     return list;
   }, [
     expenses,
+    search,
     filterPaidBy,
     filterSharedBy,
     filterDateFrom,
@@ -128,6 +153,27 @@ export function ExpenseList({
 
   return (
     <div className="space-y-3">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search expenses…"
+          className="h-8 pl-8 pr-8 text-sm"
+          aria-label="Search expenses"
+        />
+        {hasSearch && (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={showFilters ? "secondary" : "ghost"}
@@ -256,7 +302,7 @@ export function ExpenseList({
         </div>
       )}
 
-      {hasActiveFilters && (
+      {(hasActiveFilters || hasSearch) && (
         <p className="text-xs text-muted-foreground">
           Showing {filteredExpenses.length} of {expenses.length} expenses
         </p>
@@ -265,7 +311,9 @@ export function ExpenseList({
       {filteredExpenses.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            No expenses match the current filters.
+            {hasSearch
+              ? "No expenses match your search."
+              : "No expenses match the current filters."}
           </p>
         </div>
       ) : (
