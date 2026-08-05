@@ -8,6 +8,7 @@ import {
   X,
   Paperclip,
   ArrowUpDown,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,25 @@ interface PaymentListProps {
   readOnly?: boolean;
 }
 
+function matchesSearch(payment: Payment, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+
+  const haystack = [
+    payment.from,
+    payment.to,
+    payment.note ?? "",
+    payment.date,
+    String(payment.amount),
+    payment.amount.toFixed(2),
+    payment.attachment?.name ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(q);
+}
+
 export function PaymentList({
   payments,
   participants = [],
@@ -53,6 +73,7 @@ export function PaymentList({
   onDelete,
   readOnly = false,
 }: PaymentListProps) {
+  const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filterFrom, setFilterFrom] = useState("all");
   const [filterTo, setFilterTo] = useState("all");
@@ -61,10 +82,16 @@ export function PaymentList({
   const [sortKey, setSortKey] = useState<SortKey>("date-desc");
 
   const hasActiveFilters =
-    filterFrom !== "all" || filterTo !== "all" || !!filterDateFrom || !!filterDateTo;
+    filterFrom !== "all" ||
+    filterTo !== "all" ||
+    !!filterDateFrom ||
+    !!filterDateTo;
+
+  const hasSearch = search.trim().length > 0;
 
   const filteredPayments = useMemo(() => {
     const list = payments.filter((payment) => {
+      if (!matchesSearch(payment, search)) return false;
       if (filterFrom !== "all" && payment.from !== filterFrom) return false;
       if (filterTo !== "all" && payment.to !== filterTo) return false;
       if (filterDateFrom && payment.date < filterDateFrom) return false;
@@ -98,7 +125,15 @@ export function PaymentList({
     });
 
     return list;
-  }, [payments, filterFrom, filterTo, filterDateFrom, filterDateTo, sortKey]);
+  }, [
+    payments,
+    search,
+    filterFrom,
+    filterTo,
+    filterDateFrom,
+    filterDateTo,
+    sortKey,
+  ]);
 
   function clearFilters() {
     setFilterFrom("all");
@@ -118,6 +153,27 @@ export function PaymentList({
 
   return (
     <div className="space-y-3">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search payments…"
+          className="h-8 pl-8 pr-8 text-sm"
+          aria-label="Search payments"
+        />
+        {hasSearch && (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={showFilters ? "secondary" : "ghost"}
@@ -244,7 +300,7 @@ export function PaymentList({
         </div>
       )}
 
-      {hasActiveFilters && (
+      {(hasActiveFilters || hasSearch) && (
         <p className="text-xs text-muted-foreground">
           Showing {filteredPayments.length} of {payments.length} payments
         </p>
@@ -253,7 +309,9 @@ export function PaymentList({
       {filteredPayments.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            No payments match the current filters.
+            {hasSearch
+              ? "No payments match your search."
+              : "No payments match the current filters."}
           </p>
         </div>
       ) : (
