@@ -494,10 +494,14 @@ export function ExpenseForm({
         </div>
       )}
       <div className="flex justify-between gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={handleBack} className="gap-1" disabled={submitting}>
-          <ChevronLeft className="h-3.5 w-3.5" />
-          Back
-        </Button>
+        {!(isEditMode && step === 0) ? (
+          <Button type="button" variant="outline" onClick={handleBack} className="gap-1" disabled={submitting}>
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Back
+          </Button>
+        ) : (
+          <div />
+        )}
         <div className="flex gap-2">
           {!isLastStep ? (
             <Button type="button" onClick={handleNext} className="gap-1" disabled={submitting}>
