@@ -51,6 +51,11 @@ export interface Trip {
    * When present, Settle Up can collapse members into one net per group.
    */
   settlementGroups?: SettlementGroup[];
+  /**
+   * When true, the trip is read-only for everyone (including owner).
+   * Owner can unarchive to re-enable edits. Missing/false = active.
+   */
+  archived?: boolean;
   shareToken: string | null; // random token for share link; null = revoked/disabled
   createdAt: Timestamp;
   updatedAt: Timestamp;
