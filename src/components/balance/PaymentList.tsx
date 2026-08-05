@@ -41,8 +41,9 @@ const SORT_LABELS: Record<SortKey, string> = {
 interface PaymentListProps {
   payments: Payment[];
   participants?: string[];
-  onEdit: (payment: Payment) => void;
-  onDelete: (payment: Payment) => void;
+  onEdit?: (payment: Payment) => void;
+  onDelete?: (payment: Payment) => void;
+  readOnly?: boolean;
 }
 
 export function PaymentList({
@@ -50,6 +51,7 @@ export function PaymentList({
   participants = [],
   onEdit,
   onDelete,
+  readOnly = false,
 }: PaymentListProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [filterFrom, setFilterFrom] = useState("all");
@@ -268,22 +270,26 @@ export function PaymentList({
                 <span className="ml-auto shrink-0 font-semibold text-emerald-600">
                   {formatCurrency(payment.amount)}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => onEdit(payment)}
-                  aria-label="Edit payment"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => onDelete(payment)}
-                  aria-label="Delete payment"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {!readOnly && onEdit && onDelete && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onEdit(payment)}
+                      aria-label="Edit payment"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onDelete(payment)}
+                      aria-label="Delete payment"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{payment.date}</span>
