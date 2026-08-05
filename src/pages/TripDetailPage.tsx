@@ -455,6 +455,7 @@ export function TripDetailPage() {
                 expenses={expenses}
                 participants={trip.participants}
                 payments={payments}
+                settlementGroups={trip.settlementGroups}
               />
             </CardContent>
           </Card>
