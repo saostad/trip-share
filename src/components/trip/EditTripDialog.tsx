@@ -10,7 +10,13 @@ import type { AccountOption } from "@/components/trip/ParticipantInput";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
-import type { Trip, Expense, UserProfile, SettlementMethod } from "@/types";
+import type {
+  Trip,
+  Expense,
+  UserProfile,
+  SettlementMethod,
+  SettlementGroup,
+} from "@/types";
 
 interface EditTripDialogProps {
   trip: Trip;
@@ -37,6 +43,7 @@ export function EditTripDialog({
     participants: string[];
     participantLinks: Record<string, string>;
     settlementMethod: SettlementMethod;
+    settlementGroups: SettlementGroup[];
   }) {
     setSubmitting(true);
     try {
@@ -46,6 +53,7 @@ export function EditTripDialog({
         participants: data.participants,
         participantLinks: data.participantLinks,
         settlementMethod: data.settlementMethod,
+        settlementGroups: data.settlementGroups,
         updatedAt: serverTimestamp(),
       });
       toast.success("Trip updated successfully");
