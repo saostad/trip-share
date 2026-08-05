@@ -13,6 +13,9 @@ interface ExpenseItemProps {
 export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
   const category = resolveExpenseCategory(expense.category, expense.description);
   const Icon = category?.icon ?? Receipt;
+  const shareCount = expense.sharedBy.length;
+  const perPerson =
+    shareCount > 0 ? Math.round((expense.amount / shareCount) * 100) / 100 : 0;
 
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm">
@@ -27,9 +30,14 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
           <p className="truncate font-medium">{expense.description}</p>
           <p className="text-xs text-muted-foreground sm:text-sm">
             {expense.paidBy} paid {formatCurrency(expense.amount)}
-            <span className="text-muted-foreground/80"> · </span>
-            split with {expense.sharedBy.length}{" "}
-            {expense.sharedBy.length === 1 ? "person" : "people"}
+            {shareCount > 0 && (
+              <>
+                <span className="text-muted-foreground/80"> · </span>
+                {formatCurrency(perPerson)} each
+                <span className="text-muted-foreground/80"> · </span>
+                {shareCount} {shareCount === 1 ? "person" : "people"}
+              </>
+            )}
           </p>
           <p className="text-xs text-muted-foreground">{formatDate(expense.date)}</p>
           {expense.attachment && (
