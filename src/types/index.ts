@@ -8,6 +8,27 @@ export type SettlementMethod =
   | "pairwise"
   | "smallest";
 
+/** How Settle Up displays results when settlement groups exist */
+export type SettlementViewMode = "group" | "person";
+
+/**
+ * A settlement group (e.g. a family) that settles as one economic unit.
+ * Members still appear individually on expenses; only Settle Up collapses them.
+ */
+export interface SettlementGroup {
+  /** Stable id within the trip */
+  id: string;
+  /** Display name, e.g. "Saeid family" */
+  name: string;
+  /** Participant display names in this group (subset of trip.participants) */
+  members: string[];
+  /**
+   * Participant who appears as from/to in suggested transfers.
+   * Must be one of `members`.
+   */
+  representative: string;
+}
+
 export interface Trip {
   id: string;
   ownerId: string;
@@ -25,6 +46,11 @@ export interface Trip {
    * Defaults to "greedy" when missing (existing trips).
    */
   settlementMethod?: SettlementMethod;
+  /**
+   * Optional family/household groups. Owner-only.
+   * When present, Settle Up can collapse members into one net per group.
+   */
+  settlementGroups?: SettlementGroup[];
   shareToken: string | null; // random token for share link; null = revoked/disabled
   createdAt: Timestamp;
   updatedAt: Timestamp;
