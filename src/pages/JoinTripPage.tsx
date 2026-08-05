@@ -15,7 +15,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-type JoinState = 'loading' | 'error' | 'joining' | 'redirecting';
+type JoinState = 'loading' | 'error' | 'archived' | 'joining' | 'redirecting';
 
 export function JoinTripPage() {
   const { shareToken } = useParams<{ shareToken: string }>();
@@ -44,6 +44,11 @@ export function JoinTripPage() {
         const tripDoc = snapshot.docs[0];
         const tripData = tripDoc.data();
         const tripId = tripDoc.id;
+
+        if (tripData.archived) {
+          setState('archived');
+          return;
+        }
 
         // If user is already owner, redirect directly
         if (user!.uid === tripData.ownerId) {
@@ -94,6 +99,23 @@ export function JoinTripPage() {
         <p className="mt-6 text-muted-foreground">
           {state === 'joining' ? 'Joining trip...' : 'Loading...'}
         </p>
+      </div>
+    );
+  }
+
+  if (state === 'archived') {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-amber-600">Trip archived</h1>
+        <p className="mt-4 text-muted-foreground">
+          This trip has been archived by the owner and is no longer accepting new members.
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Go to Dashboard
+        </Link>
       </div>
     );
   }

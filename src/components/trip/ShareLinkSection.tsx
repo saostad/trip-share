@@ -26,8 +26,13 @@ interface ShareLinkSectionProps {
 
 export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
   const [loading, setLoading] = useState(false);
+  const isArchived = Boolean(trip.archived);
 
   async function handleGenerate() {
+    if (isArchived) {
+      toast.error("Cannot change share link on an archived trip");
+      return;
+    }
     setLoading(true);
     try {
       const token = randomToken();
@@ -44,6 +49,10 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
   }
 
   async function handleRevoke() {
+    if (isArchived) {
+      toast.error("Cannot change share link on an archived trip");
+      return;
+    }
     setLoading(true);
     try {
       await updateDoc(doc(db, "trips", trip.id), {
@@ -66,6 +75,14 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
     } catch {
       toast.error("Could not copy link");
     }
+  }
+
+  if (isArchived) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Share link management is disabled while the trip is archived.
+      </p>
+    );
   }
 
   if (!trip.shareToken) {

@@ -45,6 +45,10 @@ export function EditTripDialog({
     settlementMethod: SettlementMethod;
     settlementGroups: SettlementGroup[];
   }) {
+    if (trip.archived) {
+      toast.error("This trip is archived and cannot be edited");
+      return;
+    }
     setSubmitting(true);
     try {
       const tripRef = doc(db, "trips", trip.id);
