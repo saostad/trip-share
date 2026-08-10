@@ -5,8 +5,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /** YouTube video explaining net-balance settlements (not expense-by-expense). */
 export const SETTLEMENT_HELP_VIDEO_ID = "WZ_6-_QJ6v8";
@@ -65,12 +66,15 @@ export function SettlementHelpDialog({
           </ul>
 
           <div className="flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="outline" asChild>
-              <a href={WATCH_URL} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                Open on YouTube
-              </a>
-            </Button>
+            <a
+              href={WATCH_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open on YouTube
+            </a>
             <Button type="button" onClick={() => onOpenChange(false)}>
               Got it
             </Button>
