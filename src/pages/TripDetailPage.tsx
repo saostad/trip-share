@@ -13,6 +13,7 @@ import { DeleteTripDialog } from "@/components/trip/DeleteTripDialog";
 import { BalanceSummary } from "@/components/balance/BalanceSummary";
 import { SettlementList } from "@/components/balance/SettlementList";
 import { SettlementReportDialog } from "@/components/balance/SettlementReportDialog";
+import { SettlementHelpDialog } from "@/components/balance/SettlementHelpDialog";
 import { PaymentForm } from "@/components/balance/PaymentForm";
 import { PaymentList } from "@/components/balance/PaymentList";
 import { EditPaymentForm } from "@/components/balance/EditPaymentForm";
@@ -47,6 +48,7 @@ import {
   Sheet,
   Archive,
   ArchiveRestore,
+  CircleHelp,
 } from "lucide-react";
 import { downloadTripExcel } from "@/lib/exportTripExcel";
 import {
@@ -88,6 +90,7 @@ export function TripDetailPage() {
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addPaymentOpen, setAddPaymentOpen] = useState(false);
   const [settlementReportOpen, setSettlementReportOpen] = useState(false);
+  const [settlementHelpOpen, setSettlementHelpOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
@@ -467,6 +470,15 @@ export function TripDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
+                  onClick={() => setSettlementHelpOpen(true)}
+                  className="gap-1.5"
+                >
+                  <CircleHelp className="h-3.5 w-3.5" />
+                  How it works
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     try {
                       downloadTripExcel(trip, expenses, payments);
@@ -547,6 +559,11 @@ export function TripDetailPage() {
           )}
         </div>
       </div>
+
+      <SettlementHelpDialog
+        open={settlementHelpOpen}
+        onOpenChange={setSettlementHelpOpen}
+      />
 
       <SettlementReportDialog
         open={settlementReportOpen}
