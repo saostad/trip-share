@@ -64,8 +64,10 @@ function InviteOnlyPanel() {
 
 export function DashboardPage() {
   const { trips, loading, error } = useTrips();
-  const { user, canCreateTrips } = useAuth();
+  const { user, canCreateTrips, accessLoading } = useAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const showCreateControls = canCreateTrips && !accessLoading;
 
   async function handleCreateTrip(data: {
     name: string;
@@ -115,7 +117,7 @@ export function DashboardPage() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-foreground">My Trips</h1>
-          {canCreateTrips && (
+          {showCreateControls && (
             <Button
               className="bg-emerald-500 text-white hover:bg-emerald-600"
               onClick={() => setShowCreateDialog(true)}
@@ -132,7 +134,7 @@ export function DashboardPage() {
           </div>
         )}
 
-        {loading && (
+        {(loading || accessLoading) && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <TripCardSkeleton />
             <TripCardSkeleton />
@@ -140,11 +142,11 @@ export function DashboardPage() {
           </div>
         )}
 
-        {!loading && !error && !canCreateTrips && trips.length === 0 && (
+        {!loading && !accessLoading && !error && !canCreateTrips && trips.length === 0 && (
           <InviteOnlyPanel />
         )}
 
-        {!loading && !error && canCreateTrips && trips.length === 0 && (
+        {!loading && !accessLoading && !error && canCreateTrips && trips.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <MapPin className="mb-4 size-12 text-muted-foreground/50" />
             <h2 className="mb-2 text-lg font-semibold text-foreground">
@@ -163,7 +165,7 @@ export function DashboardPage() {
           </div>
         )}
 
-        {!loading && !error && trips.length > 0 && (
+        {!loading && !accessLoading && !error && trips.length > 0 && (
           <div className="space-y-4">
             {!canCreateTrips && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-100">
@@ -180,7 +182,7 @@ export function DashboardPage() {
         )}
       </main>
 
-      {canCreateTrips && (
+      {showCreateControls && (
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent>
             <DialogHeader>
