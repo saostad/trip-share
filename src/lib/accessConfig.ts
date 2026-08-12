@@ -43,19 +43,18 @@ export async function fetchAccessConfig(): Promise<AccessConfig> {
   return { mode, allowedEmails };
 }
 
-/** Whether this signed-in email may use the app under the current config. */
-export function isEmailAllowed(
+/**
+ * Whether this email may create trips.
+ * - public mode → everyone
+ * - invite_only → only emails on allowedEmails
+ *
+ * Anyone can still sign in and join trips via a share link.
+ */
+export function canCreateTrips(
   email: string | null | undefined,
   config: AccessConfig,
 ): boolean {
   if (config.mode === "public") return true;
   if (!email) return false;
   return config.allowedEmails.includes(normalizeEmail(email));
-}
-
-export class InviteOnlyError extends Error {
-  constructor() {
-    super("INVITE_ONLY");
-    this.name = "InviteOnlyError";
-  }
 }
