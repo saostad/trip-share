@@ -19,10 +19,12 @@ interface AuthContextValue {
   loading: boolean;
   /**
    * True when the user may create new trips.
-   * False in invite_only mode if their email is not on the allow list.
-   * They can still join trips via share links.
+   * False while access config is loading, and in invite_only mode if their
+   * email is not on the allow list. They can still join trips via share links.
    */
   canCreateTrips: boolean;
+  /** True until appConfig/access has been loaded (or failed) for the signed-in user. */
+  accessLoading: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -32,7 +34,9 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [canCreate, setCanCreate] = useState(true);
+  // Fail closed: do not show create UI until we know the user is allowed.
+  const [canCreate, setCanCreate] = useState(false);
+  const [accessLoading, setAccessLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -43,16 +47,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           photoURL: firebaseUser.photoURL,
           email: firebaseUser.email,
         });
+        setAccessLoading(true);
+        setCanCreate(false);
         try {
           const config = await fetchAccessConfig();
           setCanCreate(canCreateTrips(firebaseUser.email, config));
-        } catch {
-          // If config cannot be read, allow create (fail open for usability).
-          setCanCreate(true);
+        } catch (err) {
+          // Fail closed so create controls stay hidden if config is unreadable.
+          console.warn("[access] could not load appConfig/access", err);
+          setCanCreate(false);
+        } finally {
+          setAccessLoading(false);
         }
       } else {
         setUser(null);
-        setCanCreate(true);
+        setCanCreate(false);
+        setAccessLoading(false);
       }
       setLoading(false);
     });
@@ -74,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         canCreateTrips: canCreate,
+        accessLoading,
         signIn,
         signOut,
       }}
