@@ -1,6 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // App-wide settings (invite-only / public switch + allow list).
+    // Read: any signed-in user (needed to check access after Google login).
+    // Write: Firebase Console / Admin SDK only — not from the client.
+    match /appConfig/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     match /trips/{tripId} {
       // Get (single doc by ID): owner or collaborator
       allow get: if request.auth != null && (
