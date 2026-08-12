@@ -1,23 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Navigate } from "react-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { InviteOnlyError } from "@/lib/accessConfig";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export function LoginPage() {
-  const { user, loading, signIn, accessDenied, clearAccessDenied } = useAuth();
+  const { user, loading, signIn } = useAuth();
   const [signingIn, setSigningIn] = useState(false);
-
-  useEffect(() => {
-    if (accessDenied) {
-      toast.error(
-        "This app is invite-only. Your Google account is not on the allow list.",
-        { duration: 6000 },
-      );
-      clearAccessDenied();
-    }
-  }, [accessDenied, clearAccessDenied]);
 
   if (loading) {
     return (
@@ -40,11 +29,8 @@ export function LoginPage() {
     setSigningIn(true);
     try {
       await signIn();
-    } catch (err) {
-      if (!(err instanceof InviteOnlyError)) {
-        toast.error("Sign-in failed. Please try again.");
-      }
-      // InviteOnlyError is handled via accessDenied toast in useEffect
+    } catch {
+      toast.error("Sign-in failed. Please try again.");
     } finally {
       setSigningIn(false);
     }
@@ -90,10 +76,6 @@ export function LoginPage() {
           )}
           {signingIn ? "Signing in..." : "Sign in with Google"}
         </Button>
-
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Access may be limited to invited accounts.
-        </p>
       </div>
     </div>
   );
