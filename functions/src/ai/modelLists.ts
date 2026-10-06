@@ -228,7 +228,7 @@ export async function fetchProviderModelIds(
   fetchImpl: FetchImpl = fetch,
   timeoutMs: number = MODELS_TIMEOUT_MS,
 ): Promise<string[]> {
-  if (provider.modelsFilter === "generate-content") {
+  if (provider.kind === "gemini") {
     return fetchGeminiModelIds(provider, apiKey, fetchImpl, timeoutMs);
   }
   return fetchOpenAiCompatibleModelIds(
