@@ -65,7 +65,7 @@ export function HeaderLogo() {
   return (
     <Link
       to="/"
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label="TripShare home"
     >
       <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">

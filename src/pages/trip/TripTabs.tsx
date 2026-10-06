@@ -35,7 +35,7 @@ export function TripTabs({ active }: { active?: TripTabId }) {
             aria-current={active !== undefined && id === active ? "page" : undefined}
             className={({ isActive }) =>
               cn(
-                "-mb-px border-b-2 px-3 py-2 text-sm font-medium",
+                "-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 (active !== undefined ? id === active : isActive)
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
@@ -59,7 +59,7 @@ export function TripTabs({ active }: { active?: TripTabId }) {
               aria-current={active !== undefined && id === active ? "page" : undefined}
               className={({ isActive }) =>
                 cn(
-                  "flex min-h-[44px] flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium",
+                  "flex min-h-[44px] flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                   (active !== undefined ? id === active : isActive)
                     ? "text-primary"
                     : "text-muted-foreground",
