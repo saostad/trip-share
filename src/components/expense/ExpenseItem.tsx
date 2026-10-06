@@ -1,7 +1,10 @@
+import { m } from "motion/react";
 import { Pencil, Trash2, Paperclip, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { resolveExpenseCategory } from "@/lib/expenseCategories";
+import { listItem } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import type { Expense } from "@/types";
 
 interface ExpenseItemProps {
@@ -10,6 +13,7 @@ interface ExpenseItemProps {
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
   readOnly?: boolean;
+  highlight?: boolean;
 }
 
 export function ExpenseItem({
@@ -18,15 +22,29 @@ export function ExpenseItem({
   onEdit,
   onDelete,
   readOnly = false,
+  highlight = false,
 }: ExpenseItemProps) {
-  const category = resolveExpenseCategory(expense.category, expense.description);
+  const category = resolveExpenseCategory(
+    expense.category,
+    expense.description,
+  );
   const Icon = category?.icon ?? Receipt;
   const shareCount = expense.sharedBy.length;
   const perPerson =
     shareCount > 0 ? Math.round((expense.amount / shareCount) * 100) / 100 : 0;
 
   return (
-    <li className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card text-sm transition-colors hover:bg-muted/30">
+    <m.li
+      variants={listItem}
+      initial="hidden"
+      animate="show"
+      exit="exit"
+      data-highlight={highlight ? "true" : undefined}
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-lg border border-border bg-card text-sm transition-colors hover:bg-muted/30",
+        highlight && "row-flash",
+      )}
+    >
       <button
         type="button"
         className="flex min-w-0 flex-1 items-start gap-3 p-3 text-left"
@@ -52,7 +70,9 @@ export function ExpenseItem({
               </>
             )}
           </p>
-          <p className="text-xs text-muted-foreground">{formatDate(expense.date)}</p>
+          <p className="text-xs text-muted-foreground">
+            {formatDate(expense.date)}
+          </p>
           {expense.attachment && (
             <span className="mt-1 inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground">
               <Paperclip className="h-3 w-3 shrink-0" />
@@ -87,6 +107,6 @@ export function ExpenseItem({
           </Button>
         </div>
       )}
-    </li>
+    </m.li>
   );
 }

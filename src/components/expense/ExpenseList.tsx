@@ -1,6 +1,15 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { Receipt, Filter, X, ArrowUpDown, Search, Camera, Pencil } from "lucide-react";
+import { AnimatePresence } from "motion/react";
+import {
+  Receipt,
+  Filter,
+  X,
+  ArrowUpDown,
+  Search,
+  Camera,
+  Pencil,
+} from "lucide-react";
 import { ExpenseItem } from "@/components/expense/ExpenseItem";
 import { ExpenseDetailDialog } from "@/components/expense/ExpenseDetailDialog";
 import { EmptyState } from "@/components/EmptyState";
@@ -13,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useAddedIds } from "@/lib/useAddedIds";
 import type { Expense } from "@/types";
 
 type SortKey =
@@ -89,8 +99,12 @@ export function ExpenseList({
   const filteredExpenses = useMemo(() => {
     const list = expenses.filter((expense) => {
       if (!matchesSearch(expense, search)) return false;
-      if (filterPaidBy !== "all" && expense.paidBy !== filterPaidBy) return false;
-      if (filterSharedBy !== "all" && !expense.sharedBy.includes(filterSharedBy))
+      if (filterPaidBy !== "all" && expense.paidBy !== filterPaidBy)
+        return false;
+      if (
+        filterSharedBy !== "all" &&
+        !expense.sharedBy.includes(filterSharedBy)
+      )
         return false;
       if (filterDateFrom && expense.date < filterDateFrom) return false;
       if (filterDateTo && expense.date > filterDateTo) return false;
@@ -135,6 +149,8 @@ export function ExpenseList({
     sortKey,
   ]);
 
+  const addedIds = useAddedIds(filteredExpenses);
+
   function clearFilters() {
     setFilterPaidBy("all");
     setFilterSharedBy("all");
@@ -148,7 +164,10 @@ export function ExpenseList({
         icons={[
           { Icon: Receipt, circleClassName: "bg-positive/10 text-positive" },
           { Icon: Camera, circleClassName: "bg-primary/10 text-primary" },
-          { Icon: Pencil, circleClassName: "bg-warning/15 text-warning-foreground" },
+          {
+            Icon: Pencil,
+            circleClassName: "bg-warning/15 text-warning-foreground",
+          },
         ]}
         title="No expenses yet"
         actions={
@@ -307,7 +326,9 @@ export function ExpenseList({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">To</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                To
+              </label>
               <Input
                 type="date"
                 value={filterDateTo}
@@ -335,16 +356,19 @@ export function ExpenseList({
         </div>
       ) : (
         <ul className="max-h-[min(24rem,60vh)] space-y-2 overflow-y-auto">
-          {filteredExpenses.map((expense) => (
-            <ExpenseItem
-              key={expense.id}
-              expense={expense}
-              onView={setViewingExpense}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              readOnly={readOnly}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {filteredExpenses.map((expense) => (
+              <ExpenseItem
+                key={expense.id}
+                expense={expense}
+                onView={setViewingExpense}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                readOnly={readOnly}
+                highlight={addedIds.has(expense.id)}
+              />
+            ))}
+          </AnimatePresence>
         </ul>
       )}
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { AnimatePresence, m } from "motion/react";
 import {
   ArrowRight,
   Trash2,
@@ -22,15 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/formatters";
+import { listItem } from "@/lib/motion";
+import { useAddedIds } from "@/lib/useAddedIds";
+import { cn } from "@/lib/utils";
 import type { Payment } from "@/types";
 
 type SortKey =
-  | "date-desc"
-  | "date-asc"
-  | "amount-desc"
-  | "amount-asc"
-  | "from"
-  | "to";
+  "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "from" | "to";
 
 const SORT_LABELS: Record<SortKey, string> = {
   "date-desc": "Date (newest)",
@@ -139,6 +138,8 @@ export function PaymentList({
     sortKey,
   ]);
 
+  const addedIds = useAddedIds(filteredPayments);
+
   function clearFilters() {
     setFilterFrom("all");
     setFilterTo("all");
@@ -157,9 +158,7 @@ export function PaymentList({
         description="When someone pays someone back, record it here."
         actions={
           !readOnly &&
-          onAdd && (
-            <Button onClick={onAdd}>Record a payment</Button>
-          )
+          onAdd && <Button onClick={onAdd}>Record a payment</Button>
         }
       />
     );
@@ -245,7 +244,9 @@ export function PaymentList({
         <div className="flex flex-col gap-2 rounded-lg border border-input bg-muted/30 p-3">
           {participants.length > 0 && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">From</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                From
+              </label>
               <Select
                 value={filterFrom}
                 onValueChange={(val) => setFilterFrom(val ?? "all")}
@@ -267,7 +268,9 @@ export function PaymentList({
 
           {participants.length > 0 && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">To</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                To
+              </label>
               <Select
                 value={filterTo}
                 onValueChange={(val) => setFilterTo(val ?? "all")}
@@ -330,64 +333,80 @@ export function PaymentList({
         </div>
       ) : (
         <ul className="max-h-[300px] space-y-2 overflow-y-auto pr-1">
-          {filteredPayments.map((payment) => (
-            <li
-              key={payment.id}
-              className="flex flex-col gap-1 rounded-lg border p-3 text-sm"
-            >
-              <div className="flex items-center gap-2">
-                <span className="min-w-[4ch] truncate font-medium">{payment.from}</span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-[4ch] truncate font-medium">{payment.to}</span>
-                <span className="ml-auto shrink-0 font-semibold">
-                  {formatCurrency(payment.amount)}
-                </span>
-                {!readOnly && onEdit && onDelete && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => onEdit(payment)}
-                      aria-label="Edit payment"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => onDelete(payment)}
-                      aria-label="Delete payment"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </>
+          <AnimatePresence initial={false}>
+            {filteredPayments.map((payment) => (
+              <m.li
+                key={payment.id}
+                variants={listItem}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                data-highlight={addedIds.has(payment.id) ? "true" : undefined}
+                className={cn(
+                  "flex flex-col gap-1 rounded-lg border p-3 text-sm",
+                  addedIds.has(payment.id) && "row-flash",
                 )}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{payment.date}</span>
-                {payment.note && (
-                  <>
-                    <span>&middot;</span>
-                    <span className="min-w-0 truncate">{payment.note}</span>
-                  </>
-                )}
-                {payment.attachment && (
-                  <>
-                    <span>&middot;</span>
-                    <a
-                      href={payment.attachment.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-0.5 text-primary hover:underline"
-                    >
-                      <Paperclip className="h-3 w-3" />
-                      <span className="truncate">{payment.attachment.name}</span>
-                    </a>
-                  </>
-                )}
-              </div>
-            </li>
-          ))}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[4ch] truncate font-medium">
+                    {payment.from}
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-[4ch] truncate font-medium">
+                    {payment.to}
+                  </span>
+                  <span className="ml-auto shrink-0 font-semibold">
+                    {formatCurrency(payment.amount)}
+                  </span>
+                  {!readOnly && onEdit && onDelete && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => onEdit(payment)}
+                        aria-label="Edit payment"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => onDelete(payment)}
+                        aria-label="Delete payment"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{payment.date}</span>
+                  {payment.note && (
+                    <>
+                      <span>&middot;</span>
+                      <span className="min-w-0 truncate">{payment.note}</span>
+                    </>
+                  )}
+                  {payment.attachment && (
+                    <>
+                      <span>&middot;</span>
+                      <a
+                        href={payment.attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-0.5 text-primary hover:underline"
+                      >
+                        <Paperclip className="h-3 w-3" />
+                        <span className="truncate">
+                          {payment.attachment.name}
+                        </span>
+                      </a>
+                    </>
+                  )}
+                </div>
+              </m.li>
+            ))}
+          </AnimatePresence>
         </ul>
       )}
     </div>
