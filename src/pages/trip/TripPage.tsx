@@ -63,6 +63,35 @@ type ExpenseFormData = {
   attachment?: FileAttachment | null;
 };
 
+/** Loading placeholder matching the trip layout: header, tabs, hero, cards. */
+export function TripPageSkeleton() {
+  return (
+    <div
+      className="container mx-auto max-w-6xl px-4 py-6"
+      role="status"
+      aria-label="Loading…"
+    >
+      <div className="mb-6 flex items-center gap-3">
+        <Skeleton className="h-8 w-8 rounded-lg" />
+        <Skeleton className="h-7 w-48" />
+      </div>
+      <div className="mb-6 hidden gap-1 border-b md:flex">
+        <Skeleton className="h-9 w-24 rounded-t-md" />
+        <Skeleton className="h-9 w-24 rounded-t-md" />
+        <Skeleton className="h-9 w-24 rounded-t-md" />
+        <Skeleton className="h-9 w-24 rounded-t-md" />
+      </div>
+      <div className="space-y-4">
+        <Skeleton className="h-36 w-full rounded-xl" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-40 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TripPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const { trip, loading: tripLoading } = useTrip(tripId ?? "");
@@ -96,14 +125,7 @@ export function TripPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto max-w-6xl px-4 py-6">
-          <div className="mb-6">
-            <div className="mb-4 flex items-center gap-3">
-              <Skeleton className="h-8 w-8 rounded-lg" />
-              <Skeleton className="h-7 w-48" />
-            </div>
-          </div>
-        </div>
+        <TripPageSkeleton />
       </div>
     );
   }
