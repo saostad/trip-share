@@ -175,6 +175,9 @@ describe("hero view toggle", () => {
     expect(
       screen.getByText(/Ava pays or receives for Fam/),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "See Settle up" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("You get back")).not.toBeInTheDocument();
   });
 
@@ -191,6 +194,9 @@ describe("hero view toggle", () => {
     expect(
       screen.getByText(/Your group settles as one/),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "see Settle up" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Fam gets back")).not.toBeInTheDocument();
   });
 
@@ -199,6 +205,45 @@ describe("hero view toggle", () => {
     expect(screen.getByText("You owe")).toBeInTheDocument();
     expect(screen.getByText(/You owe Fam/)).toBeInTheDocument();
     expect(screen.queryByText(/pays or receives for/)).not.toBeInTheDocument();
+  });
+
+  it("shows the group note with a capitalised link when the group is square", () => {
+    const squareTrip: Trip = { ...trip, participants: ["Ava", "Liam"] };
+    const squareExpenses: Expense[] = (["e1", "e2"] as const).map(
+      (id, i) => ({
+        id,
+        description: id === "e1" ? "Dinner" : "Lunch",
+        date: "2026-10-01",
+        amount: 50,
+        paidBy: i === 0 ? "Ava" : "Liam",
+        sharedBy: ["Ava", "Liam"],
+        createdAt: {} as never,
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <OverviewTabView
+          position={myPosition(squareTrip, squareExpenses, [], "Ava")}
+          groupPosition={myPosition(squareTrip, squareExpenses, [], "Ava", "group")}
+          hasGroups
+          isOwner
+          isArchived={false}
+          checklist={{ steps: [], complete: true }}
+          checklistDismissed={false}
+          activity={[]}
+          onAddExpense={vi.fn()}
+          onEditTrip={vi.fn()}
+          onDismissChecklist={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("radiogroup", { name: "Overview view" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fam is all square")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "See Settle up" }),
+    ).toBeInTheDocument();
   });
 
   it("shows no toggle without groups", () => {

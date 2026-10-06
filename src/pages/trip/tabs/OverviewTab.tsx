@@ -148,7 +148,7 @@ function Hero({
             <p className="text-xs break-words text-muted-foreground">
               {group.representative} pays or receives for {group.name}.{" "}
               <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
-                see Settle up
+                See Settle up
               </Link>
               .
             </p>
@@ -220,7 +220,7 @@ function Hero({
           <p className="text-xs break-words text-muted-foreground">
             {group.representative} pays or receives for {group.name}.{" "}
             <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
-              see Settle up
+              See Settle up
             </Link>
             .
           </p>
