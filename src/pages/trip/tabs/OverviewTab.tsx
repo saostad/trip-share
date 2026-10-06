@@ -74,7 +74,7 @@ function Hero({
       <Card>
         <CardContent className="space-y-1">
           <p className="text-sm text-muted-foreground">Total spent</p>
-          <p className="text-2xl font-bold tabular-nums">
+          <p className="text-3xl font-bold tabular-nums">
             {formatCurrency(position.totalSpent)}
           </p>
           <p className="text-sm text-muted-foreground">
@@ -90,36 +90,52 @@ function Hero({
     );
   }
 
-  const title =
-    position.kind === "owed"
-      ? `You get back ${formatCurrency(position.amount)}`
-      : position.kind === "owes"
-        ? `You owe ${formatCurrency(position.amount)}`
-        : "You're all square";
-  const titleClass =
-    position.kind === "owed"
-      ? "text-positive"
-      : position.kind === "owes"
-        ? "text-negative"
-        : "text-foreground";
+  if (position.kind === "square") {
+    return (
+      <Card>
+        <CardContent className="space-y-2">
+          <p className="text-2xl font-bold">You&apos;re all square</p>
+          {position.inGroup && (
+            <p className="text-xs text-muted-foreground">
+              Your group settles as one;{" "}
+              <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
+                see Settle up
+              </Link>
+              .
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const label = position.kind === "owed" ? "You get back" : "You owe";
+  const amountClass = position.kind === "owed" ? "text-positive" : "text-negative";
 
   return (
     <Card>
       <CardContent className="space-y-2">
-        <p className={cn("text-2xl font-bold tabular-nums", titleClass)}>{title}</p>
-        {position.counterparties.map((c) => (
-          <p
-            key={`${c.direction}-${c.name}`}
-            className={cn(
-              "text-sm tabular-nums",
-              c.direction === "owesMe" ? "text-positive" : "text-negative",
-            )}
-          >
-            {c.direction === "owesMe"
-              ? `${c.name} owes you ${formatCurrency(c.amount)}`
-              : `You owe ${c.name} ${formatCurrency(c.amount)}`}
-          </p>
-        ))}
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className={cn("text-3xl font-bold tabular-nums", amountClass)}>
+          {formatCurrency(position.amount)}
+        </p>
+        {position.counterparties.length > 0 && (
+          <ul className="space-y-1">
+            {position.counterparties.map((c) => (
+              <li key={`${c.direction}-${c.name}`} className="text-sm tabular-nums">
+                {c.direction === "owesMe" ? `${c.name} owes you ` : `You owe ${c.name} `}
+                <span
+                  className={cn(
+                    "font-medium",
+                    c.direction === "owesMe" ? "text-positive" : "text-negative",
+                  )}
+                >
+                  {formatCurrency(c.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
         {position.inGroup && (
           <p className="text-xs text-muted-foreground">
             Your group settles as one;{" "}
