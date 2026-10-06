@@ -10,6 +10,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Admin allow-list for AI settings. Docs are created by hand in the
+    // Firebase Console with lowercased email addresses as document ids.
+    // A user can read only their own doc; nobody can list or write.
+    match /admins/{email} {
+      allow get: if request.auth != null && request.auth.token.email.lower() == email;
+      allow list, write: if false;
+    }
+
     function accessDoc() {
       return get(/databases/$(database)/documents/appConfig/access);
     }
