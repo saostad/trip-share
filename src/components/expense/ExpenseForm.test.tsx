@@ -294,6 +294,36 @@ describe("ExpenseForm auto-fill", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows no photos-only note for a PDF when disabled", async () => {
+    vi.mocked(fetchAutofillEnabled).mockResolvedValue(false);
+    renderForm();
+    fireEvent.click(screen.getByRole("button", { name: "mock-pick-pdf" }));
+    uploaded();
+    expect(
+      await screen.findByText("Receipt attached: receipt.jpg. Fill in the details below."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Auto-fill reads photos only/)).not.toBeInTheDocument();
+    expect(extractReceipt).not.toHaveBeenCalled();
+  });
+
+  it("ignores a photo result when a PDF is picked after it", async () => {
+    const gate = deferred<ExtractReceiptResponse>();
+    vi.mocked(extractReceipt).mockReturnValue(gate.promise);
+    renderForm();
+    pickPhoto();
+    await waitFor(() => expect(extractReceipt).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: "mock-pick-pdf" }));
+    uploaded();
+    expect(
+      await screen.findByText("Receipt attached: receipt.jpg. Auto-fill reads photos only."),
+    ).toBeInTheDocument();
+    await act(async () => {
+      gate.resolve(FULL_RESULT);
+    });
+    expect(screen.getByLabelText(/Description/)).toHaveValue("");
+    expect(screen.queryByText(/Filled from receipt/)).not.toBeInTheDocument();
+  });
+
   it("toasts a late result on step 2 or later", async () => {
     const gate = deferred<ExtractReceiptResponse>();
     vi.mocked(extractReceipt).mockReturnValue(gate.promise);
