@@ -48,7 +48,11 @@ function formatUpdatedAt(value: string): string | null {
 
 function StatusDot({ tone }: { tone: "ok" | "warn" | "missing" }) {
   const color =
-    tone === "ok" ? "bg-positive" : tone === "warn" ? "bg-warning-foreground" : "bg-muted-foreground";
+    tone === "ok"
+      ? "bg-positive"
+      : tone === "warn"
+        ? "bg-warning ring-1 ring-warning-foreground/40"
+        : "bg-muted-foreground";
   return <span aria-hidden="true" className={`inline-block size-2 rounded-full ${color}`} />;
 }
 
