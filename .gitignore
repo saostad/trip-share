@@ -33,3 +33,6 @@ dist-ssr
 functions/lib/
 functions/node_modules/
 functions/.secret.local
+
+# Claude Code personal settings
+.claude/settings.local.json
