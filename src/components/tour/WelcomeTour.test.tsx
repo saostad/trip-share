@@ -39,6 +39,17 @@ describe("WelcomeTour", () => {
     expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
   });
 
+  it("moves focus to Next when Back reaches the first step", () => {
+    renderTour();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    const back = screen.getByRole("button", { name: "Back" });
+    back.focus();
+    fireEvent.click(back);
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Next" }),
+    );
+  });
+
   it("closes on Skip", () => {
     const { onClose } = renderTour();
     fireEvent.click(screen.getByRole("button", { name: "Skip" }));

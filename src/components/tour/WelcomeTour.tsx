@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { m } from "motion/react";
 import {
   Camera,
@@ -82,6 +82,7 @@ export function WelcomeTour({ open, onClose, initialStep = 0 }: WelcomeTourProps
   const [step, setStep] = useState(initialStep);
   const last = step === TOUR_STEPS.length - 1;
   const current = TOUR_STEPS[step] ?? TOUR_STEPS[0]!;
+  const nextRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (open) setStep(initialStep);
@@ -96,7 +97,13 @@ export function WelcomeTour({ open, onClose, initialStep = 0 }: WelcomeTourProps
   }
 
   function goBack() {
-    setStep((s) => Math.max(s - 1, 0));
+    const next = Math.max(step - 1, 0);
+    // Back disables itself on step 1, which would drop focus out of the
+    // dialog; move it to Next first, while Back is still enabled.
+    if (next === 0) {
+      nextRef.current?.focus();
+    }
+    setStep(next);
   }
 
   return (
@@ -161,7 +168,12 @@ export function WelcomeTour({ open, onClose, initialStep = 0 }: WelcomeTourProps
             >
               Back
             </Button>
-            <Button type="button" size="sm" onClick={goNext}>
+            <Button
+              ref={nextRef}
+              type="button"
+              size="sm"
+              onClick={goNext}
+            >
               {last ? "Done" : "Next"}
             </Button>
           </div>
