@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,9 +30,15 @@ import { fileToReceiptImage } from "@/lib/receiptImage";
 
 const DEFAULT_DAILY_LIMIT = 30;
 const MAX_DAILY_LIMIT = 500;
+const MODEL_URL_HINT = "That looks like a page URL. Paste the model ID instead.";
 
 function errorMessage(err: unknown): string {
   return err instanceof Error && err.message ? err.message : "Something went wrong.";
+}
+
+function formatUpdatedAt(value: string): string | null {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : format(date, "PPpp");
 }
 
 function StatusDot({ tone }: { tone: "ok" | "warn" | "missing" }) {
@@ -99,12 +107,19 @@ function AiReceiptSection() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   const [testFile, setTestFile] = useState<File | null>(null);
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestReceiptExtractionResponse | null>(null);
+
+  function applySettings(next: AiAdminStatusResponse) {
+    const savedSettings = next.settings;
+    setEnabled(savedSettings?.enabled ?? false);
+    setProvider(savedSettings?.provider ?? next.providers[0]?.id ?? "");
+    setModel(savedSettings?.model ?? "");
+    setDailyLimit(String(savedSettings?.dailyLimitPerUser ?? DEFAULT_DAILY_LIMIT));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -129,11 +144,7 @@ function AiReceiptSection() {
   useEffect(() => {
     if (status === null || formReady) return;
     setFormReady(true);
-    const savedSettings = status.settings;
-    setEnabled(savedSettings?.enabled ?? false);
-    setProvider(savedSettings?.provider ?? status.providers[0]?.id ?? "");
-    setModel(savedSettings?.model ?? "");
-    setDailyLimit(String(savedSettings?.dailyLimitPerUser ?? DEFAULT_DAILY_LIMIT));
+    applySettings(status);
   }, [status, formReady]);
 
   useEffect(() => {
@@ -161,80 +172,10 @@ function AiReceiptSection() {
     };
   }, [provider]);
 
-  function handleProviderChange(next: string | null) {
-    if (next === null) return;
-    setProvider(next);
-    setModel("");
-    setSaved(false);
-    setSaveError(null);
-  }
-
-  async function handleSave() {
-    const trimmedModel = model.trim();
-    const limit = Number(dailyLimit);
-    if (!provider) {
-      setSaveError("Choose a provider first.");
-      return;
-    }
-    if (!trimmedModel) {
-      setSaveError("Enter a model ID.");
-      return;
-    }
-    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_DAILY_LIMIT) {
-      setSaveError(`Daily limit must be a whole number from 1 to ${MAX_DAILY_LIMIT}.`);
-      return;
-    }
-    setSaving(true);
-    setSaveError(null);
-    setSaved(false);
-    try {
-      const savedSettings = await saveAiSettings({
-        enabled,
-        provider,
-        model: trimmedModel,
-        dailyLimitPerUser: limit,
-      });
-      setStatus((prev) =>
-        prev === null
-          ? prev
-          : { ...prev, settings: savedSettings, settingsStatus: "ok", settingsError: null },
-      );
-      setSaved(true);
-    } catch (err: unknown) {
-      setSaveError(errorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleTest() {
-    if (!testFile || !provider || !model.trim()) return;
-    setTesting(true);
-    setTestError(null);
-    setTestResult(null);
-    try {
-      const image = await fileToReceiptImage(testFile);
-      const result = await testReceiptExtraction({
-        provider,
-        model: model.trim(),
-        image,
-        categories: EXPENSE_CATEGORIES.map((category) => ({
-          id: category.id,
-          label: category.label,
-        })),
-      });
-      setTestResult(result);
-    } catch (err: unknown) {
-      setTestError(errorMessage(err));
-    } finally {
-      setTesting(false);
-    }
-  }
-
   if (statusLoading) {
     return (
-      <section aria-label="AI receipt extraction">
-        <h2 className="text-lg font-semibold">AI receipt extraction</h2>
+      <section aria-label="Receipt auto-fill (AI)">
+        <h2 className="text-lg font-semibold">Receipt auto-fill (AI)</h2>
         <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
           Loading AI status…
@@ -245,8 +186,8 @@ function AiReceiptSection() {
 
   if (statusError !== null || status === null) {
     return (
-      <section aria-label="AI receipt extraction">
-        <h2 className="text-lg font-semibold">AI receipt extraction</h2>
+      <section aria-label="Receipt auto-fill (AI)">
+        <h2 className="text-lg font-semibold">Receipt auto-fill (AI)</h2>
         <p className="mt-2 text-sm text-destructive" role="alert">
           {statusError ?? "Could not load AI status."}
         </p>
@@ -274,11 +215,99 @@ function AiReceiptSection() {
   }
 
   const selectedProvider = status.providers.find((entry) => entry.id === provider);
-  const testReady = testFile !== null && provider !== "" && model.trim() !== "";
+  const providerKeyMissing = selectedProvider !== undefined && !selectedProvider.keyConfigured;
+  const modelTrimmed = model.trim();
+  const modelIsUrl = modelTrimmed.includes("://");
+  const limitNumber = Number(dailyLimit);
+  const limitError =
+    dailyLimit.trim() === "" ||
+    !Number.isInteger(limitNumber) ||
+    limitNumber < 1 ||
+    limitNumber > MAX_DAILY_LIMIT
+      ? `Enter a whole number from 1 to ${MAX_DAILY_LIMIT}.`
+      : null;
+  const testReady = testFile !== null && provider !== "" && modelTrimmed !== "";
+  const saveBlockedByKey = enabled && providerKeyMissing;
+
+  function handleProviderChange(next: string | null) {
+    if (next === null) return;
+    setProvider(next);
+    setModel("");
+    setSaveError(null);
+  }
+
+  async function handleSave() {
+    if (!provider) {
+      setSaveError("Choose a provider first.");
+      return;
+    }
+    if (!modelTrimmed) {
+      setSaveError("Enter a model ID.");
+      return;
+    }
+    if (limitError !== null) {
+      setSaveError(limitError);
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await saveAiSettings({
+        enabled,
+        provider,
+        model: modelTrimmed,
+        dailyLimitPerUser: limitNumber,
+      });
+      toast.success("Settings saved.");
+    } catch (err: unknown) {
+      const message = errorMessage(err);
+      setSaveError(message);
+      toast.error(message);
+      return;
+    } finally {
+      setSaving(false);
+    }
+    try {
+      const fresh = await getAiAdminStatus();
+      setStatus(fresh);
+      applySettings(fresh);
+    } catch (err: unknown) {
+      setSaveError(`Settings saved, but reloading the status failed: ${errorMessage(err)}`);
+    }
+  }
+
+  async function handleTest() {
+    if (!testFile || !provider || !modelTrimmed) return;
+    setTesting(true);
+    setTestError(null);
+    setTestResult(null);
+    try {
+      const image = await fileToReceiptImage(testFile);
+      const result = await testReceiptExtraction({
+        provider,
+        model: modelTrimmed,
+        image,
+        categories: EXPENSE_CATEGORIES.map((category) => ({
+          id: category.id,
+          label: category.label,
+        })),
+      });
+      setTestResult(result);
+    } catch (err: unknown) {
+      setTestError(errorMessage(err));
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const updatedOn =
+    status.updatedAt !== null && status.updatedBy !== null
+      ? { by: status.updatedBy, on: formatUpdatedAt(status.updatedAt) }
+      : null;
 
   return (
-    <section aria-label="AI receipt extraction" className="space-y-6">
-      <h2 className="text-lg font-semibold">AI receipt extraction</h2>
+    <section aria-label="Receipt auto-fill (AI)" className="space-y-6">
+      <h2 className="text-lg font-semibold">Receipt auto-fill (AI)</h2>
 
       <Card>
         <CardHeader>
@@ -302,29 +331,37 @@ function AiReceiptSection() {
           )}
           <div className="flex items-center gap-2">
             <StatusDot tone={status.settingsStatus === "ok" ? "ok" : "missing"} />
-            {status.settingsStatus === "ok" && (
-              <span>
-                Settings saved
-                {status.updatedAt !== null && status.updatedBy !== null
-                  ? ` by ${status.updatedBy} on ${new Date(status.updatedAt).toLocaleString()}`
-                  : ""}
-                .
-              </span>
-            )}
-            {status.settingsStatus === "missing" && <span>No settings saved yet.</span>}
-            {status.settingsStatus === "invalid" && (
-              <span>Saved settings are invalid: {status.settingsError ?? "unknown error"}.</span>
-            )}
+            {status.settingsStatus === "ok" &&
+              (updatedOn !== null && updatedOn.on !== null ? (
+                <span>
+                  Last updated by {updatedOn.by} on {updatedOn.on}.
+                </span>
+              ) : (
+                <span>Settings saved.</span>
+              ))}
+            {status.settingsStatus === "missing" && <span>Not set up yet.</span>}
           </div>
-          {status.keysStatus === "invalid" && (
+          {status.settingsStatus === "invalid" && (
             <p className="text-amber-600" role="alert">
-              The provider-keys secret on the server is invalid. Fix the secret, then reload this
-              page.
+              The saved settings are invalid: {status.settingsError ?? "unknown error"}. Saving
+              will replace the stored settings.
             </p>
+          )}
+          {status.keysStatus === "invalid" && (
+            <div className="space-y-1 text-amber-600" role="alert">
+              <p>
+                The AI_PROVIDER_KEYS secret isn&apos;t valid JSON, so no provider has a key. Run
+                this to replace it:
+              </p>
+              <pre className="overflow-x-auto rounded-lg bg-muted p-2 text-xs text-foreground">
+                firebase functions:secrets:set AI_PROVIDER_KEYS
+              </pre>
+            </div>
           )}
           {status.ignoredKeyNames.length > 0 && (
             <p className="text-muted-foreground">
-              Ignored unknown key names: {status.ignoredKeyNames.join(", ")}.
+              These names in AI_PROVIDER_KEYS aren&apos;t providers and are ignored:{" "}
+              {status.ignoredKeyNames.join(", ")}
             </p>
           )}
         </CardContent>
@@ -340,7 +377,6 @@ function AiReceiptSection() {
               checked={enabled}
               onCheckedChange={(checked) => {
                 setEnabled(checked === true);
-                setSaved(false);
               }}
               aria-label="Enable AI receipt extraction"
             />
@@ -359,6 +395,7 @@ function AiReceiptSection() {
                 {status.providers.map((entry) => (
                   <SelectItem key={entry.id} value={entry.id}>
                     {entry.label}
+                    {entry.keyConfigured ? "" : " (key not set)"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -367,7 +404,7 @@ function AiReceiptSection() {
 
           <div className="space-y-1.5">
             <label htmlFor="ai-model" className="text-sm font-medium leading-none">
-              Model
+              Model ID
             </label>
             <Input
               id="ai-model"
@@ -375,9 +412,8 @@ function AiReceiptSection() {
               value={model}
               onChange={(event) => {
                 setModel(event.target.value);
-                setSaved(false);
               }}
-              placeholder="e.g. gemini-2.5-flash"
+              placeholder="Paste a model ID"
               autoComplete="off"
             />
             <datalist id="ai-model-options">
@@ -387,12 +423,15 @@ function AiReceiptSection() {
                 </option>
               ))}
             </datalist>
-            {modelsLoading && (
-              <p className="text-xs text-muted-foreground">Loading known models…</p>
+            {modelIsUrl && (
+              <p className="text-xs text-destructive" role="alert">
+                {MODEL_URL_HINT}
+              </p>
             )}
+            {modelsLoading && <p className="text-xs text-muted-foreground">Loading models…</p>}
             {modelsError !== null && (
               <p className="text-xs text-muted-foreground">
-                Couldn&apos;t load suggestions — you can still type a model ID. ({modelsError})
+                Couldn&apos;t load the model list: {modelsError}. You can still paste a model ID.
               </p>
             )}
             {selectedProvider !== undefined && (
@@ -412,24 +451,32 @@ function AiReceiptSection() {
               value={dailyLimit}
               onChange={(event) => {
                 setDailyLimit(event.target.value);
-                setSaved(false);
               }}
             />
+            {limitError !== null && (
+              <p className="text-xs text-destructive" role="alert">
+                {limitError}
+              </p>
+            )}
           </div>
 
+          {saveBlockedByKey && selectedProvider !== undefined && (
+            <p className="text-xs text-muted-foreground">
+              Save is disabled because the {selectedProvider.label} API key isn&apos;t set. Turn
+              the feature off to save anyway.
+            </p>
+          )}
           {saveError !== null && (
             <p className="text-sm text-destructive" role="alert">
               {saveError}
             </p>
           )}
-          {saved && (
-            <p className="text-sm text-emerald-600" role="status">
-              Settings saved.
-            </p>
-          )}
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            onClick={handleSave}
+            disabled={saving || modelIsUrl || saveBlockedByKey}
+          >
             {saving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            Save settings
+            Save
           </Button>
         </CardContent>
       </Card>
@@ -457,9 +504,18 @@ function AiReceiptSection() {
               }}
             />
           </div>
-          <Button onClick={handleTest} disabled={!testReady || testing} variant="outline">
+          {providerKeyMissing && selectedProvider !== undefined && (
+            <p className="text-xs text-muted-foreground">
+              Test is disabled because the {selectedProvider.label} API key isn&apos;t set.
+            </p>
+          )}
+          <Button
+            onClick={handleTest}
+            disabled={!testReady || testing || modelIsUrl || providerKeyMissing}
+            variant="outline"
+          >
             {testing && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            Run test
+            Test
           </Button>
           {testError !== null && (
             <p className="text-sm text-destructive" role="alert">
