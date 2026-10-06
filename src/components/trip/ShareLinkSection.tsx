@@ -113,7 +113,7 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Input value={shareUrl} readOnly className="text-xs" />
+        <Input value={shareUrl} readOnly className="md:text-xs" />
         <Button
           variant="outline"
           size="icon"
