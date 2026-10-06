@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { m } from "motion/react";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/Header";
+import { fadeSlideUp } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,13 +91,13 @@ export function AdminPage() {
   }
 
   return (
-    <div>
+    <m.div variants={fadeSlideUp} initial="hidden" animate="show">
       <Header />
       <main className="mx-auto max-w-2xl space-y-6 px-4 py-6">
         <h1 className="text-2xl font-bold">Admin</h1>
         <AiReceiptSection />
       </main>
-    </div>
+    </m.div>
   );
 }
 

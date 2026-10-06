@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Link, useLocation } from "react-router";
+import { m } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarGroup } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { fadeSlideUp } from "@/lib/motion";
 import type { Trip } from "@/types";
 
 export interface TripShellViewProps {
@@ -33,8 +35,18 @@ export function TripShellView({
   fab,
   children,
 }: TripShellViewProps) {
+  const { pathname } = useLocation();
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+  }, []);
   return (
-    <div className="min-h-screen bg-background">
+    <m.div
+      variants={fadeSlideUp}
+      initial="hidden"
+      animate="show"
+      className="min-h-screen bg-background"
+    >
       {header}
       <div className="container mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6">
@@ -76,9 +88,18 @@ export function TripShellView({
         </div>
 
         {tabs}
-        <div className="pb-24 md:pb-0">{children}</div>
+        <div className="pb-24 md:pb-0">
+          <m.div
+            key={pathname}
+            variants={fadeSlideUp}
+            initial={mountedRef.current ? "hidden" : false}
+            animate="show"
+          >
+            {children}
+          </m.div>
+        </div>
       </div>
       {fab}
-    </div>
+    </m.div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { m } from "motion/react";
 import {
   ChevronDown,
   HandCoins,
@@ -13,6 +14,7 @@ import { SettlementHelpDialog } from "@/components/balance/SettlementHelpDialog"
 import { Header, HeaderLogo } from "@/components/layout/Header";
 import { WorkedExample } from "@/components/how-it-works/WorkedExample";
 import { useAuth } from "@/contexts/AuthContext";
+import { fadeSlideUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -177,12 +179,17 @@ export function HowItWorksPage() {
   const [videoOpen, setVideoOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <m.div
+      variants={fadeSlideUp}
+      initial="hidden"
+      animate="show"
+      className="min-h-screen bg-background"
+    >
       {user ? <Header /> : <HowItWorksSignedOutBar />}
 
       <HowItWorksContent onWatchVideo={() => setVideoOpen(true)} />
 
       <SettlementHelpDialog open={videoOpen} onOpenChange={setVideoOpen} />
-    </div>
+    </m.div>
   );
 }

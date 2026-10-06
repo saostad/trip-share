@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { m } from "motion/react";
 import { TripCard } from "@/components/trip/TripCard";
 import { CreateTripWizard } from "@/components/trip/CreateTripWizard";
 import type { AccountOption } from "@/components/trip/ParticipantInput";
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, MapPin, Link2, Lock, Receipt, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { fadeSlideUp } from "@/lib/motion";
 import type { AnnotatedTrip } from "@/lib/tripFilters";
 import type { SettlementMethod, SettlementGroup } from "@/types";
 
@@ -98,7 +100,12 @@ export function DashboardView({
   const firstName = displayName?.trim().split(/\s+/)[0] ?? null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <m.div
+      variants={fadeSlideUp}
+      initial="hidden"
+      animate="show"
+      className="min-h-screen bg-background"
+    >
       {header}
 
       <main className="container mx-auto px-4 py-8">
@@ -197,6 +204,6 @@ export function DashboardView({
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </m.div>
   );
 }
