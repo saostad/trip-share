@@ -50,7 +50,7 @@ function Hero({
   if (position.kind === "empty") {
     return (
       <Card>
-        <CardContent className="space-y-1 pt-6">
+        <CardContent className="space-y-1">
           <p className="text-2xl font-bold">No expenses yet</p>
           <p className="text-sm text-muted-foreground">
             Add the first expense and TripShare keeps a running balance for
@@ -72,7 +72,7 @@ function Hero({
   if (position.kind === "unlinked") {
     return (
       <Card>
-        <CardContent className="space-y-1 pt-6">
+        <CardContent className="space-y-1">
           <p className="text-sm text-muted-foreground">Total spent</p>
           <p className="text-2xl font-bold tabular-nums">
             {formatCurrency(position.totalSpent)}
@@ -105,7 +105,7 @@ function Hero({
 
   return (
     <Card>
-      <CardContent className="space-y-2 pt-6">
+      <CardContent className="space-y-2">
         <p className={cn("text-2xl font-bold tabular-nums", titleClass)}>{title}</p>
         {position.counterparties.map((c) => (
           <p
