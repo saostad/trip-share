@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CountUp } from "@/components/CountUp";
 import { EmptyState } from "@/components/EmptyState";
 import { formatCurrency } from "@/lib/formatters";
 import { resolveExpenseCategory } from "@/lib/expenseCategories";
@@ -78,7 +79,7 @@ function Hero({
         <CardContent className="space-y-1">
           <p className="text-sm text-muted-foreground">Total spent</p>
           <p className="text-3xl font-bold tabular-nums">
-            {formatCurrency(position.totalSpent)}
+            <CountUp value={position.totalSpent} format={formatCurrency} />
           </p>
           <p className="text-sm text-muted-foreground">
             {formatCurrency(position.perPersonAverage)} per person
@@ -129,7 +130,7 @@ function Hero({
       <CardContent className="space-y-2">
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className={cn("text-3xl font-bold tabular-nums", amountClass)}>
-          {formatCurrency(position.amount)}
+          <CountUp value={position.amount} format={formatCurrency} />
         </p>
         {position.counterparties.length > 0 && (
           <ul className="space-y-1">

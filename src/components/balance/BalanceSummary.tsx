@@ -6,6 +6,7 @@ import {
   buildGroupByRepresentative,
 } from "@/lib/settlementGroups";
 import { formatCurrency } from "@/lib/formatters";
+import { CountUp } from "@/components/CountUp";
 import type {
   Expense,
   Payment,
@@ -157,7 +158,7 @@ export function BalanceSummary({
               <span
                 className={`shrink-0 text-base font-semibold tabular-nums ${amountClass}`}
               >
-                {formatCurrency(balance)}
+                <CountUp value={Math.abs(balance)} format={formatCurrency} />
               </span>
             </li>
           );
