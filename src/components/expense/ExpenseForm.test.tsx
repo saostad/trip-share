@@ -2,20 +2,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { ExpenseForm } from "./ExpenseForm";
+import * as FileUploadModule from "@/components/ui/FileUpload";
 import { extractReceipt, type ExtractReceiptResponse } from "@/lib/aiApi";
 import { fetchAutofillEnabled } from "@/lib/aiSettings";
 import { fileToReceiptImage } from "@/lib/receiptImage";
 import type { Expense } from "@/types";
 
-vi.mock("@/components/ui/FileUpload", () => ({
-  FileUpload: ({
-    onChange,
-    onFileSelected,
-  }: {
-    onChange: (file: unknown) => void;
-    onFileSelected?: (file: File) => void;
-  }) => (
-    <div>
+vi.mock("@/components/ui/FileUpload", () => {
+  let startOnChange: ((file: unknown) => void) | null = null;
+  const attachment = { name: "receipt.jpg", url: "http://x/y", path: "p", type: "image/jpeg" };
+  return {
+    FileUpload: ({
+      onChange,
+      onFileSelected,
+    }: {
+      onChange: (file: unknown) => void;
+      onFileSelected?: (file: File) => void;
+    }) => {
+      // Only the start-screen uploader passes onFileSelected.
+      if (onFileSelected) startOnChange = onChange;
+      return (
+        <div>
       <button
         type="button"
         onClick={() =>
@@ -30,20 +37,19 @@ vi.mock("@/components/ui/FileUpload", () => ({
       >
         mock-pick-pdf
       </button>
-      <button
-        type="button"
-        onClick={() =>
-          onChange({ name: "receipt.jpg", url: "http://x/y", path: "p", type: "image/jpeg" })
-        }
-      >
+      <button type="button" onClick={() => onChange(attachment)}>
         mock-uploaded
       </button>
       <button type="button" onClick={() => onChange(null)}>
         mock-remove
       </button>
-    </div>
-  ),
-}));
+        </div>
+      );
+    },
+    /** Simulates the start-screen upload finishing after its UI unmounted. */
+    __lateStartUpload: () => startOnChange?.(attachment),
+  };
+});
 
 vi.mock("@/lib/aiApi", () => ({
   extractReceipt: vi.fn(),
@@ -322,6 +328,20 @@ describe("ExpenseForm auto-fill", () => {
     });
     expect(screen.getByLabelText(/Description/)).toHaveValue("");
     expect(screen.queryByText(/Filled from receipt/)).not.toBeInTheDocument();
+  });
+
+  it("doesn't pull the user back when the upload finishes late", async () => {
+    renderForm();
+    fireEvent.click(screen.getByRole("button", { name: /Enter manually/ }));
+    next();
+    expect(screen.getByLabelText(/Amount/)).toBeInTheDocument();
+    // The start-screen upload finishes after the user moved on.
+    const mocked = FileUploadModule as unknown as { __lateStartUpload?: () => void };
+    act(() => {
+      mocked.__lateStartUpload?.();
+    });
+    expect(screen.getByLabelText(/Amount/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Description/)).not.toBeInTheDocument();
   });
 
   it("toasts a late result on step 2 or later", async () => {

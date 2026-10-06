@@ -215,6 +215,8 @@ export function ExpenseForm({
   const mountedRef = useRef(true);
   const stepRef = useRef(step);
   stepRef.current = step;
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
   const fieldsRef = useRef<AutofillCurrent>({ description, category, date, amount });
   fieldsRef.current = { description, category, date, amount };
   const autofillEnabledRef = useRef<Promise<boolean> | null>(null);
@@ -399,8 +401,12 @@ export function ExpenseForm({
   function handleStartAttachment(file: FileAttachment | null) {
     setAttachment(file);
     if (file) {
-      setPhase("form");
-      setStep(0);
+      // The upload can finish after the user left the start screen (e.g. via
+      // "Enter manually"); only move a still-waiting user into the form.
+      if (phaseRef.current === "start") {
+        setPhase("form");
+        setStep(0);
+      }
     } else {
       // The attachment is gone, so a late result for it must not apply.
       requestTokenRef.current += 1;
