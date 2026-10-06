@@ -36,8 +36,10 @@ export function redactKey(text: string, apiKey: string): string {
 
 /**
  * Pulls a short safe message out of a provider error body: `error.message`,
- * or a top-level `message` / `detail` string, else the raw text. Cut to 300
- * characters with every copy of the key redacted. Never throws.
+ * or a top-level `message` / `detail` string, else the raw text. Redacts
+ * every copy of the key first and only then cuts to 300 characters: cutting
+ * first could leave a partial key across the cut that no longer matches.
+ * Never throws.
  */
 export function extractProviderMessage(bodyText: string, apiKey: string): string {
   let message = "";
@@ -56,7 +58,7 @@ export function extractProviderMessage(bodyText: string, apiKey: string): string
   } catch {
     message = bodyText;
   }
-  return redactKey(message.slice(0, MAX_PROVIDER_MESSAGE_CHARS).trim(), apiKey);
+  return redactKey(message.trim(), apiKey).slice(0, MAX_PROVIDER_MESSAGE_CHARS);
 }
 
 function hasApiKeyInvalidReason(bodyText: string): boolean {

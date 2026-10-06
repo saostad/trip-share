@@ -78,6 +78,15 @@ describe("extractProviderMessage", () => {
     expect(extractProviderMessage(JSON.stringify({ nothing: 1 }), FAKE_KEY)).toBe("");
   });
 
+  it("redacts a key straddling the 300-character cut", () => {
+    const bodyText = JSON.stringify({
+      error: { message: `${"x".repeat(280)} key ${FAKE_KEY} tail` },
+    });
+    const message = extractProviderMessage(bodyText, FAKE_KEY);
+    expect(message).not.toContain(FAKE_KEY.slice(0, 4));
+    expect(message).toContain("[redacted]");
+  });
+
   it("cuts to 300 characters and redacts every copy of the key", () => {
     const long = `oops ${FAKE_KEY} ` + "x".repeat(500) + ` ${FAKE_KEY}`;
     const message = extractProviderMessage(long, FAKE_KEY);
