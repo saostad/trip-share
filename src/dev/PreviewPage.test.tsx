@@ -42,6 +42,13 @@ describe("preview settled section", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Replay confetti" }));
     expect(await screen.findByText("All settled! 🎉")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        document.querySelector(
+          'div[aria-hidden="true"].pointer-events-none',
+        ),
+      ).toBeInTheDocument(),
+    );
   });
 });
 

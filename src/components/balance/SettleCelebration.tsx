@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { m, useReducedMotion } from "motion/react";
 import { Download, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  readCelebratedSignature,
+  hasCelebratedSignature,
   writeCelebratedSignature,
 } from "./celebrationStorage";
 import type { Expense, Payment } from "@/types";
@@ -81,9 +81,10 @@ export interface SettleCelebrationProps {
 }
 
 /**
- * Non-modal "all square" card for the top of the Settle tab. Shows only on
- * a fresh transition to empty (previously had transfers, at least one
- * expense), once per trip state; confetti is skipped under reduced motion.
+ * Non-modal "all settled" card for the top of the Settle tab. The card is
+ * a pure function of the props (at least one expense, no transfers); only
+ * the confetti burst is one-time per trip state. Confetti is skipped
+ * under reduced motion while the card still shows.
  */
 export function SettleCelebration({
   tripId,
@@ -101,30 +102,23 @@ export function SettleCelebration({
       ]),
     [expenses, payments],
   );
-  const celebrated = useMemo(
-    () => readCelebratedSignature(tripId) === signature,
-    [tripId, signature],
-  );
+  const settled = expenses.length >= 1 && !hasTransfers;
+  const [burst, setBurst] = useState(false);
 
-  const prevHadTransfers = useRef<boolean | null>(null);
-  const fresh =
-    prevHadTransfers.current === true &&
-    !hasTransfers &&
-    expenses.length >= 1;
   useEffect(() => {
-    prevHadTransfers.current = hasTransfers;
-  }, [hasTransfers]);
+    if (!settled) return;
+    if (hasCelebratedSignature(tripId, signature)) return;
+    writeCelebratedSignature(tripId, signature);
+    setBurst(true);
+    const timer = window.setTimeout(() => setBurst(false), 1200);
+    return () => window.clearTimeout(timer);
+  }, [settled, tripId, signature]);
 
-  const visible = fresh && !celebrated;
-  useEffect(() => {
-    if (visible) writeCelebratedSignature(tripId, signature);
-  }, [visible, tripId, signature]);
-
-  if (!visible) return null;
+  if (!settled) return null;
 
   return (
     <Card className="relative overflow-hidden border-positive/30 bg-positive/5">
-      {!reduceMotion && <Confetti />}
+      {burst && !reduceMotion && <Confetti />}
       <CardContent className="flex flex-wrap items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-positive/15 text-positive">
           <PartyPopper className="size-5" aria-hidden />

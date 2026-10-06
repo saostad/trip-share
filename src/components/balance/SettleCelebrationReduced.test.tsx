@@ -32,15 +32,7 @@ describe("SettleCelebration reduced motion", () => {
         createdAt: { toDate: () => new Date("2026-10-01T10:00:00Z") } as never,
       },
     ];
-    const { container, rerender } = render(
-      <SettleCelebration
-        tripId="t9"
-        expenses={expenses}
-        payments={[]}
-        hasTransfers
-      />,
-    );
-    rerender(
+    const { container } = render(
       <SettleCelebration
         tripId="t9"
         expenses={expenses}
@@ -50,7 +42,7 @@ describe("SettleCelebration reduced motion", () => {
     );
     expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
     expect(
-      container.querySelector('div[aria-hidden="true"]'),
+      container.querySelector('div[aria-hidden="true"].pointer-events-none'),
     ).not.toBeInTheDocument();
   });
 });

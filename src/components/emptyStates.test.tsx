@@ -82,7 +82,7 @@ describe("SettlementList empty", () => {
     ).toBeInTheDocument();
   });
 
-  it("celebrates all square when balances net out", () => {
+  it("shows a muted line when settled, leaving the celebration to the card", () => {
     render(
       <SettlementList
         expenses={[
@@ -93,7 +93,10 @@ describe("SettlementList empty", () => {
         payments={[]}
       />,
     );
-    expect(screen.getByText("Everyone is all square")).toBeInTheDocument();
+    expect(screen.getByText("No payments needed.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Everyone is all square"),
+    ).not.toBeInTheDocument();
   });
 });
 

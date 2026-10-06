@@ -128,7 +128,7 @@ export function SettlementList({
             ]}
             title="Add expenses to see who owes whom"
           />
-        ) : (
+        ) : expenses.length === 0 ? (
           <EmptyState
             icons={[
               { Icon: Scale, circleClassName: "bg-primary/10 text-primary" },
@@ -139,6 +139,9 @@ export function SettlementList({
             ]}
             title="Everyone is all square"
           />
+        ) : (
+          // The celebration card above already covers this case.
+          <p className="text-sm text-muted-foreground">No payments needed.</p>
         )
       ) : (
         <ul className="space-y-2">

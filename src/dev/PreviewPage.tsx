@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -814,23 +814,13 @@ const SETTLED_PREVIEW_TRIP_ID = "preview-settled";
 function SettledSection() {
   const [round, setRound] = useState(0);
   const [settled, setSettled] = useState(false);
-  const timer = useRef<number | null>(null);
-
-  useEffect(
-    () => () => {
-      if (timer.current !== null) window.clearTimeout(timer.current);
-    },
-    [],
-  );
 
   function replay() {
+    // Clear the stored key and the in-memory fallback, then remount so
+    // the one-time burst plays again for the same trip state.
     clearCelebratedSignature(SETTLED_PREVIEW_TRIP_ID);
-    if (timer.current !== null) window.clearTimeout(timer.current);
-    // Remount with transfers, then settle on the next tick so the
-    // fresh-transition confetti plays again.
-    setSettled(false);
+    setSettled(true);
     setRound((r) => r + 1);
-    timer.current = window.setTimeout(() => setSettled(true), 150);
   }
 
   return (
@@ -844,8 +834,10 @@ function SettledSection() {
         </Button>
       </div>
       <p className="text-sm text-muted-foreground">
-        Replay clears this trip&apos;s celebrated key, then re-settles so the
-        one-time burst plays again. Reloading the page does not replay it.
+        The card shows whenever there is at least one expense and nothing
+        left to pay. Replay clears this trip&apos;s celebrated state and
+        remounts so the one-time burst plays again; reloading the page does
+        not replay it.
       </p>
       <SettleCelebration
         key={round}

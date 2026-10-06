@@ -29,18 +29,34 @@ function payment(id: string): Payment {
 
 const EXPENSES = [expense("e1")];
 
-function renderCelebration(
+function renderSettled(
   tripId: string,
-  payments: Payment[],
-  hasTransfers: boolean,
+  {
+    expenses = EXPENSES,
+    payments = [],
+    hasTransfers = false,
+    onDownloadExcel,
+  }: {
+    expenses?: Expense[];
+    payments?: Payment[];
+    hasTransfers?: boolean;
+    onDownloadExcel?: () => void;
+  } = {},
 ) {
   return render(
     <SettleCelebration
       tripId={tripId}
-      expenses={EXPENSES}
+      expenses={expenses}
       payments={payments}
       hasTransfers={hasTransfers}
+      onDownloadExcel={onDownloadExcel}
     />,
+  );
+}
+
+function confettiBox(container: HTMLElement): Element | null {
+  return container.querySelector(
+    'div[aria-hidden="true"].pointer-events-none',
   );
 }
 
@@ -62,150 +78,101 @@ beforeEach(() => {
 });
 
 describe("SettleCelebration", () => {
-  it("appears on a fresh transition and disappears with transfers", () => {
-    const { rerender, unmount } = renderCelebration("t1", [], true);
-    expect(
-      screen.queryByText("All settled! 🎉"),
-    ).not.toBeInTheDocument();
-
+  it("keeps the card on re-render with the same settled props", () => {
+    const { rerender, unmount } = renderSettled("r1");
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
     rerender(
       <SettleCelebration
-        tripId="t1"
+        tripId="r1"
         expenses={EXPENSES}
         payments={[]}
         hasTransfers={false}
       />,
     );
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+    unmount();
+  });
+
+  it("shows card plus confetti once on the first settled view", () => {
+    const { container, unmount } = renderSettled("r2");
     expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
     expect(screen.getByText("Everyone's paid back. Nice trip.")).toBeInTheDocument();
-
-    rerender(
-      <SettleCelebration
-        tripId="t1"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers
-      />,
-    );
-    expect(
-      screen.queryByText("All settled! 🎉"),
-    ).not.toBeInTheDocument();
+    expect(confettiBox(container)?.childElementCount).toBe(20);
     unmount();
   });
 
-  it("stays hidden when mounting already empty", () => {
-    renderCelebration("t2", [], false);
-    expect(
-      screen.queryByText("All settled! 🎉"),
-    ).not.toBeInTheDocument();
-  });
-
-  it("celebrates once per trip state; a new payment resets it", () => {
-    const first = renderCelebration("t3", [], true);
-    first.rerender(
-      <SettleCelebration
-        tripId="t3"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers={false}
-      />,
-    );
-    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+  it("remounts with card but no confetti once celebrated", () => {
+    const first = renderSettled("r3");
+    expect(confettiBox(first.container)).toBeInTheDocument();
     first.unmount();
 
-    const second = renderCelebration("t3", [], true);
-    second.rerender(
-      <SettleCelebration
-        tripId="t3"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers={false}
-      />,
-    );
-    expect(
-      screen.queryByText("All settled! 🎉"),
-    ).not.toBeInTheDocument();
-    second.unmount();
-
-    const withPayment = [payment("p9")];
-    const third = renderCelebration("t3", withPayment, true);
-    third.rerender(
-      <SettleCelebration
-        tripId="t3"
-        expenses={EXPENSES}
-        payments={withPayment}
-        hasTransfers={false}
-      />,
-    );
+    const second = renderSettled("r3");
     expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
-    third.unmount();
+    expect(confettiBox(second.container)).not.toBeInTheDocument();
+    second.unmount();
   });
 
-  it("renders confetti pieces when visible", () => {
-    const { container, rerender, unmount } = renderCelebration("t4", [], true);
-    rerender(
-      <SettleCelebration
-        tripId="t4"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers={false}
-      />,
-    );
-    const box = container.querySelector('div[aria-hidden="true"]');
-    expect(box?.childElementCount).toBe(20);
+  it("shows no card with zero expenses", () => {
+    const { container, unmount } = renderSettled("r4", { expenses: [] });
+    expect(screen.queryByText("All settled! 🎉")).not.toBeInTheDocument();
+    expect(confettiBox(container)).not.toBeInTheDocument();
     unmount();
+  });
+
+  it("shows no card while transfers remain", () => {
+    const { unmount } = renderSettled("r5", { hasTransfers: true });
+    expect(screen.queryByText("All settled! 🎉")).not.toBeInTheDocument();
+    unmount();
+  });
+
+  it("bursts again for a new trip state", () => {
+    const first = renderSettled("r6");
+    expect(confettiBox(first.container)).toBeInTheDocument();
+    first.unmount();
+
+    const withPayment = [payment("p9")];
+    const second = renderSettled("r6", { payments: withPayment });
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+    expect(confettiBox(second.container)).toBeInTheDocument();
+    second.unmount();
+  });
+
+  it("celebrates again after the signature is cleared", () => {
+    const first = renderSettled("r7");
+    expect(confettiBox(first.container)).toBeInTheDocument();
+    first.unmount();
+
+    clearCelebratedSignature("r7");
+    const second = renderSettled("r7");
+    expect(confettiBox(second.container)).toBeInTheDocument();
+    second.unmount();
+  });
+
+  it("confetti fires at most once per load when storage throws", () => {
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("blocked");
+      });
+    try {
+      const first = renderSettled("r8");
+      expect(confettiBox(first.container)).toBeInTheDocument();
+      first.unmount();
+
+      const second = renderSettled("r8");
+      expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+      expect(confettiBox(second.container)).not.toBeInTheDocument();
+      second.unmount();
+    } finally {
+      setItem.mockRestore();
+    }
   });
 
   it("offers the Excel download when a handler is provided", () => {
     const onDownloadExcel = vi.fn();
-    const { rerender, unmount } = render(
-      <SettleCelebration
-        tripId="t5"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers
-        onDownloadExcel={onDownloadExcel}
-      />,
-    );
-    rerender(
-      <SettleCelebration
-        tripId="t5"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers={false}
-        onDownloadExcel={onDownloadExcel}
-      />,
-    );
-    const button = screen.getByRole("button", { name: "Download Excel" });
-    fireEvent.click(button);
+    const { unmount } = renderSettled("r9", { onDownloadExcel });
+    fireEvent.click(screen.getByRole("button", { name: "Download Excel" }));
     expect(onDownloadExcel).toHaveBeenCalledTimes(1);
     unmount();
-  });
-
-  it("celebrates again after the signature is cleared", () => {
-    const { rerender, unmount } = renderCelebration("t6", [], true);
-    rerender(
-      <SettleCelebration
-        tripId="t6"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers={false}
-      />,
-    );
-    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
-    unmount();
-
-    clearCelebratedSignature("t6");
-    const second = renderCelebration("t6", [], true);
-    second.rerender(
-      <SettleCelebration
-        tripId="t6"
-        expenses={EXPENSES}
-        payments={[]}
-        hasTransfers={false}
-      />,
-    );
-    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
-    second.unmount();
   });
 });
