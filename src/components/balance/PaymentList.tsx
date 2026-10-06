@@ -325,7 +325,7 @@ export function PaymentList({
                 <span className="min-w-0 truncate font-medium">{payment.from}</span>
                 <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 truncate font-medium">{payment.to}</span>
-                <span className="ml-auto shrink-0 font-semibold text-positive">
+                <span className="ml-auto shrink-0 font-semibold">
                   {formatCurrency(payment.amount)}
                 </span>
                 {!readOnly && onEdit && onDelete && (
