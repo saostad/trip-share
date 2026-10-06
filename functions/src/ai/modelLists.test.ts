@@ -56,6 +56,8 @@ function mockFetch(
       ok: outcome.status >= 200 && outcome.status < 300,
       status: outcome.status,
       json: async () => outcome.body,
+      text: async () =>
+        typeof outcome.body === "string" ? outcome.body : JSON.stringify(outcome.body),
     } as unknown as Response;
   }) as FetchImpl;
 }

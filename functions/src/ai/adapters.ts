@@ -1,5 +1,6 @@
 import { HttpsError } from "firebase-functions/v2/https";
 import type { FetchImpl } from "./modelLists";
+import { MAX_ERROR_BODY_CHARS, toProviderHttpError } from "./providerErrors";
 import type { ProviderDef } from "./providers";
 
 export interface ExtractionImage {
@@ -27,8 +28,6 @@ export interface BuiltRequest {
 }
 
 const EXTRACTION_TIMEOUT_MS = 45_000;
-const MAX_ERROR_BODY_CHARS = 8_000;
-const MAX_PROVIDER_MESSAGE_CHARS = 300;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -288,116 +287,6 @@ function findBalancedEnd(text: string, start: number): number {
   return -1;
 }
 
-class AdapterHttpError extends HttpsError {
-  readonly httpStatus: number;
-
-  constructor(code: "failed-precondition" | "resource-exhausted" | "unavailable" | "internal", message: string, httpStatus: number) {
-    super(code, message);
-    this.httpStatus = httpStatus;
-  }
-}
-
-function redactKey(text: string, apiKey: string): string {
-  if (apiKey === "") {
-    return text;
-  }
-  return text.split(apiKey).join("[redacted]");
-}
-
-/** Pulls a short safe message out of a provider error body. Never throws. */
-function extractProviderMessage(bodyText: string, apiKey: string): string {
-  let message = "";
-  try {
-    const parsed: unknown = JSON.parse(bodyText);
-    if (isRecord(parsed)) {
-      const nested = parsed["error"];
-      if (isRecord(nested) && typeof nested["message"] === "string") {
-        message = nested["message"];
-      } else if (typeof parsed["message"] === "string") {
-        message = parsed["message"];
-      } else if (typeof parsed["detail"] === "string") {
-        message = parsed["detail"];
-      }
-    }
-  } catch {
-    message = bodyText;
-  }
-  return redactKey(message.slice(0, MAX_PROVIDER_MESSAGE_CHARS).trim(), apiKey);
-}
-
-function hasApiKeyInvalidReason(bodyText: string): boolean {
-  try {
-    const parsed: unknown = JSON.parse(bodyText);
-    const details =
-      isRecord(parsed) && isRecord(parsed["error"]) ? parsed["error"]["details"] : undefined;
-    return (
-      Array.isArray(details) &&
-      details.some((detail) => isRecord(detail) && detail["reason"] === "API_KEY_INVALID")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function toExtractionHttpError(
-  providerLabel: string,
-  model: string,
-  status: number,
-  bodyText: string,
-  apiKey: string,
-): AdapterHttpError {
-  if (status === 401 || status === 403) {
-    return new AdapterHttpError(
-      "failed-precondition",
-      `${providerLabel} rejected the API key (HTTP ${status}). Check the key and try again.`,
-      status,
-    );
-  }
-  if (status === 400) {
-    if (hasApiKeyInvalidReason(bodyText)) {
-      return new AdapterHttpError(
-        "failed-precondition",
-        `${providerLabel} rejected the API key (HTTP 400). Check the key and try again.`,
-        status,
-      );
-    }
-    const message = extractProviderMessage(bodyText, apiKey);
-    return new AdapterHttpError(
-      "failed-precondition",
-      message === ""
-        ? `${providerLabel} rejected the request (HTTP 400).`
-        : `${providerLabel} rejected the request: ${message}`,
-      status,
-    );
-  }
-  if (status === 404) {
-    return new AdapterHttpError(
-      "failed-precondition",
-      `Model \`${model}\` was not found at \`${providerLabel}\`.`,
-      status,
-    );
-  }
-  if (status === 429) {
-    return new AdapterHttpError(
-      "resource-exhausted",
-      `${providerLabel} rate-limited the request (HTTP 429). Try again later.`,
-      status,
-    );
-  }
-  if (status >= 500) {
-    return new AdapterHttpError(
-      "unavailable",
-      `${providerLabel} is unavailable (HTTP ${status}). Try again later.`,
-      status,
-    );
-  }
-  return new AdapterHttpError(
-    "internal",
-    `${providerLabel} returned an unexpected error (HTTP ${status}).`,
-    status,
-  );
-}
-
 /**
  * Runs one extraction call against the provider selected by `kind`.
  * Error messages carry only the label, the status and a short redacted
@@ -432,13 +321,13 @@ export async function runAdapter(
   }
   if (!response.ok) {
     const bodyText = (await response.text().catch(() => "")).slice(0, MAX_ERROR_BODY_CHARS);
-    throw toExtractionHttpError(
-      call.provider.label,
-      call.model,
-      response.status,
+    throw toProviderHttpError({
+      providerLabel: call.provider.label,
+      model: call.model,
+      status: response.status,
       bodyText,
-      call.apiKey,
-    );
+      apiKey: call.apiKey,
+    });
   }
   let parsed: unknown;
   try {

@@ -1,4 +1,5 @@
 import { HttpsError } from "firebase-functions/v2/https";
+import { MAX_ERROR_BODY_CHARS, toProviderHttpError } from "./providerErrors";
 import type { ProviderDef } from "./providers";
 
 export interface ListedModel {
@@ -109,31 +110,6 @@ export function toListedModels(ids: readonly string[]): ListedModel[] {
   return [...new Set(ids)].sort().map((id) => ({ id, label: id }));
 }
 
-function toHttpError(providerLabel: string, status: number): HttpsError {
-  if (status === 401 || status === 403) {
-    return new HttpsError(
-      "failed-precondition",
-      `${providerLabel} rejected the API key (HTTP ${status}). Check the key and try again.`,
-    );
-  }
-  if (status === 429) {
-    return new HttpsError(
-      "resource-exhausted",
-      `${providerLabel} rate-limited the request (HTTP 429). Try again later.`,
-    );
-  }
-  if (status >= 500) {
-    return new HttpsError(
-      "unavailable",
-      `${providerLabel} is unavailable (HTTP ${status}). Try again later.`,
-    );
-  }
-  return new HttpsError(
-    "internal",
-    `${providerLabel} returned an unexpected error (HTTP ${status}).`,
-  );
-}
-
 /**
  * GETs a JSON body with a 15s timeout. Error messages carry only the provider
  * label, the HTTP status and a safe interpretation — never the key, the
@@ -145,6 +121,7 @@ async function fetchJson(
   providerLabel: string,
   fetchImpl: FetchImpl,
   timeoutMs: number,
+  apiKey: string,
 ): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -160,7 +137,8 @@ async function fetchJson(
     clearTimeout(timer);
   }
   if (!response.ok) {
-    throw toHttpError(providerLabel, response.status);
+    const bodyText = (await response.text().catch(() => "")).slice(0, MAX_ERROR_BODY_CHARS);
+    throw toProviderHttpError({ providerLabel, status: response.status, bodyText, apiKey });
   }
   try {
     return (await response.json()) as unknown;
@@ -190,6 +168,7 @@ async function fetchGeminiModelIds(
       provider.label,
       fetchImpl,
       timeoutMs,
+      apiKey,
     );
     const parsed = parseGeminiModelsPage(body, provider.label);
     ids.push(...parsed.ids);
@@ -214,6 +193,7 @@ async function fetchOpenAiCompatibleModelIds(
     provider.label,
     fetchImpl,
     timeoutMs,
+    apiKey,
   );
   return parseOpenAiCompatibleModels(body, provider.label, chatOnly);
 }
