@@ -244,7 +244,9 @@ export function extractJsonObject(text: string): Record<string, unknown> {
     }
     const end = findBalancedEnd(cleaned, start);
     if (end === -1) {
-      break;
+      // A stray unbalanced brace: keep looking for a later object.
+      index = start + 1;
+      continue;
     }
     try {
       const parsed: unknown = JSON.parse(cleaned.slice(start, end + 1));

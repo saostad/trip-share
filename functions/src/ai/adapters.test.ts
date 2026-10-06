@@ -293,6 +293,10 @@ describe("extractJsonObject", () => {
   it("skips an invalid first candidate for a later valid one", () => {
     expect(extractJsonObject("{oops} {\"ok\":true}")).toEqual({ ok: true });
   });
+
+  it("recovers past a stray unbalanced brace", () => {
+    expect(extractJsonObject("I think { maybe … {\"total\": 5}")).toEqual({ total: 5 });
+  });
 });
 
 describe("runAdapter", () => {
