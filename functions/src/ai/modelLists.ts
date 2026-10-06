@@ -137,7 +137,7 @@ function toHttpError(providerLabel: string, status: number): HttpsError {
 /**
  * GETs a JSON body with a 15s timeout. Error messages carry only the provider
  * label, the HTTP status and a safe interpretation — never the key, the
- * request URL (Gemini puts the key in it), headers or the response body.
+ * request URL, headers (which carry the key) or the response body.
  */
 async function fetchJson(
   url: string,
@@ -178,12 +178,19 @@ async function fetchGeminiModelIds(
   const ids: string[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < MAX_GEMINI_PAGES; page++) {
-    let url = `${provider.baseUrl}/models?pageSize=${GEMINI_PAGE_SIZE}&key=${encodeURIComponent(apiKey)}`;
+    let url = `${provider.baseUrl}/models?pageSize=${GEMINI_PAGE_SIZE}`;
     if (pageToken !== undefined) {
       url += `&pageToken=${encodeURIComponent(pageToken)}`;
     }
-    // The URL holds the key: it must never be logged or returned.
-    const body = await fetchJson(url, {}, provider.label, fetchImpl, timeoutMs);
+    // The key travels in the header, never in the URL: URLs end up in proxy
+    // logs, error causes and stack traces. Headers must never be logged.
+    const body = await fetchJson(
+      url,
+      { "x-goog-api-key": apiKey },
+      provider.label,
+      fetchImpl,
+      timeoutMs,
+    );
     const parsed = parseGeminiModelsPage(body, provider.label);
     ids.push(...parsed.ids);
     if (parsed.nextPageToken === undefined) {

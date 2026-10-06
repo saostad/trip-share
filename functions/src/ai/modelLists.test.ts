@@ -211,6 +211,16 @@ describe("fetchProviderModelIds", () => {
     expect(calls[1]?.url).toContain("pageToken=token-abc");
   });
 
+  it("sends the Gemini key in the header, never in the URL", async () => {
+    const calls: RecordedCall[] = [];
+    const fetchImpl = mockFetch(() => ({ status: 200, body: geminiPage2 }), calls);
+    await fetchProviderModelIds(gemini(), FAKE_KEY, fetchImpl);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).not.toContain(FAKE_KEY);
+    expect(calls[0]?.url).not.toContain("key=");
+    expect(calls[0]?.headers).toMatchObject({ "x-goog-api-key": FAKE_KEY });
+  });
+
   it("sends the Together key as a Bearer token", async () => {
     const calls: RecordedCall[] = [];
     const fetchImpl = mockFetch(() => ({ status: 200, body: togetherBody }), calls);
@@ -274,14 +284,14 @@ describe("fetchProviderModelIds", () => {
     await expect(fetchProviderModelIds(gemini(), FAKE_KEY, fetchImpl)).resolves.toEqual([]);
   });
 
-  it("never leaks the key into any thrown message, including Gemini's ?key= URL", async () => {
+  it("never leaks the key into any thrown message or request URL", async () => {
     const fetchImpl = mockFetch(() => ({ status: 200, body: { models: "unexpected-shape" } }), []);
     const parseError = await expectHttpsError(
       fetchProviderModelIds(gemini(), FAKE_KEY, fetchImpl),
       "internal",
     );
     expect(parseError.message).not.toContain(FAKE_KEY);
-    expect(parseError.message).not.toContain("?key=");
+    expect(parseError.message).not.toContain("key=");
 
     const cases: Array<[number, string]> = [
       [401, "failed-precondition"],
@@ -293,7 +303,7 @@ describe("fetchProviderModelIds", () => {
       const failing = mockFetch(() => ({ status, body: { key: FAKE_KEY } }), []);
       const error = await expectHttpsError(fetchProviderModelIds(gemini(), FAKE_KEY, failing), code);
       expect(error.message).not.toContain(FAKE_KEY);
-      expect(error.message).not.toContain("?key=");
+      expect(error.message).not.toContain("key=");
     }
   });
 });
