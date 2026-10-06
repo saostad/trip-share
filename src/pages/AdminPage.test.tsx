@@ -128,6 +128,7 @@ describe("AdminPage AI section", () => {
   });
 
   it("shows the invalid-keys warning with the fix command", async () => {
+    vi.stubEnv("VITE_FIREBASE_PROJECT_ID", "demo-project");
     vi.mocked(getAiAdminStatus).mockResolvedValue({
       ...statusFixture,
       keysStatus: "invalid",
@@ -137,8 +138,11 @@ describe("AdminPage AI section", () => {
     renderPage();
     expect(await screen.findByText(/The AI_PROVIDER_KEYS secret isn't valid JSON/)).toBeInTheDocument();
     expect(
-      screen.getByText("firebase functions:secrets:set AI_PROVIDER_KEYS"),
+      screen.getByText(
+        "npx firebase-tools functions:secrets:set AI_PROVIDER_KEYS --project demo-project",
+      ),
     ).toBeInTheDocument();
+    vi.unstubAllEnvs();
     expect(
       screen.getByText(/These names in AI_PROVIDER_KEYS aren't providers and are ignored: gemni/),
     ).toBeInTheDocument();

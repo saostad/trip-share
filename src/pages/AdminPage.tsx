@@ -354,7 +354,8 @@ function AiReceiptSection() {
                 this to replace it:
               </p>
               <pre className="overflow-x-auto rounded-lg bg-muted p-2 text-xs text-foreground">
-                firebase functions:secrets:set AI_PROVIDER_KEYS
+                npx firebase-tools functions:secrets:set AI_PROVIDER_KEYS --project{" "}
+                {import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "<projectId>"}
               </pre>
             </div>
           )}
