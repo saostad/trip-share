@@ -25,7 +25,7 @@ import {
   type ListedModel,
   type TestReceiptExtractionResponse,
 } from "@/lib/aiApi";
-import { EXPENSE_CATEGORIES } from "@/lib/expenseCategories";
+import { expenseCategoryPayload } from "@/lib/expenseCategories";
 import { fileToReceiptImage } from "@/lib/receiptImage";
 
 const DEFAULT_DAILY_LIMIT = 30;
@@ -292,10 +292,7 @@ function AiReceiptSection() {
         provider,
         model: modelTrimmed,
         image,
-        categories: EXPENSE_CATEGORIES.map((category) => ({
-          id: category.id,
-          label: category.label,
-        })),
+        categories: expenseCategoryPayload(),
       });
       setTestResult(result);
     } catch (err: unknown) {

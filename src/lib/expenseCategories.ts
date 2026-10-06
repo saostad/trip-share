@@ -44,6 +44,16 @@ export function getCategoryById(id: string | null | undefined): ExpenseCategory 
   return EXPENSE_CATEGORIES.find((c) => c.id === id);
 }
 
+export interface ExpenseCategoryPayload {
+  id: string;
+  label: string;
+}
+
+/** The `{ id, label }[]` shape extraction callables take for categories. */
+export function expenseCategoryPayload(): ExpenseCategoryPayload[] {
+  return EXPENSE_CATEGORIES.map(({ id, label }) => ({ id, label }));
+}
+
 /** Match category from stored id, or fall back to description label match for older expenses. */
 export function resolveExpenseCategory(
   categoryId: string | null | undefined,
