@@ -8,30 +8,12 @@ import { TripDetailPage } from '@/pages/TripDetailPage'
 import { JoinTripPage } from '@/pages/JoinTripPage'
 import { AdminPage } from '@/pages/AdminPage'
 
-function BuildFooter() {
-  const builtAt = new Date(__BUILD_TIME__).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short',
-  })
-
-  return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/80 px-3 py-1 text-center text-[10px] text-muted-foreground backdrop-blur-sm">
-      build {__BUILD_COMMIT__} · {builtAt}
-    </footer>
-  )
-}
-
 function App() {
   return (
     <BrowserRouter>
       <InstallPrompt />
       <Toaster richColors position="top-right" />
-      <div className="min-h-dvh pb-6">
+      <div className="min-h-dvh">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -68,7 +50,6 @@ function App() {
           />
         </Routes>
       </div>
-      <BuildFooter />
     </BrowserRouter>
   )
 }

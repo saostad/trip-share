@@ -1,17 +1,147 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { LogOut, Moon, Sun, ShieldCheck } from "lucide-react";
-import { useNavigate, Link } from "react-router";
+import { LogOut, Moon, Plane, ShieldCheck, Sun } from "lucide-react";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+
+export interface HeaderUser {
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}
+
+export interface HeaderViewProps {
+  user: HeaderUser | null;
+  isAdmin: boolean;
+  theme: "light" | "dark";
+  buildCommit: string;
+  buildTime: string;
+  onToggleTheme: () => void;
+  onSignOut: () => void;
+}
+
+function initialsFor(name: string | null): string {
+  if (!name) return "?";
+  return (
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?"
+  );
+}
+
+function formatBuildDate(buildTime: string): string {
+  const date = new Date(buildTime);
+  if (Number.isNaN(date.getTime())) return buildTime;
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function HeaderView({
+  user,
+  isAdmin,
+  theme,
+  buildCommit,
+  buildTime,
+  onToggleTheme,
+  onSignOut,
+}: HeaderViewProps) {
+  const initials = initialsFor(user?.displayName ?? null);
+
+  return (
+    <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
+      <Link to="/" className="flex items-center gap-2" aria-label="TripShare home">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Plane className="size-4" aria-hidden />
+        </span>
+        <span className="text-xl font-bold text-foreground">TripShare</span>
+      </Link>
+
+      {user && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label="User menu"
+            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Avatar size="default">
+              <AvatarImage
+                src={user.photoURL ?? undefined}
+                alt={user.displayName ?? "User avatar"}
+              />
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={8}>
+            <DropdownMenuLabel>
+              <div className="truncate text-sm font-medium">
+                {user.displayName ?? "Account"}
+              </div>
+              {user.email && (
+                <div className="truncate text-xs text-muted-foreground">
+                  {user.email}
+                </div>
+              )}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={onToggleTheme}>
+              {theme === "dark" ? (
+                <Sun className="size-4" aria-hidden />
+              ) : (
+                <Moon className="size-4" aria-hidden />
+              )}
+              {theme === "dark" ? "Light" : "Dark"}
+            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem render={<Link to="/admin" />}>
+                <ShieldCheck className="size-4" aria-hidden />
+                Admin
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
+              Version {buildCommit} · {formatBuildDate(buildTime)}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={onSignOut}>
+              <LogOut className="size-4" aria-hidden />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </header>
+  );
+}
+
+function buildInfo(): { commit: string; time: string } {
+  const commit =
+    typeof __BUILD_COMMIT__ !== "undefined" ? __BUILD_COMMIT__ : "local";
+  const time =
+    typeof __BUILD_TIME__ !== "undefined"
+      ? __BUILD_TIME__
+      : new Date().toISOString();
+  return { commit, time };
+}
 
 export function Header() {
   const { user, isAdmin, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { commit, time } = buildInfo();
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     try {
       await signOut();
       toast.success("Signed out successfully");
@@ -21,61 +151,23 @@ export function Header() {
     }
   };
 
-  const initials = user?.displayName
-    ? user.displayName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "?";
-
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
-      <Link to="/" className="text-xl font-bold text-foreground">
-        TripShare
-      </Link>
-
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-        </Button>
-
-        {user && isAdmin && (
-          <Link
-            to="/admin"
-            aria-label="Admin"
-            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent"
-          >
-            <ShieldCheck className="size-4" />
-            <span className="hidden sm:inline">Admin</span>
-          </Link>
-        )}
-
-        {user && (
-          <>
-            <Avatar size="default">
-              <AvatarImage
-                src={user.photoURL ?? undefined}
-                alt={user.displayName ?? "User avatar"}
-              />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <span className="hidden text-sm font-medium sm:inline">
-              {user.displayName}
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="size-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
-          </>
-        )}
-      </div>
-    </header>
+    <HeaderView
+      user={
+        user
+          ? {
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+            }
+          : null
+      }
+      isAdmin={isAdmin}
+      theme={theme}
+      buildCommit={commit}
+      buildTime={time}
+      onToggleTheme={toggleTheme}
+      onSignOut={handleSignOut}
+    />
   );
 }
