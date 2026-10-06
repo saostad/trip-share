@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { Toaster } from 'sonner'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
@@ -6,7 +7,22 @@ import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { TripDetailPage } from '@/pages/TripDetailPage'
 import { JoinTripPage } from '@/pages/JoinTripPage'
-import { AdminPage } from '@/pages/AdminPage'
+
+const AdminPage = lazy(() =>
+  import('@/pages/AdminPage').then((m) => ({ default: m.AdminPage })),
+)
+
+function AdminFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary"
+        role="status"
+        aria-label="Loading admin page"
+      />
+    </div>
+  )
+}
 
 function App() {
   return (
@@ -44,7 +60,9 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <AdminPage />
+                <Suspense fallback={<AdminFallback />}>
+                  <AdminPage />
+                </Suspense>
               </ProtectedRoute>
             }
           />

@@ -476,9 +476,9 @@ export function TripDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
+                  onClick={async () => {
                     try {
-                      downloadTripExcel(trip, expenses, payments);
+                      await downloadTripExcel(trip, expenses, payments);
                       toast.success("Excel file downloaded");
                     } catch {
                       toast.error("Failed to export Excel. Please try again.");

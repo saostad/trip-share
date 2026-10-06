@@ -1,4 +1,3 @@
-import * as XLSX from "xlsx";
 import {
   calculateBalances,
   computeSettlements,
@@ -8,6 +7,8 @@ import {
 } from "@/lib/balances";
 import { buildSettlementReport } from "@/lib/settlementReport";
 import type { Expense, Payment, Trip } from "@/types";
+
+type XlsxModule = typeof import("xlsx");
 
 function safeFileName(name: string): string {
   return (
@@ -23,20 +24,24 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function sheetFromAoA(rows: (string | number | null | undefined)[][]) {
+function sheetFromAoA(
+  XLSX: XlsxModule,
+  rows: (string | number | null | undefined)[][],
+) {
   return XLSX.utils.aoa_to_sheet(
     rows.map((row) => row.map((c) => (c === null || c === undefined ? "" : c))),
   );
 }
 
-export function downloadTripExcel(
+export async function downloadTripExcel(
   trip: Pick<
     Trip,
     "id" | "name" | "participants" | "participantLinks" | "settlementMethod"
   >,
   expenses: Expense[],
   payments: Payment[] = [],
-): void {
+): Promise<void> {
+  const XLSX = await import("xlsx");
   const participants = trip.participants;
   const method = normalizeSettlementMethod(trip.settlementMethod);
   const balances = calculateBalances(expenses, participants, payments);
@@ -107,7 +112,7 @@ export function downloadTripExcel(
               : "Suggested settlements: greedy — pair largest remaining debt with largest remaining credit.",
     ],
   ];
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(summaryRows), "Summary");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, summaryRows), "Summary");
 
   const participantRows: (string | number)[][] = [
     ["Name", "Linked account UID (if any)"],
@@ -118,7 +123,7 @@ export function downloadTripExcel(
   ];
   XLSX.utils.book_append_sheet(
     wb,
-    sheetFromAoA(participantRows),
+    sheetFromAoA(XLSX, participantRows),
     "Participants",
   );
 
@@ -157,7 +162,7 @@ export function downloadTripExcel(
         ];
       }),
   ];
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(expenseRows), "Expenses");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, expenseRows), "Expenses");
 
   const paymentRows: (string | number)[][] = [
     ["ID", "Date", "From", "To", "Amount", "Note", "Attachment file", "Attachment URL"],
@@ -174,7 +179,7 @@ export function downloadTripExcel(
         p.attachment?.url ?? "",
       ]),
   ];
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(paymentRows), "Payments");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, paymentRows), "Payments");
 
   const balanceRows: (string | number)[][] = [
     [
@@ -207,7 +212,7 @@ export function downloadTripExcel(
     [],
     ["Checksum (sum of net)", checksum],
   ];
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(balanceRows), "Balances");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, balanceRows), "Balances");
 
   const settleRows: (string | number)[][] = [
     [
@@ -230,7 +235,7 @@ export function downloadTripExcel(
   if (settlements.length === 0) {
     settleRows.push(["—", "(none)", "All settled", 0, method, ""]);
   }
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(settleRows), "Settle Up");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, settleRows), "Settle Up");
 
   const ledgerRows: (string | number)[][] = [
     [
@@ -277,7 +282,7 @@ export function downloadTripExcel(
       });
     }
   }
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(ledgerRows), "Ledger");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, ledgerRows), "Ledger");
 
   const filename = `${safeFileName(trip.name)}-trip-export.xlsx`;
   XLSX.writeFile(wb, filename);
