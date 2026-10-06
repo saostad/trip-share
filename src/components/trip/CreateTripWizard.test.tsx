@@ -183,4 +183,21 @@ describe("CreateTripWizard payload", () => {
       screen.queryByText("How payments are suggested"),
     ).not.toBeInTheDocument();
   });
+
+  it("starts at a given step when asked", () => {
+    render(
+      <CreateTripWizard
+        creatorName="Ava Example"
+        creatorUid="u1"
+        accountOptions={ACCOUNT_OPTIONS}
+        initialStep={2}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Advanced options")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create trip" }),
+    ).toBeInTheDocument();
+  });
 });

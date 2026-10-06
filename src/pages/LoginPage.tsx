@@ -4,38 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export function LoginPage() {
-  const { user, loading, signIn } = useAuth();
-  const [signingIn, setSigningIn] = useState(false);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
-      </div>
-    );
-  }
-
-  if (user) {
-    const redirectPath = sessionStorage.getItem("redirectAfterLogin");
-    if (redirectPath) {
-      sessionStorage.removeItem("redirectAfterLogin");
-      return <Navigate to={redirectPath} replace />;
-    }
-    return <Navigate to="/" replace />;
-  }
-
-  const handleSignIn = async () => {
-    setSigningIn(true);
-    try {
-      await signIn();
-    } catch {
-      toast.error("Sign-in failed. Please try again.");
-    } finally {
-      setSigningIn(false);
-    }
-  };
-
+export function LoginCard({
+  signingIn,
+  onSignIn,
+}: {
+  signingIn: boolean;
+  onSignIn: () => void;
+}) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-xl bg-card p-8 shadow-sm">
@@ -49,7 +24,7 @@ export function LoginPage() {
         <Button
           className="w-full gap-2"
           size="lg"
-          onClick={handleSignIn}
+          onClick={onSignIn}
           disabled={signingIn}
         >
           {signingIn ? (
@@ -88,4 +63,39 @@ export function LoginPage() {
       </div>
     </div>
   );
+}
+
+export function LoginPage() {
+  const { user, loading, signIn } = useAuth();
+  const [signingIn, setSigningIn] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+      </div>
+    );
+  }
+
+  if (user) {
+    const redirectPath = sessionStorage.getItem("redirectAfterLogin");
+    if (redirectPath) {
+      sessionStorage.removeItem("redirectAfterLogin");
+      return <Navigate to={redirectPath} replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
+  const handleSignIn = async () => {
+    setSigningIn(true);
+    try {
+      await signIn();
+    } catch {
+      toast.error("Sign-in failed. Please try again.");
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  return <LoginCard signingIn={signingIn} onSignIn={handleSignIn} />;
 }

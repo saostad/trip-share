@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -12,10 +12,33 @@ import {
 } from "@/components/ui/card";
 import { HeaderView } from "@/components/layout/Header";
 import { DashboardView } from "@/pages/DashboardView";
+import {
+  HowItWorksContent,
+  HowItWorksSignedOutBar,
+} from "@/pages/HowItWorksPage";
+import { LoginCard } from "@/pages/LoginPage";
+import { WelcomeTour } from "@/components/tour/WelcomeTour";
+import { CreateTripWizard } from "@/components/trip/CreateTripWizard";
+import {
+  BalancesExplainer,
+  MarkPaidExplainer,
+  SuggestedPaymentsExplainer,
+} from "@/components/balance/explainerTips";
+import {
+  GroupsExplainer,
+  MethodExplainer,
+} from "@/components/trip/settlementExplainers";
+import { ExpenseList } from "@/components/expense/ExpenseList";
+import { PaymentList } from "@/components/balance/PaymentList";
+import { SettlementList } from "@/components/balance/SettlementList";
+import { SettlementHelpDialog } from "@/components/balance/SettlementHelpDialog";
 import { TripShellView } from "@/pages/trip/TripShellView";
 import { TripTabs, type TripTabId } from "@/pages/trip/TripTabs";
 import { Fab } from "@/pages/trip/Fab";
-import { OverviewTabView } from "@/pages/trip/tabs/OverviewTab";
+import {
+  OverviewTabView,
+  RecentActivity,
+} from "@/pages/trip/tabs/OverviewTab";
 import { ExpensesTabView } from "@/pages/trip/tabs/ExpensesTab";
 import { SettleTabView } from "@/pages/trip/tabs/SettleTab";
 import { PeopleTabView } from "@/pages/trip/tabs/PeopleTab";
@@ -43,7 +66,13 @@ type Section =
   | "trip-expenses"
   | "trip-settle"
   | "trip-people"
-  | "dashboard";
+  | "dashboard"
+  | "how-it-works"
+  | "login"
+  | "tour"
+  | "wizard"
+  | "infotips"
+  | "empty-states";
 
 const SECTIONS: Section[] = [
   "tokens",
@@ -56,6 +85,12 @@ const SECTIONS: Section[] = [
   "trip-settle",
   "trip-people",
   "dashboard",
+  "how-it-works",
+  "login",
+  "tour",
+  "wizard",
+  "infotips",
+  "empty-states",
 ];
 
 const SECTION_LABELS: Record<Section, string> = {
@@ -69,6 +104,12 @@ const SECTION_LABELS: Record<Section, string> = {
   "trip-settle": "Trip · Settle",
   "trip-people": "Trip · People",
   dashboard: "Dashboard",
+  "how-it-works": "How it works",
+  login: "Login",
+  tour: "Tour",
+  wizard: "Wizard",
+  infotips: "InfoTips",
+  "empty-states": "Empty states",
 };
 
 function sectionFromParam(value: string | null): Section {
@@ -87,6 +128,12 @@ function overviewStateFromParam(value: string | null): OverviewState {
     return value as OverviewState;
   }
   return "owed";
+}
+
+function stepFromParam(value: string | null, max: number): number {
+  const step = Number.parseInt(value ?? "", 10);
+  if (Number.isInteger(step) && step >= 1 && step <= max) return step;
+  return 1;
 }
 
 function TokenSwatch({
@@ -614,6 +661,140 @@ function DashboardSection({ theme }: { theme: "light" | "dark" }) {
   );
 }
 
+function HowItWorksSection() {
+  const [videoOpen, setVideoOpen] = useState(false);
+  return (
+    <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
+      <HowItWorksSignedOutBar />
+      <HowItWorksContent onWatchVideo={() => setVideoOpen(true)} />
+      <SettlementHelpDialog open={videoOpen} onOpenChange={setVideoOpen} />
+    </div>
+  );
+}
+
+function LoginSection() {
+  return (
+    <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
+      <LoginCard signingIn={false} onSignIn={noop} />
+    </div>
+  );
+}
+
+function TourSection({ step }: { step: number }) {
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        The welcome tour opens as a dialog over the dashboard.
+      </p>
+      <WelcomeTour open onClose={noop} initialStep={step - 1} />
+    </div>
+  );
+}
+
+function WizardSection({ step }: { step: number }) {
+  return (
+    <div className="mx-auto max-w-lg">
+      <CreateTripWizard
+        creatorName="Ava Example"
+        creatorUid="fake-uid-ava"
+        accountOptions={[
+          {
+            uid: "fake-uid-ava",
+            label: "Ava Example",
+            email: "ava@example.com",
+          },
+        ]}
+        initialStep={step - 1}
+        onSubmit={() => {
+          toast.success("Trip created (preview)");
+        }}
+        onCancel={noop}
+      />
+    </div>
+  );
+}
+
+function InfoTipsSection() {
+  const rows: { label: string; tip: ReactNode; room: string }[] = [
+    { label: "Balances", tip: <BalancesExplainer open />, room: "min-h-44" },
+    {
+      label: "Suggested payments",
+      tip: <SuggestedPaymentsExplainer open />,
+      room: "min-h-44",
+    },
+    {
+      label: "How payments are suggested",
+      tip: <MethodExplainer open />,
+      room: "min-h-96",
+    },
+    { label: "Pay as a group", tip: <GroupsExplainer open />, room: "min-h-44" },
+    { label: "Mark as paid", tip: <MarkPaidExplainer open />, room: "min-h-40" },
+  ];
+  return (
+    <div className="space-y-2">
+      {rows.map((row) => (
+        <div key={row.label} className={row.room}>
+          <p className="flex items-center gap-1 text-sm font-medium">
+            {row.label}
+            {row.tip}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyStatesSection() {
+  const blocks: { label: string; body: ReactNode }[] = [
+    {
+      label: "Expenses",
+      body: <ExpenseList expenses={[]} onAdd={noop} />,
+    },
+    {
+      label: "Payments",
+      body: <PaymentList payments={[]} onAdd={noop} />,
+    },
+    {
+      label: "Settle · no expenses",
+      body: (
+        <SettlementList
+          expenses={[]}
+          participants={previewTrip.participants}
+          payments={[]}
+          settlementMethod={previewTrip.settlementMethod}
+        />
+      ),
+    },
+    {
+      label: "Settle · all square",
+      body: (
+        <SettlementList
+          expenses={SQUARE_EXPENSES}
+          participants={["Ava", "Liam"]}
+          payments={[]}
+          settlementMethod="greedy"
+        />
+      ),
+    },
+    {
+      label: "Recent activity",
+      body: <RecentActivity activity={[]} />,
+    },
+  ];
+  return (
+    <div className="space-y-6">
+      {blocks.map((block) => (
+        <div key={block.label}>
+          <h2 className="mb-2 text-lg font-semibold">{block.label}</h2>
+          <Card>
+            <CardContent>{block.body}</CardContent>
+          </Card>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function PreviewPage() {
   const [params] = useSearchParams();
   const section = sectionFromParam(params.get("section"));
@@ -678,6 +859,25 @@ export function PreviewPage() {
             </Link>
           ))}
         </nav>
+        {(section === "tour" || section === "wizard") && (
+          <nav className="mb-6 flex flex-wrap gap-2" aria-label="Preview step">
+            {(section === "tour" ? [1, 2, 3, 4] : [1, 2, 3]).map((n) => {
+              const next = new URLSearchParams(params);
+              next.set("step", String(n));
+              const max = section === "tour" ? 4 : 3;
+              const active = stepFromParam(params.get("step"), max) === n;
+              return (
+                <Link
+                  key={n}
+                  to={`?${next.toString()}`}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+                >
+                  {`Step ${n}`}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
         {section === "trip-overview" && (
           <nav className="mb-6 flex flex-wrap gap-2" aria-label="Overview states">
             {OVERVIEW_STATES.map((st) => {
@@ -711,6 +911,16 @@ export function PreviewPage() {
         {section === "trip-settle" && <TripSettleSection theme={forcedTheme} />}
         {section === "trip-people" && <TripPeopleSection theme={forcedTheme} />}
         {section === "dashboard" && <DashboardSection theme={forcedTheme} />}
+        {section === "how-it-works" && <HowItWorksSection />}
+        {section === "login" && <LoginSection />}
+        {section === "tour" && (
+          <TourSection step={stepFromParam(params.get("step"), 4)} />
+        )}
+        {section === "wizard" && (
+          <WizardSection step={stepFromParam(params.get("step"), 3)} />
+        )}
+        {section === "infotips" && <InfoTipsSection />}
+        {section === "empty-states" && <EmptyStatesSection />}
       </div>
     </div>
   );

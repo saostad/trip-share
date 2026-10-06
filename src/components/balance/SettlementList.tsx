@@ -11,7 +11,7 @@ import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
 import { formatCurrency } from "@/lib/formatters";
 import { SettlementLineReportDialog } from "@/components/balance/SettlementLineReportDialog";
 import { EmptyState } from "@/components/EmptyState";
-import { InfoTip } from "@/components/InfoTip";
+import { MarkPaidExplainer } from "@/components/balance/explainerTips";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -179,11 +179,7 @@ export function SettlementList({
                       >
                         Mark as paid
                       </Button>
-                      <InfoTip
-                        term="mark as paid"
-                        title="Mark as paid"
-                        body="Records this payment so balances update."
-                      />
+                      <MarkPaidExplainer />
                     </span>
                   )}
                 </div>

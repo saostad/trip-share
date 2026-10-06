@@ -66,7 +66,7 @@ const FAQS = [
   },
 ];
 
-function SignedOutBar() {
+export function HowItWorksSignedOutBar() {
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
       <HeaderLogo />
@@ -80,15 +80,9 @@ function SignedOutBar() {
   );
 }
 
-export function HowItWorksPage() {
-  const { user } = useAuth();
-  const [videoOpen, setVideoOpen] = useState(false);
-
+export function HowItWorksContent({ onWatchVideo }: { onWatchVideo: () => void }) {
   return (
-    <div className="min-h-screen bg-background">
-      {user ? <Header /> : <SignedOutBar />}
-
-      <main className="container mx-auto max-w-3xl space-y-12 px-4 py-10">
+    <main className="container mx-auto max-w-3xl space-y-12 px-4 py-10">
         <div className="max-w-xl">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Split trip costs without the awkward math
@@ -165,15 +159,23 @@ export function HowItWorksPage() {
               See how the settle-up math works in a short video.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setVideoOpen(true)}
-          >
+          <Button type="button" variant="outline" onClick={onWatchVideo}>
             Watch a 3-minute video
           </Button>
         </section>
-      </main>
+    </main>
+  );
+}
+
+export function HowItWorksPage() {
+  const { user } = useAuth();
+  const [videoOpen, setVideoOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background">
+      {user ? <Header /> : <HowItWorksSignedOutBar />}
+
+      <HowItWorksContent onWatchVideo={() => setVideoOpen(true)} />
 
       <SettlementHelpDialog open={videoOpen} onOpenChange={setVideoOpen} />
     </div>

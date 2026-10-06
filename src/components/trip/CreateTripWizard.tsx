@@ -29,6 +29,8 @@ export interface CreateTripWizardProps {
   creatorName: string | null;
   creatorUid: string | null;
   accountOptions?: AccountOption[];
+  /** First step to show; the app always starts at 0. */
+  initialStep?: number;
   onSubmit: (data: {
     name: string;
     participants: string[];
@@ -47,11 +49,12 @@ export function CreateTripWizard({
   creatorName,
   creatorUid,
   accountOptions = [],
+  initialStep = 0,
   onSubmit,
   onCancel,
 }: CreateTripWizardProps) {
   const prefillName = firstNameOf(creatorName);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [participants, setParticipants] = useState<string[]>([prefillName]);

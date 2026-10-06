@@ -4,7 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BalanceSummary } from "@/components/balance/BalanceSummary";
 import { PaymentList } from "@/components/balance/PaymentList";
 import { SettlementList } from "@/components/balance/SettlementList";
-import { InfoTip } from "@/components/InfoTip";
+import {
+  BalancesExplainer,
+  SuggestedPaymentsExplainer,
+} from "@/components/balance/explainerTips";
 import type {
   Expense,
   Payment,
@@ -58,11 +61,7 @@ export function SettleTabView({
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
             Balances
-            <InfoTip
-              term="your balance"
-              title="Gets back and owes"
-              body="“Gets back” is money that should come back to you. “Owes” is money you still need to pay. Both come from what everyone paid, minus their fair share."
-            />
+            <BalancesExplainer />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -79,11 +78,7 @@ export function SettleTabView({
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
             Suggested payments
-            <InfoTip
-              term="suggested payments"
-              title="Why so few payments?"
-              body="TripShare looks at everyone's final balance instead of repaying each expense one by one, so debts in opposite directions cancel out."
-            />
+            <SuggestedPaymentsExplainer />
           </CardTitle>
         </CardHeader>
         <CardContent>

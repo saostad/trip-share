@@ -318,7 +318,7 @@ function ActivityRow({ item }: { item: RecentActivityItem }) {
   );
 }
 
-function RecentActivity({ activity }: { activity: RecentActivityItem[] }) {
+export function RecentActivity({ activity }: { activity: RecentActivityItem[] }) {
   return (
     <Card>
       <CardHeader>
