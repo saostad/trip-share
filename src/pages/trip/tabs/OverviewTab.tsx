@@ -385,7 +385,13 @@ export function OverviewTabView({
         onAddExpense={onAddExpense}
         onEditTrip={onEditTrip}
       />
-      <QuickActions isOwner={isOwner} isArchived={isArchived} onAddExpense={onAddExpense} />
+      {position.kind !== "empty" && (
+        <QuickActions
+          isOwner={isOwner}
+          isArchived={isArchived}
+          onAddExpense={onAddExpense}
+        />
+      )}
       {showChecklist && (
         <Checklist
           checklist={checklist}

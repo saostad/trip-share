@@ -32,8 +32,11 @@ describe("empty hero", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("button", { name: "Add expense" }).length,
-    ).toBeGreaterThan(0);
+      screen.getAllByRole("button", { name: "Add expense" }),
+    ).toHaveLength(1);
+    expect(
+      screen.queryByRole("link", { name: "Settle up" }),
+    ).not.toBeInTheDocument();
   });
 
   it("hides every Add button when archived", () => {
@@ -77,6 +80,14 @@ describe("unlinked hero", () => {
     const button = screen.getByRole("button", { name: "Choose which name is you" });
     fireEvent.click(button);
     expect(onEditTrip).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the quick actions for non-empty positions", () => {
+    renderUnlinked(true, false);
+    expect(screen.getByRole("link", { name: "Settle up" })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Add expense" }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("keeps the ask-the-creator text for non-owners", () => {
