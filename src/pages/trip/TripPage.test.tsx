@@ -127,6 +127,6 @@ describe("archived gating", () => {
     renderAt("/trip/preview-trip-1/settle");
     await screen.findByText("Suggested payments");
     expect(screen.queryByText("Mark as paid")).not.toBeInTheDocument();
-    expect(screen.queryByText("Record Payment")).not.toBeInTheDocument();
+    expect(screen.queryByText("Record a payment")).not.toBeInTheDocument();
   });
 });

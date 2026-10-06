@@ -195,8 +195,8 @@ function BadgesSection() {
       <div>
         <h2 className="mb-3 text-lg font-semibold">In context</h2>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="primary">Owner</Badge>
-          <Badge variant="neutral">Collaborator</Badge>
+          <Badge variant="primary">Created by you</Badge>
+          <Badge variant="neutral">Shared with you</Badge>
           <Badge variant="warning">Archived</Badge>
         </div>
       </div>

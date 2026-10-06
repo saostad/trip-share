@@ -118,7 +118,7 @@ export function ParticipantInput({
 
       {canLink && (
         <p className="text-xs text-muted-foreground">
-          Optionally link a name to a collaborator account (for defaults and
+          Optionally link a name to a person&apos;s account (for defaults and
           future notifications).
         </p>
       )}

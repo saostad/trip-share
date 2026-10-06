@@ -42,11 +42,11 @@ export function buildAccountOptions(
         email: user.email ?? ownerProfile?.email ?? null,
         photoURL: ownerProfile?.photoURL ?? null,
       },
-      "Me (owner)",
+      "Me (trip creator)",
     );
     push(trip.ownerId, label, email);
   } else {
-    const { label, email } = profileLabel(ownerProfile, "Owner");
+    const { label, email } = profileLabel(ownerProfile, "Trip creator");
     push(trip.ownerId, label, email);
   }
 

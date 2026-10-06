@@ -384,7 +384,7 @@ export function PaymentForm({ participants, tripId, defaultFrom, prefill, onSubm
         </Button>
         <Button type="submit" disabled={submitting} className="gap-1.5">
           {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {submitting ? "Recording..." : "Record Payment"}
+          {submitting ? "Recording..." : "Record a payment"}
         </Button>
       </div>
     </form>

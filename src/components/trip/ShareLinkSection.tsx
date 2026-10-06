@@ -89,7 +89,7 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
     return (
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">
-          No active share link. Generate one to invite collaborators.
+          No active share link. Generate one to invite people.
         </p>
         <Button
           onClick={handleGenerate}

@@ -3,12 +3,14 @@ import {
   computeSettlements,
   normalizeSettlementMethod,
   personBalanceBreakdown,
+  settlementMethodDescription,
   settlementMethodLabel,
   type SettlementExplanation,
 } from "@/lib/balances";
 import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
 import { formatCurrency } from "@/lib/formatters";
 import { SettlementLineReportDialog } from "@/components/balance/SettlementLineReportDialog";
+import { InfoTip } from "@/components/InfoTip";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import type {
@@ -28,22 +30,6 @@ interface SettlementListProps {
   settlementGroups?: SettlementGroup[];
   archived?: boolean;
   onMarkPaid?: (transfer: { from: string; to: string; amount: number }) => void;
-}
-
-function methodHint(method: SettlementMethod): string {
-  if (method === "pairwise") {
-    return " — transfers only between people who shared costs";
-  }
-  if (method === "smallest") {
-    return " — clears smallest remaining balance first";
-  }
-  if (method === "treasurer") {
-    return " — everyone settles only with the auto-picked treasurer";
-  }
-  if (method === "minimize") {
-    return " — fewest possible transfers (optimal search)";
-  }
-  return " — fewest global transfers (largest first)";
 }
 
 export function SettlementList({
@@ -77,8 +63,8 @@ export function SettlementList({
     <>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          Method: {settlementMethodLabel(method)}
-          {methodHint(method)}
+          How payments are suggested: {settlementMethodLabel(method)} —{" "}
+          {settlementMethodDescription(method)}
           {groupMode && " · group mode"}
         </p>
         {hasGroups && (
@@ -111,7 +97,7 @@ export function SettlementList({
 
       {transactions.length === 0 ? (
         <p className="rounded-lg border border-positive/20 bg-positive/5 px-3 py-3 text-sm text-positive">
-          All settled! No payments needed.
+          Everyone is all square! No payments needed.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -148,21 +134,28 @@ export function SettlementList({
                     </span>
                   </button>
                   {onMarkPaid && !archived && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="w-full sm:w-auto sm:shrink-0"
-                      onClick={() =>
-                        onMarkPaid({
-                          from: transaction.from,
-                          to: transaction.to,
-                          amount: transaction.amount,
-                        })
-                      }
-                    >
-                      Mark as paid
-                    </Button>
+                    <span className="flex w-full items-center gap-1 sm:w-auto sm:shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 sm:flex-none"
+                        onClick={() =>
+                          onMarkPaid({
+                            from: transaction.from,
+                            to: transaction.to,
+                            amount: transaction.amount,
+                          })
+                        }
+                      >
+                        Mark as paid
+                      </Button>
+                      <InfoTip
+                        term="mark as paid"
+                        title="Mark as paid"
+                        body="Records this payment so balances update."
+                      />
+                    </span>
                   )}
                 </div>
 

@@ -72,7 +72,7 @@ export function DashboardPage() {
           ? [
               {
                 uid: user.uid,
-                label: user.displayName || "Me (owner)",
+                label: user.displayName || "Me (trip creator)",
                 email: user.email,
               },
             ]

@@ -71,9 +71,9 @@ export function SettlementReportDialog({
   }, [report.generatedAt]);
 
   function balanceLabel(n: number): string {
-    if (n > 0.01) return `owed ${formatCurrency(n)}`;
+    if (n > 0.01) return `gets back ${formatCurrency(n)}`;
     if (n < -0.01) return `owes ${formatCurrency(n)}`;
-    return "settled";
+    return "all square";
   }
 
   function balanceClass(n: number): string {
@@ -166,7 +166,7 @@ export function SettlementReportDialog({
             </h3>
             {report.remainingSettlements.length === 0 ? (
               <p className="rounded-lg border border-positive/30 bg-positive/5 px-3 py-2 text-xs text-positive">
-                All settled — no further payments needed.
+                All square — no further payments needed.
               </p>
             ) : (
               <ul className="space-y-1.5">
@@ -293,7 +293,7 @@ function buildReportHtml(
 ): string {
   const remaining =
     report.remainingSettlements.length === 0
-      ? "<p>All settled.</p>"
+      ? "<p>All square.</p>"
       : "<ul>" +
         report.remainingSettlements
           .map(

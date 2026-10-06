@@ -131,7 +131,7 @@ export function HeaderView({
                 ) : (
                   <Moon className="size-4" aria-hidden />
                 )}
-                {theme === "dark" ? "Light" : "Dark"}
+                {theme === "dark" ? "Light mode" : "Dark mode"}
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link to="/how-it-works" />}>
                 <CircleHelp className="size-4" aria-hidden />

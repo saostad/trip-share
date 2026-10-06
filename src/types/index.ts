@@ -1,6 +1,6 @@
 import type { Timestamp } from "firebase/firestore";
 
-/** How suggested Settle Up transfers are computed */
+/** How suggested Settle up transfers are computed */
 export type SettlementMethod =
   | "greedy"
   | "minimize"
@@ -8,12 +8,12 @@ export type SettlementMethod =
   | "pairwise"
   | "smallest";
 
-/** How Settle Up displays results when settlement groups exist */
+/** How Settle up displays results when settlement groups exist */
 export type SettlementViewMode = "group" | "person";
 
 /**
  * A settlement group (e.g. a family) that settles as one economic unit.
- * Members still appear individually on expenses; only Settle Up collapses them.
+ * Members still appear individually on expenses; only Settle up collapses them.
  */
 export interface SettlementGroup {
   /** Stable id within the trip */
@@ -42,13 +42,13 @@ export interface Trip {
    */
   participantLinks?: Record<string, string>;
   /**
-   * How Settle Up suggestions are computed. Owner-only setting.
+   * How Settle up suggestions are computed. Owner-only setting.
    * Defaults to "greedy" when missing (existing trips).
    */
   settlementMethod?: SettlementMethod;
   /**
    * Optional family/household groups. Owner-only.
-   * When present, Settle Up can collapse members into one net per group.
+   * When present, Settle up can collapse members into one net per group.
    */
   settlementGroups?: SettlementGroup[];
   /**

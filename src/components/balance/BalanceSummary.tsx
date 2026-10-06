@@ -74,7 +74,7 @@ export function BalanceSummary({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
             {groupMode
-              ? "Group nets (members collapsed onto representative)"
+              ? "Groups are combined: each group pays or receives as one."
               : "Individual balances"}
           </p>
           <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
@@ -124,7 +124,7 @@ export function BalanceSummary({
           if (isPositive) {
             amountClass = "text-positive";
             rowTint = "border-positive/20 bg-positive/5";
-            statusLabel = "is owed";
+            statusLabel = "gets back";
           } else if (isNegative) {
             amountClass = "text-negative";
             rowTint = "border-negative/20 bg-negative/5";
@@ -132,7 +132,7 @@ export function BalanceSummary({
           } else {
             amountClass = "text-muted-foreground";
             rowTint = "border-border bg-muted/20";
-            statusLabel = "settled";
+            statusLabel = "all square";
           }
 
           return (

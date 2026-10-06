@@ -36,6 +36,28 @@ export function settlementMethodLabel(method: SettlementMethod): string {
   return "Greedy (largest first)";
 }
 
+/** All methods in picker order, recommended default first. */
+export const SETTLEMENT_METHODS: SettlementMethod[] = [
+  "greedy",
+  "minimize",
+  "treasurer",
+  "smallest",
+  "pairwise",
+];
+
+/** One plain sentence per method, shared by the picker, tips and captions. */
+export function settlementMethodDescription(method: SettlementMethod): string {
+  if (method === "pairwise")
+    return "Only suggests payments between people who shared expenses.";
+  if (method === "smallest")
+    return "Clears one person's balance at a time, smallest first.";
+  if (method === "minimize")
+    return "Searches for the smallest possible number of payments.";
+  if (method === "treasurer")
+    return "Picks one person as treasurer; everyone settles with them.";
+  return "Pairs the biggest amounts first. Best for most trips.";
+}
+
 /**
  * Computes the net balance for each participant based on all expenses and payments.
  *

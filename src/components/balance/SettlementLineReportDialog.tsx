@@ -451,9 +451,9 @@ function formatSigned(n: number): string {
 }
 
 function balanceLabel(n: number): string {
-  if (n > 0.01) return `owed ${formatCurrency(n)}`;
+  if (n > 0.01) return `gets back ${formatCurrency(n)}`;
   if (n < -0.01) return `owes ${formatCurrency(n)}`;
-  return "settled";
+  return "all square";
 }
 
 interface LineReportData {

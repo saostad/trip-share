@@ -49,7 +49,7 @@ export function TripCard({ trip, role }: TripCardProps) {
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
               {isArchived && <Badge variant="warning">Archived</Badge>}
               <Badge variant={role === "owner" ? "primary" : "neutral"}>
-                {role === "owner" ? "Owner" : "Collaborator"}
+                {role === "owner" ? "Created by you" : "Shared with you"}
               </Badge>
             </div>
           </div>

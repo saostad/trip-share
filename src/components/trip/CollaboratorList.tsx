@@ -62,9 +62,9 @@ export function CollaboratorList({
         participantLinks: linksWithoutUid(trip?.participantLinks, uid),
       });
       await deleteDoc(doc(db, "trips", tripId, "members", uid));
-      toast.success("Collaborator removed");
+      toast.success("Access removed");
     } catch {
-      toast.error("Failed to remove collaborator");
+      toast.error("Failed to remove access");
     } finally {
       setRemoving(null);
     }
@@ -94,14 +94,18 @@ export function CollaboratorList({
         </AvatarGroup>
         <span className="text-xs text-muted-foreground">
           {collaboratorIds.length}{" "}
-          {collaboratorIds.length === 1 ? "collaborator" : "collaborators"}
+          {collaboratorIds.length === 1
+            ? "person with access"
+            : "people with access"}
         </span>
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Collaborators ({collaboratorIds.length})</DialogTitle>
+            <DialogTitle>
+              People with access ({collaboratorIds.length})
+            </DialogTitle>
           </DialogHeader>
           <ul className="max-h-[400px] space-y-2 overflow-y-auto">
             {collaboratorIds.map((uid) => {

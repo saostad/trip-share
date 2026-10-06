@@ -73,7 +73,7 @@ export async function downloadTripExcel(
     ["Trip name", trip.name],
     ["Trip ID", trip.id],
     ["Generated at (UTC)", generatedAt],
-    ["Settlement method", settlementMethodLabel(method)],
+    ["How payments are suggested", settlementMethodLabel(method)],
     ["Participants", participants.join(", ")],
     ["Expense count", expenses.length],
     ["Payment count", payments.length],
@@ -98,7 +98,7 @@ export async function downloadTripExcel(
       "For each recorded payment: sender balance increases by amount; receiver balance decreases by amount.",
     ],
     [
-      "Net balance = paid − fair share + payments sent − payments received. Positive = is owed; negative = owes.",
+      "Net balance = paid − fair share + payments sent − payments received. Positive = gets back; negative = owes.",
     ],
     [
       method === "pairwise"
@@ -195,10 +195,10 @@ export async function downloadTripExcel(
       const b = personBalanceBreakdown(name, expenses, payments);
       const status =
         b.netBalance > 0.01
-          ? "is owed"
+          ? "gets back"
           : b.netBalance < -0.01
             ? "owes"
-            : "settled";
+            : "all square";
       return [
         name,
         b.totalPaid,
@@ -233,9 +233,9 @@ export async function downloadTripExcel(
     ]),
   ];
   if (settlements.length === 0) {
-    settleRows.push(["—", "(none)", "All settled", 0, method, ""]);
+    settleRows.push(["—", "(none)", "All square", 0, method, ""]);
   }
-  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, settleRows), "Settle Up");
+  XLSX.utils.book_append_sheet(wb, sheetFromAoA(XLSX, settleRows), "Settle up");
 
   const ledgerRows: (string | number)[][] = [
     [

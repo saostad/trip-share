@@ -31,8 +31,8 @@ describe("PaymentForm prefill", () => {
         onCancel={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByText("Record Payment"));
-    await screen.findByText("Record Payment");
+    fireEvent.click(screen.getByText("Record a payment"));
+    await screen.findByText("Record a payment");
     expect(onSubmit).toHaveBeenCalledTimes(1);
     expect(onSubmit).toHaveBeenCalledWith([
       {

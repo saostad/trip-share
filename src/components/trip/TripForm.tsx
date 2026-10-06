@@ -17,8 +17,9 @@ import { sanitizeParticipantLinks } from "@/lib/participantLinks";
 import {
   DEFAULT_SETTLEMENT_METHOD,
   normalizeSettlementMethod,
-  settlementMethodLabel,
 } from "@/lib/balances";
+import { SettlementMethodPicker } from "@/components/trip/SettlementMethodPicker";
+import { GroupsExplainer } from "@/components/trip/settlementExplainers";
 import {
   newSettlementGroupId,
   sanitizeSettlementGroups,
@@ -46,22 +47,6 @@ interface TripFormProps {
     settlementGroups: SettlementGroup[];
   }) => void | Promise<void>;
   onCancel: () => void;
-}
-
-function methodHelp(method: SettlementMethod): string {
-  if (method === "pairwise") {
-    return "Each person only settles with people they shared expenses with (after netting). May create more transfers. ";
-  }
-  if (method === "smallest") {
-    return "Always clears the person with the smallest remaining balance first. Easy to follow; may need more transfers. ";
-  }
-  if (method === "minimize") {
-    return "Finds the fewest possible transfers that zero every balance (optimal search). ";
-  }
-  if (method === "treasurer") {
-    return "Auto-picks a treasurer (most owed, else most paid). Everyone pays or is paid by that person only. ";
-  }
-  return "Pairs the largest remaining debt with the largest remaining credit. Usually fewer transfers. ";
 }
 
 export function TripForm({
@@ -222,41 +207,13 @@ export function TripForm({
 
       {showSettlementMethod && (
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none">
-            Settlement method
-          </label>
-          <Select
+          <SettlementMethodPicker
             value={settlementMethod}
-            onValueChange={(val) => {
-              const v =
-                typeof val === "string"
-                  ? val
-                  : (val as { value?: string } | null)?.value;
-              setSettlementMethod(normalizeSettlementMethod(v));
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <span className="truncate text-left">
-                {settlementMethodLabel(settlementMethod)}
-              </span>
-              <SelectValue className="sr-only" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="greedy">Greedy (largest first)</SelectItem>
-              <SelectItem value="minimize">Minimize transactions</SelectItem>
-              <SelectItem value="treasurer">
-                Central pot (auto treasurer)
-              </SelectItem>
-              <SelectItem value="smallest">
-                Smallest first (clear one person)
-              </SelectItem>
-              <SelectItem value="pairwise">Pairwise netting</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={setSettlementMethod}
+          />
           <p className="text-xs text-muted-foreground">
-            {methodHelp(settlementMethod)}
-            Only the trip owner can change this; everyone sees the same Settle Up
-            list.
+            Only the trip owner can change this. Everyone sees the same
+            suggested payments.
           </p>
         </div>
       )}
@@ -284,7 +241,7 @@ export function TripForm({
         {participantsOpen && (
           <div className="space-y-2 border-t border-border px-3 py-3">
             <p className="text-xs text-muted-foreground">
-              Optionally link a name to a collaborator account (for defaults and
+              Optionally link a name to a person&apos;s account (for defaults and
               notifications).
             </p>
             <ParticipantInput
@@ -301,30 +258,35 @@ export function TripForm({
 
       {showSettlementMethod && (
         <div className="overflow-hidden rounded-lg border border-border">
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/40"
-            onClick={() => setGroupsOpen((v) => !v)}
-            aria-expanded={groupsOpen}
-          >
-            {groupsOpen ? (
-              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-            <span className="text-sm font-medium">Settlement groups</span>
-            <span className="ml-auto text-xs text-muted-foreground">
-              {groups.length === 0
-                ? "optional · family / shared wallet"
-                : `${groups.length} group${groups.length === 1 ? "" : "s"}`}
-            </span>
-          </button>
+          <div className="flex items-center gap-1 px-3 py-2.5 hover:bg-muted/40">
+            <button
+              type="button"
+              className="flex w-full min-w-0 items-center gap-2 text-left"
+              onClick={() => setGroupsOpen((v) => !v)}
+              aria-expanded={groupsOpen}
+            >
+              {groupsOpen ? (
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+              <span className="truncate text-sm font-medium">
+                Pay as a group (families, couples)
+              </span>
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {groups.length === 0
+                  ? "optional · family / shared wallet"
+                  : `${groups.length} group${groups.length === 1 ? "" : "s"}`}
+              </span>
+            </button>
+            <GroupsExplainer />
+          </div>
 
           {groupsOpen && (
             <div className="space-y-3 border-t border-border px-3 py-3">
               <p className="text-xs text-muted-foreground">
                 Group family or household members so they settle as one unit.
-                Expenses stay individual; only Settle Up collapses them onto the
+                Expenses stay individual; only Settle up collapses them onto the
                 representative.
               </p>
 
@@ -395,7 +357,7 @@ export function TripForm({
                   {g.members.length > 0 && (
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">
-                        Representative (appears in Settle Up)
+                        Representative (appears in Settle up)
                       </p>
                       <Select
                         value={g.representative}

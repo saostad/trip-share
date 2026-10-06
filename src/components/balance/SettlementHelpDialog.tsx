@@ -28,7 +28,7 @@ export function SettlementHelpDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>How Settle Up works</DialogTitle>
+          <DialogTitle>How Settle up works</DialogTitle>
           <DialogDescription>
             Settlements use net balances — not repaying each expense one by one.
           </DialogDescription>
@@ -39,7 +39,7 @@ export function SettlementHelpDialog({
             {open && (
               <iframe
                 src={EMBED_URL}
-                title="How Settle Up works"
+                title="How Settle up works"
                 className="h-full w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
@@ -59,7 +59,7 @@ export function SettlementHelpDialog({
               paid minus fair share (plus any payments already recorded).
             </li>
             <li>
-              <span className="font-medium text-foreground">Settle Up</span> —
+              <span className="font-medium text-foreground">Settle up</span> —
               suggests a few transfers so everyone ends at zero. Chains and
               circles of "I owe you" often cancel automatically.
             </li>

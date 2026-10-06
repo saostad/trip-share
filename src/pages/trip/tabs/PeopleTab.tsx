@@ -8,6 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CollaboratorList } from "@/components/trip/CollaboratorList";
 import { ShareLinkSection } from "@/components/trip/ShareLinkSection";
 import {
+  GroupsExplainer,
+  MethodExplainer,
+} from "@/components/trip/settlementExplainers";
+import {
   normalizeSettlementMethod,
   settlementMethodLabel,
 } from "@/lib/balances";
@@ -128,13 +132,19 @@ export function PeopleTabView({
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Settlement method</span>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    How payments are suggested
+                    <MethodExplainer />
+                  </span>
                   <span className="text-right font-medium">
                     {settlementMethodLabel(method)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Settlement groups</span>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    Pay as a group (families, couples)
+                    <GroupsExplainer />
+                  </span>
                   <span className="font-medium tabular-nums">{groupCount}</span>
                 </div>
               </div>

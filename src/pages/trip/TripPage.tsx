@@ -16,6 +16,7 @@ import { EditPaymentForm } from "@/components/balance/EditPaymentForm";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -443,7 +444,10 @@ export function TripPage() {
       <Dialog open={addPaymentOpen} onOpenChange={setAddPaymentOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Record Payment</DialogTitle>
+            <DialogTitle>Record a payment</DialogTitle>
+            <DialogDescription>
+              When someone pays someone back
+            </DialogDescription>
           </DialogHeader>
           <PaymentForm
             key={

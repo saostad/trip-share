@@ -91,7 +91,7 @@ describe("HeaderView", () => {
     const props = baseProps({ theme: "light" });
     renderHeader(props);
     openMenu();
-    fireEvent.click(screen.getByText("Dark"));
+    fireEvent.click(screen.getByText("Dark mode"));
     expect(props.onToggleTheme).toHaveBeenCalledTimes(1);
   });
 
