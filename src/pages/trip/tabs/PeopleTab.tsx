@@ -86,13 +86,20 @@ export function PeopleTabView({
       </Card>
 
       {trip.collaboratorIds.length > 0 && (
-        <CollaboratorList
-          tripId={trip.id}
-          collaboratorIds={trip.collaboratorIds}
-          members={members}
-          isOwner={isOwner && !isArchived}
-          trip={trip}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Who has access</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CollaboratorList
+              tripId={trip.id}
+              collaboratorIds={trip.collaboratorIds}
+              members={members}
+              isOwner={isOwner && !isArchived}
+              trip={trip}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {isOwner ? (
