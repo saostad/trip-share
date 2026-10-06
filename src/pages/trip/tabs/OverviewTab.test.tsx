@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { OverviewTabView } from "./OverviewTab";
-import type { MyPosition } from "@/lib/tripOverview";
+import { myPosition, type MyPosition } from "@/lib/tripOverview";
+import type { Expense, Trip } from "@/types";
 
 function renderEmpty(isArchived: boolean) {
   render(
@@ -107,6 +108,149 @@ describe("unlinked hero", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Ask the trip creator to link your account/),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("hero view toggle", () => {
+  const trip: Trip = {
+    id: "t1",
+    ownerId: "u1",
+    name: "Test",
+    participants: ["Ava", "Liam", "Maya"],
+    collaboratorIds: [],
+    participantLinks: {},
+    settlementMethod: "greedy",
+    settlementGroups: [
+      { id: "g1", name: "Fam", members: ["Ava", "Liam"], representative: "Ava" },
+    ],
+    shareToken: null,
+    createdAt: {} as never,
+    updatedAt: {} as never,
+  };
+  const expenses: Expense[] = [
+    {
+      id: "e1",
+      description: "Dinner",
+      date: "2026-10-01",
+      amount: 120,
+      paidBy: "Ava",
+      sharedBy: ["Ava", "Liam", "Maya"],
+      createdAt: {} as never,
+    },
+  ];
+
+  function renderHero(myName: string | null, opts?: { hasGroups?: boolean }) {
+    const hasGroups = opts?.hasGroups ?? true;
+    render(
+      <MemoryRouter>
+        <OverviewTabView
+          position={myPosition(trip, expenses, [], myName)}
+          groupPosition={myPosition(trip, expenses, [], myName, "group")}
+          hasGroups={hasGroups}
+          isOwner
+          isArchived={false}
+          checklist={{ steps: [], complete: true }}
+          checklistDismissed={false}
+          activity={[]}
+          onAddExpense={vi.fn()}
+          onEditTrip={vi.fn()}
+          onDismissChecklist={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+  }
+
+  it("defaults to By group on a grouped trip", () => {
+    renderHero("Ava");
+    expect(
+      screen.getByRole("radiogroup", { name: "Overview view" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "By group" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByText("Fam gets back")).toBeInTheDocument();
+    expect(screen.getByText(/Maya owes your group/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ava pays or receives for Fam/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("You get back")).not.toBeInTheDocument();
+  });
+
+  it("switching to By person shows the person lines", () => {
+    renderHero("Ava");
+    fireEvent.click(screen.getByRole("radio", { name: "By person" }));
+    expect(screen.getByRole("radio", { name: "By person" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByText("You get back")).toBeInTheDocument();
+    expect(screen.getByText(/Liam owes you/)).toBeInTheDocument();
+    expect(screen.getByText(/Maya owes you/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Your group settles as one/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Fam gets back")).not.toBeInTheDocument();
+  });
+
+  it("keeps person wording with group names when I'm ungrouped", () => {
+    renderHero("Maya");
+    expect(screen.getByText("You owe")).toBeInTheDocument();
+    expect(screen.getByText(/You owe Fam/)).toBeInTheDocument();
+    expect(screen.queryByText(/pays or receives for/)).not.toBeInTheDocument();
+  });
+
+  it("shows no toggle without groups", () => {
+    renderHero("Ava", { hasGroups: false });
+    expect(
+      screen.queryByRole("radiogroup", { name: "Overview view" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("You get back")).toBeInTheDocument();
+  });
+
+  it("shows no toggle on the empty or unlinked heroes", () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <OverviewTabView
+          position={{ kind: "empty" }}
+          groupPosition={{ kind: "empty" }}
+          hasGroups
+          isOwner
+          isArchived={false}
+          checklist={{ steps: [], complete: true }}
+          checklistDismissed={false}
+          activity={[]}
+          onAddExpense={vi.fn()}
+          onEditTrip={vi.fn()}
+          onDismissChecklist={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.queryByRole("radiogroup", { name: "Overview view" }),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <OverviewTabView
+          position={{ kind: "unlinked", totalSpent: 120, perPersonAverage: 40 }}
+          groupPosition={{ kind: "unlinked", totalSpent: 120, perPersonAverage: 40 }}
+          hasGroups
+          isOwner
+          isArchived={false}
+          checklist={{ steps: [], complete: true }}
+          checklistDismissed={false}
+          activity={[]}
+          onAddExpense={vi.fn()}
+          onEditTrip={vi.fn()}
+          onDismissChecklist={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.queryByRole("radiogroup", { name: "Overview view" }),
     ).not.toBeInTheDocument();
   });
 });

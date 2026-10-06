@@ -12,6 +12,9 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountUp } from "@/components/CountUp";
+import { ViewModeToggle } from "@/components/balance/ViewModeToggle";
+import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
+import type { SettlementViewMode } from "@/types";
 import { EmptyState } from "@/components/EmptyState";
 import { formatCurrency } from "@/lib/formatters";
 import { resolveExpenseCategory } from "@/lib/expenseCategories";
@@ -28,6 +31,10 @@ import { cn } from "@/lib/utils";
 
 export interface OverviewTabViewProps {
   position: MyPosition;
+  /** Group-mode position; shown when the hero toggle is on "By group". */
+  groupPosition?: MyPosition;
+  /** Whether the trip has usable settlement groups (enables the toggle). */
+  hasGroups?: boolean;
   isOwner: boolean;
   isArchived: boolean;
   checklist: ChecklistState;
@@ -40,18 +47,35 @@ export interface OverviewTabViewProps {
 
 function Hero({
   position,
+  groupPosition,
+  hasGroups,
   isOwner,
   isArchived,
   onAddExpense,
   onEditTrip,
 }: {
   position: MyPosition;
+  groupPosition?: MyPosition;
+  hasGroups?: boolean;
   isOwner: boolean;
   isArchived: boolean;
   onAddExpense: () => void;
   onEditTrip: () => void;
 }) {
-  if (position.kind === "empty") {
+  // Each box owns its toggle, like the Settle cards; the choice isn't persisted.
+  const [viewMode, setViewMode] = useState<SettlementViewMode>(
+    hasGroups ? "group" : "person",
+  );
+  const showToggle =
+    hasGroups === true &&
+    (position.kind === "owed" ||
+      position.kind === "owes" ||
+      position.kind === "square");
+  const groupView =
+    showToggle && viewMode === "group" && groupPosition !== undefined;
+  const displayed = groupView && groupPosition ? groupPosition : position;
+
+  if (displayed.kind === "empty") {
     return (
       <Card>
         <CardContent className="space-y-1">
@@ -73,16 +97,16 @@ function Hero({
     );
   }
 
-  if (position.kind === "unlinked") {
+  if (displayed.kind === "unlinked") {
     return (
       <Card>
         <CardContent className="space-y-1">
           <p className="text-sm text-muted-foreground">Total spent</p>
           <p className="text-3xl font-bold break-all tabular-nums">
-            <CountUp value={position.totalSpent} format={formatCurrency} />
+            <CountUp value={displayed.totalSpent} format={formatCurrency} />
           </p>
           <p className="text-sm text-muted-foreground">
-            {formatCurrency(position.perPersonAverage)} per person
+            {formatCurrency(displayed.perPersonAverage)} per person
           </p>
           {isOwner && !isArchived ? (
             <div className="pt-2">
@@ -103,12 +127,105 @@ function Hero({
     );
   }
 
-  if (position.kind === "square") {
+  if (displayed.kind === "square") {
+    const group = displayed.group;
     return (
       <Card>
         <CardContent className="space-y-2">
-          <p className="text-2xl font-bold">You&apos;re all square</p>
-          {position.inGroup && (
+          {showToggle && (
+            <div className="flex justify-start">
+              <ViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                ariaLabel="Overview view"
+              />
+            </div>
+          )}
+          <p className="text-2xl font-bold break-words">
+            {group ? `${group.name} is all square` : "You're all square"}
+          </p>
+          {group ? (
+            <p className="text-xs break-words text-muted-foreground">
+              {group.representative} pays or receives for {group.name}.{" "}
+              <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
+                see Settle up
+              </Link>
+              .
+            </p>
+          ) : (
+            displayed.inGroup && (
+              <p className="text-xs text-muted-foreground">
+                Your group settles as one;{" "}
+                <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
+                  see Settle up
+                </Link>
+                .
+              </p>
+            )
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const group = displayed.group;
+  const label =
+    displayed.kind === "owed"
+      ? (group ? `${group.name} gets back` : "You get back")
+      : (group ? `${group.name} owes` : "You owe");
+  const amountClass = displayed.kind === "owed" ? "text-positive" : "text-negative";
+
+  return (
+    <Card>
+      <CardContent className="space-y-2">
+        {showToggle && (
+          <div className="flex justify-start">
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              ariaLabel="Overview view"
+            />
+          </div>
+        )}
+        <p className="text-sm break-words text-muted-foreground">{label}</p>
+        <p className={cn("text-3xl font-bold break-all tabular-nums", amountClass)}>
+          <CountUp value={displayed.amount} format={formatCurrency} />
+        </p>
+        {displayed.counterparties.length > 0 && (
+          <ul className="space-y-1">
+            {displayed.counterparties.map((c) => {
+              const other = c.label ?? c.name;
+              return (
+                <li
+                  key={`${c.direction}-${c.name}`}
+                  className="text-sm break-words tabular-nums"
+                >
+                  {c.direction === "owesMe"
+                    ? (group ? `${other} owes your group ` : `${other} owes you `)
+                    : (group ? `Your group owes ${other} ` : `You owe ${other} `)}
+                  <span
+                    className={cn(
+                      "font-medium",
+                      c.direction === "owesMe" ? "text-positive" : "text-negative",
+                    )}
+                  >
+                    {formatCurrency(c.amount)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {group ? (
+          <p className="text-xs break-words text-muted-foreground">
+            {group.representative} pays or receives for {group.name}.{" "}
+            <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
+              see Settle up
+            </Link>
+            .
+          </p>
+        ) : (
+          displayed.inGroup && (
             <p className="text-xs text-muted-foreground">
               Your group settles as one;{" "}
               <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
@@ -116,50 +233,7 @@ function Hero({
               </Link>
               .
             </p>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const label = position.kind === "owed" ? "You get back" : "You owe";
-  const amountClass = position.kind === "owed" ? "text-positive" : "text-negative";
-
-  return (
-    <Card>
-      <CardContent className="space-y-2">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className={cn("text-3xl font-bold break-all tabular-nums", amountClass)}>
-          <CountUp value={position.amount} format={formatCurrency} />
-        </p>
-        {position.counterparties.length > 0 && (
-          <ul className="space-y-1">
-            {position.counterparties.map((c) => (
-              <li
-                key={`${c.direction}-${c.name}`}
-                className="text-sm break-words tabular-nums"
-              >
-                {c.direction === "owesMe" ? `${c.name} owes you ` : `You owe ${c.name} `}
-                <span
-                  className={cn(
-                    "font-medium",
-                    c.direction === "owesMe" ? "text-positive" : "text-negative",
-                  )}
-                >
-                  {formatCurrency(c.amount)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {position.inGroup && (
-          <p className="text-xs text-muted-foreground">
-            Your group settles as one;{" "}
-            <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
-              see Settle up
-            </Link>
-            .
-          </p>
+          )
         )}
       </CardContent>
     </Card>
@@ -369,6 +443,8 @@ export function RecentActivity({ activity }: { activity: RecentActivityItem[] })
 
 export function OverviewTabView({
   position,
+  groupPosition,
+  hasGroups,
   isOwner,
   isArchived,
   checklist,
@@ -384,6 +460,8 @@ export function OverviewTabView({
     <div className="space-y-4">
       <Hero
         position={position}
+        groupPosition={groupPosition}
+        hasGroups={hasGroups}
         isOwner={isOwner}
         isArchived={isArchived}
         onAddExpense={onAddExpense}
@@ -436,6 +514,8 @@ export function OverviewTab() {
   } = useTripPage();
 
   const position = myPosition(trip, expenses, payments, myName);
+  const hasGroups = hasUsableSettlementGroups(trip.settlementGroups);
+  const groupPosition = myPosition(trip, expenses, payments, myName, "group");
   const checklist = checklistState(trip, expenses, payments, isOwner);
   const activity = recentActivity(expenses, payments);
   const [dismissed, setDismissed] = useState(() => readDismissed(tripId));
@@ -456,6 +536,8 @@ export function OverviewTab() {
   return (
     <OverviewTabView
       position={position}
+      groupPosition={groupPosition}
+      hasGroups={hasGroups}
       isOwner={isOwner}
       isArchived={isArchived}
       checklist={checklist}

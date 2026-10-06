@@ -74,7 +74,7 @@ beforeEach(() => {
 
 describe("trip routes", () => {
   it.each([
-    ["/trip/preview-trip-1", /You get back/],
+    ["/trip/preview-trip-1", /gets back/],
     ["/trip/preview-trip-1/expenses", /9 expenses/],
     ["/trip/preview-trip-1/settle", /Suggested payments/],
     ["/trip/preview-trip-1/people", /Participants/],
@@ -87,7 +87,7 @@ describe("trip routes", () => {
   it("redirects unknown children to the index", async () => {
     mockTripData(previewTrip);
     renderAt("/trip/preview-trip-1/bogus");
-    expect(await screen.findByText(/You get back/)).toBeInTheDocument();
+    expect(await screen.findByText(/gets back/)).toBeInTheDocument();
   });
 
   it("marks only the active tab with aria-current", async () => {
