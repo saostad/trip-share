@@ -79,6 +79,7 @@ export function TripPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
+  const [paymentPrefill, setPaymentPrefill] = useState<PaymentPrefill | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [archiving, setArchiving] = useState(false);
 
@@ -319,7 +320,10 @@ export function TripPage() {
         openAddExpense: () => setAddExpenseOpen(true),
         openEditExpense: (expense: Expense) => setEditingExpense(expense),
         openDeleteExpense: (expense: Expense) => setDeletingExpense(expense),
-        openAddPayment: (_prefill?: PaymentPrefill) => setAddPaymentOpen(true),
+        openAddPayment: (prefill?: PaymentPrefill) => {
+          setPaymentPrefill(prefill ?? null);
+          setAddPaymentOpen(true);
+        },
         openEditPayment: (payment: Payment) => setEditingPayment(payment),
         openDeletePayment: (payment: Payment) => setDeletingPayment(payment),
         openEditTrip: () => setEditTripOpen(true),
@@ -442,9 +446,15 @@ export function TripPage() {
             <DialogTitle>Record Payment</DialogTitle>
           </DialogHeader>
           <PaymentForm
+            key={
+              paymentPrefill
+                ? `${paymentPrefill.from}-${paymentPrefill.to}-${paymentPrefill.amount}`
+                : "manual"
+            }
             participants={trip.participants}
             tripId={tripId}
             defaultFrom={myParticipantName ?? undefined}
+            prefill={paymentPrefill ?? undefined}
             onSubmit={handleAddPayment}
             onCancel={() => setAddPaymentOpen(false)}
           />

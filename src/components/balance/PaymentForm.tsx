@@ -28,23 +28,31 @@ interface PaymentFormProps {
   tripId?: string;
   /** Pre-select payer when linked to current user */
   defaultFrom?: string;
+  /** Pre-fill from Mark as paid; amount is set as a 2-decimal string. */
+  prefill?: { from: string; to: string; amount: number };
   onSubmit: (payments: PaymentSubmitData[]) => void | Promise<void>;
   onCancel: () => void;
 }
 
-export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCancel }: PaymentFormProps) {
+export function PaymentForm({ participants, tripId, defaultFrom, prefill, onSubmit, onCancel }: PaymentFormProps) {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const [onBehalfMode, setOnBehalfMode] = useState(false);
   const [customAmounts, setCustomAmounts] = useState(false);
   const [from, setFrom] = useState(() => {
+    if (prefill && participants.includes(prefill.from)) return prefill.from;
     if (defaultFrom && participants.includes(defaultFrom)) return defaultFrom;
     return participants[0] ?? "";
   });
-  const [to, setTo] = useState(participants[1] ?? "");
+  const [to, setTo] = useState(() => {
+    if (prefill && participants.includes(prefill.to)) return prefill.to;
+    return participants[1] ?? "";
+  });
   const [onBehalfOf, setOnBehalfOf] = useState<string[]>([]);
   const [personAmounts, setPersonAmounts] = useState<Record<string, string>>({});
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(() =>
+    prefill ? prefill.amount.toFixed(2) : "",
+  );
   const [date, setDate] = useState(today);
   const [note, setNote] = useState("");
   const [attachment, setAttachment] = useState<FileAttachment | null>(null);

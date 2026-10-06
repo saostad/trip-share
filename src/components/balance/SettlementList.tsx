@@ -26,6 +26,8 @@ interface SettlementListProps {
   tripName?: string;
   settlementMethod?: SettlementMethod | string | null;
   settlementGroups?: SettlementGroup[];
+  archived?: boolean;
+  onMarkPaid?: (transfer: { from: string; to: string; amount: number }) => void;
 }
 
 function methodHint(method: SettlementMethod): string {
@@ -51,6 +53,8 @@ export function SettlementList({
   tripName = "Trip",
   settlementMethod,
   settlementGroups = [],
+  archived = false,
+  onMarkPaid,
 }: SettlementListProps) {
   const method = normalizeSettlementMethod(settlementMethod);
   const hasGroups = hasUsableSettlementGroups(settlementGroups);
@@ -120,28 +124,47 @@ export function SettlementList({
                 key={key}
                 className="rounded-lg border border-border bg-card text-sm"
               >
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 p-3 text-left"
-                  onClick={() => setOpenKey(isOpen ? null : key)}
-                  aria-expanded={isOpen}
-                >
-                  {isOpen ? (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="flex items-center gap-2 p-3">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    onClick={() => setOpenKey(isOpen ? null : key)}
+                    aria-expanded={isOpen}
+                  >
+                    {isOpen ? (
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="min-w-0 truncate font-medium text-negative">
+                      {transaction.from}
+                    </span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 truncate font-medium text-positive">
+                      {transaction.to}
+                    </span>
+                    <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
+                      {formatCurrency(transaction.amount)}
+                    </span>
+                  </button>
+                  {onMarkPaid && !archived && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() =>
+                        onMarkPaid({
+                          from: transaction.from,
+                          to: transaction.to,
+                          amount: transaction.amount,
+                        })
+                      }
+                    >
+                      Mark as paid
+                    </Button>
                   )}
-                  <span className="min-w-0 truncate font-medium text-negative">
-                    {transaction.from}
-                  </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 truncate font-medium text-positive">
-                    {transaction.to}
-                  </span>
-                  <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
-                    {formatCurrency(transaction.amount)}
-                  </span>
-                </button>
+                </div>
 
                 {isOpen && (
                   <SettlementRowDetail
