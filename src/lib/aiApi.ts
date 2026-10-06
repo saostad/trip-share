@@ -21,15 +21,20 @@ export interface AiProviderStatus {
   id: string;
   label: string;
   keyConfigured: boolean;
+  modelHelp: string;
 }
 
 export type AiSettingsStatus = "missing" | "invalid" | "ok";
+
+export type AiKeysStatus = "ok" | "invalid";
 
 export interface AiAdminStatusResponse {
   providers: AiProviderStatus[];
   settings: AiSettings | null;
   settingsStatus: AiSettingsStatus;
   settingsError: string | null;
+  keysStatus: AiKeysStatus;
+  ignoredKeyNames: string[];
   updatedAt: string | null;
   updatedBy: string | null;
 }

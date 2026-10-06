@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall, type CallableOptions } from "firebase-functions/v2/https";
 import { requireAdmin } from "./auth";
 import {
   checkTripAccess,
@@ -13,7 +13,16 @@ import {
 import { validateCategoriesField, validateExtractInput, validateImageField } from "./ai/extractInput";
 import { fetchProviderModelIds, toListedModels, type ListedModel } from "./ai/modelLists";
 import type { NormalizedFields } from "./ai/normalize";
-import { getProvider, isKeyConfigured, PROVIDERS, type ProviderDef } from "./ai/providers";
+import {
+  AI_PROVIDER_KEYS,
+  getProvider,
+  getProviderKey,
+  isKeyConfigured,
+  PROVIDERS,
+  readProviderKeysState,
+  type ProviderDef,
+  type ProviderId,
+} from "./ai/providers";
 import {
   parseAiSettings,
   validateAiSettingsInput,
@@ -34,15 +43,20 @@ export interface AiProviderStatus {
   id: string;
   label: string;
   keyConfigured: boolean;
+  modelHelp: string;
 }
 
 export type AiSettingsStatus = "missing" | "invalid" | "ok";
+
+export type AiKeysStatus = "ok" | "invalid";
 
 export interface AiAdminStatusResponse {
   providers: AiProviderStatus[];
   settings: AiSettings | null;
   settingsStatus: AiSettingsStatus;
   settingsError: string | null;
+  keysStatus: AiKeysStatus;
+  ignoredKeyNames: string[];
   updatedAt: string | null;
   updatedBy: string | null;
 }
@@ -89,16 +103,13 @@ export interface TestReceiptExtractionRequest {
 
 export type TestReceiptExtractionResponse = TestPipelineResult;
 
-// Every callable below serves a provider chosen at request time, and secret
-// binding is static per function, so each one binds all three provider
-// secrets. There is no way to bind only the selected provider's secret.
-const allSecrets = PROVIDERS.map((provider) => provider.secret);
-
-const callableOptions = {
+// Every callable below either calls a provider or reports key status, so
+// each one binds the single AI_PROVIDER_KEYS secret.
+const callableOptions: CallableOptions = {
   region: "us-central1",
   maxInstances: 5,
-  secrets: allSecrets,
-} as const;
+  secrets: [AI_PROVIDER_KEYS],
+};
 
 function readUpdatedAt(data: unknown): string | null {
   if (typeof data !== "object" || data === null) {
@@ -140,15 +151,23 @@ export const getAiAdminStatus = onCall(
     const snapshot = await getFirestore().doc("appConfig/ai").get();
     const data = snapshot.data();
     const state = parseAiSettings(data);
+    // An invalid secret is reported, never thrown: the admin page must be
+    // able to explain the problem.
+    const keysState = readProviderKeysState();
+    const keys = keysState.status === "ok" ? keysState.keys : {};
     return {
       providers: PROVIDERS.map((provider) => ({
         id: provider.id,
         label: provider.label,
-        keyConfigured: isKeyConfigured(provider.secret.value()),
+        keyConfigured:
+          keysState.status === "ok" && isKeyConfigured(keys[provider.id as ProviderId]),
+        modelHelp: provider.modelHelp,
       })),
       settings: state.status === "ok" ? state.settings : null,
       settingsStatus: state.status,
       settingsError: state.status === "invalid" ? state.reason : null,
+      keysStatus: keysState.status,
+      ignoredKeyNames: keysState.status === "ok" ? keysState.ignoredNames : [],
       updatedAt: readUpdatedAt(data),
       updatedBy: readUpdatedBy(data),
     };
@@ -161,7 +180,7 @@ export const listAiModels = onCall(
   async (request): Promise<ListAiModelsResponse> => {
     await requireAdmin(request);
     const provider = readProviderParam(request.data);
-    const apiKey = provider.secret.value();
+    const apiKey = getProviderKey(provider);
     if (!isKeyConfigured(apiKey)) {
       throw new HttpsError(
         "failed-precondition",
@@ -197,7 +216,7 @@ export const extractReceipt = onCall(
       }
       log.provider = provider.id;
       log.model = settings.model;
-      const apiKey = provider.secret.value();
+      const apiKey = getProviderKey(provider);
       if (!isKeyConfigured(apiKey)) {
         throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
       }
@@ -239,7 +258,7 @@ export const testReceiptExtraction = onCall(
       }
       log.provider = provider.id;
       log.model = model;
-      const apiKey = provider.secret.value();
+      const apiKey = getProviderKey(provider);
       if (!isKeyConfigured(apiKey)) {
         throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
       }
@@ -258,7 +277,7 @@ export const saveAiSettings = onCall(
     if (provider === undefined) {
       throw new HttpsError("internal", "Validated provider is unknown.");
     }
-    if (settings.enabled && !isKeyConfigured(provider.secret.value())) {
+    if (settings.enabled && !isKeyConfigured(getProviderKey(provider))) {
       throw new HttpsError(
         "failed-precondition",
         `Cannot enable auto-fill: API key for ${provider.label} is not set.`,
