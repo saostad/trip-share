@@ -78,7 +78,11 @@ export interface WelcomeTourProps {
   initialStep?: number;
 }
 
-export function WelcomeTour({ open, onClose, initialStep = 0 }: WelcomeTourProps) {
+export function WelcomeTour({
+  open,
+  onClose,
+  initialStep = 0,
+}: WelcomeTourProps) {
   const [step, setStep] = useState(initialStep);
   const last = step === TOUR_STEPS.length - 1;
   const current = TOUR_STEPS[step] ?? TOUR_STEPS[0]!;
@@ -168,12 +172,7 @@ export function WelcomeTour({ open, onClose, initialStep = 0 }: WelcomeTourProps
             >
               Back
             </Button>
-            <Button
-              ref={nextRef}
-              type="button"
-              size="sm"
-              onClick={goNext}
-            >
+            <Button ref={nextRef} type="button" size="sm" onClick={goNext}>
               {last ? "Done" : "Next"}
             </Button>
           </div>

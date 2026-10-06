@@ -61,8 +61,9 @@ export function CreateTripWizard({
   const [links, setLinks] = useState<Record<string, string>>(() =>
     creatorUid ? { [prefillName]: creatorUid } : {},
   );
-  const [settlementMethod, setSettlementMethod] =
-    useState<SettlementMethod>(DEFAULT_SETTLEMENT_METHOD);
+  const [settlementMethod, setSettlementMethod] = useState<SettlementMethod>(
+    DEFAULT_SETTLEMENT_METHOD,
+  );
   const [groups, setGroups] = useState<SettlementGroup[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
