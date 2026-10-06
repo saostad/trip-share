@@ -15,9 +15,9 @@ describe("PaymentForm prefill", () => {
         onCancel={vi.fn()}
       />,
     );
-    expect(screen.getByLabelText("Total Amount")).toHaveValue(12.4);
+    expect(screen.getByLabelText("Total amount")).toHaveValue(12.4);
     expect(
-      (screen.getByLabelText("Total Amount") as HTMLInputElement).value,
+      (screen.getByLabelText("Total amount") as HTMLInputElement).value,
     ).toBe("12.40");
   });
 

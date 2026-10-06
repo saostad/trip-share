@@ -120,7 +120,7 @@ export function DashboardView({
           {showCreateControls && (
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="size-4" data-icon="inline-start" />
-              New Trip
+              New trip
             </Button>
           )}
         </div>

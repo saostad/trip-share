@@ -212,7 +212,7 @@ export function PaymentForm({ participants, tripId, defaultFrom, prefill, onSubm
 
       <div className="space-y-2">
         <label htmlFor="payment-amount" className="text-sm font-medium leading-none">
-          Total Amount
+          Total amount
         </label>
         <div className="relative">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
