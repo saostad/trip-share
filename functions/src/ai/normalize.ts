@@ -1,3 +1,5 @@
+import { replaceControlChars } from "./text";
+
 export interface NormalizedFields {
   description: string | null;
   category: string | null;
@@ -17,24 +19,15 @@ const MAX_DESCRIPTION_LENGTH = 80;
 const US_GROUPED = /^\d{1,3}(,\d{3})*(\.\d+)?$/;
 const US_PLAIN = /^\d+(\.\d+)?$/;
 
-/** Code-point loop: a control-char regex would trip the linter. */
-function removeControlChars(value: string): string {
-  let out = "";
-  for (const char of value) {
-    const code = char.codePointAt(0) ?? 0;
-    if ((code >= 0x00 && code <= 0x1f) || code === 0x7f) {
-      continue;
-    }
-    out += char;
-  }
-  return out;
-}
-
 function cleanLabel(value: unknown): string {
   if (typeof value !== "string") {
     return "";
   }
-  return removeControlChars(value).replace(/\s+/g, " ").trim().slice(0, MAX_DESCRIPTION_LENGTH).trim();
+  return replaceControlChars(value)
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_DESCRIPTION_LENGTH)
+    .trim();
 }
 
 function roundToCents(value: number): number {
@@ -53,7 +46,7 @@ function normalizeAmount(total: unknown): number | null {
   if (typeof total !== "string") {
     return null;
   }
-  const stripped = removeControlChars(total)
+  const stripped = replaceControlChars(total)
     .replace(/[\s$€£¥₹₩¢]/g, "")
     .trim();
   if (!US_GROUPED.test(stripped) && !US_PLAIN.test(stripped)) {

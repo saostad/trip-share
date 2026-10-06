@@ -73,11 +73,14 @@ describe("normalizeExtraction category", () => {
 });
 
 describe("normalizeExtraction description", () => {
-  it("cleans control chars and whitespace and cuts to 80 characters", () => {
+  it("turns control chars into spaces, collapses whitespace, cuts to 80", () => {
     expect(
       normalizeExtraction({ description: "  Grand\u0000  Hotel\nLobby  " }, IDS, TODAY).fields
         .description,
-    ).toBe("Grand HotelLobby");
+    ).toBe("Grand Hotel Lobby");
+    expect(
+      normalizeExtraction({ description: "STARBUCKS\nSTORE #123" }, IDS, TODAY).fields.description,
+    ).toBe("STARBUCKS STORE #123");
     expect(normalizeExtraction({ description: "x".repeat(81) }, IDS, TODAY).fields.description).toBe(
       "x".repeat(80),
     );

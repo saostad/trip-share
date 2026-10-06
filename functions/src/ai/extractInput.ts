@@ -1,4 +1,5 @@
 import { HttpsError } from "firebase-functions/v2/https";
+import { replaceControlChars } from "./text";
 
 /**
  * Request validation for `extractReceipt` and `testReceiptExtraction`. Pure:
@@ -33,19 +34,6 @@ const MAX_LABEL_LENGTH = 40;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/** Code-point loop: a control-char regex would trip the linter. */
-function removeControlChars(value: string): string {
-  let out = "";
-  for (const char of value) {
-    const code = char.codePointAt(0) ?? 0;
-    if ((code >= 0x00 && code <= 0x1f) || code === 0x7f) {
-      continue;
-    }
-    out += char;
-  }
-  return out;
 }
 
 export function validateTripIdField(value: unknown): string {
@@ -123,8 +111,10 @@ export function validateCategoriesField(value: unknown): ValidatedCategory[] {
       throw new HttpsError("invalid-argument", `Invalid 'categories': duplicate id '${id}'.`);
     }
     seen.add(id);
-    // Length applies to the usable label, after control chars are removed.
-    const label = typeof entry["label"] === "string" ? removeControlChars(entry["label"]) : "";
+    // Control chars become spaces, then trim: length applies to the usable
+    // label, so an all-control label is rejected instead of stored as spaces.
+    const label =
+      typeof entry["label"] === "string" ? replaceControlChars(entry["label"]).trim() : "";
     if (label.length < 1 || label.length > MAX_LABEL_LENGTH) {
       throw new HttpsError(
         "invalid-argument",

@@ -86,10 +86,13 @@ describe("validateImageField", () => {
 });
 
 describe("validateCategoriesField", () => {
-  it("accepts 1 to 30 items and strips control chars from labels", () => {
+  it("accepts 1 to 30 items and turns label control chars into spaces", () => {
     expect(validateCategoriesField(CATEGORIES)).toEqual(CATEGORIES);
     expect(validateCategoriesField([{ id: "a", label: "A\0B" }])).toEqual([
-      { id: "a", label: "AB" },
+      { id: "a", label: "A B" },
+    ]);
+    expect(validateCategoriesField([{ id: "a", label: "  Food  " }])).toEqual([
+      { id: "a", label: "Food" },
     ]);
     expect(
       validateCategoriesField(Array.from({ length: 30 }, (_, i) => ({ id: `c${i}`, label: "L" }))),
@@ -118,6 +121,8 @@ describe("validateCategoriesField", () => {
 
   it("rejects empty and over-long labels", () => {
     expectInvalidArgument(() => validateCategoriesField([{ id: "a", label: "" }]), "label");
+    expectInvalidArgument(() => validateCategoriesField([{ id: "a", label: "  " }]), "label");
+    expectInvalidArgument(() => validateCategoriesField([{ id: "a", label: "\u0007" }]), "label");
     expectInvalidArgument(() => validateCategoriesField([{ id: "a", label: "x".repeat(41) }]), "label");
     expectInvalidArgument(() => validateCategoriesField([{ id: "a", label: 42 }]), "label");
   });
