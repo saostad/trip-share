@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,10 +97,10 @@ export function TripPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto max-w-6xl px-4 py-6">
-          <div className="mb-6 animate-pulse">
+          <div className="mb-6">
             <div className="mb-4 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-muted" />
-              <div className="h-7 w-48 rounded bg-muted" />
+              <Skeleton className="h-8 w-8 rounded-lg" />
+              <Skeleton className="h-7 w-48" />
             </div>
           </div>
         </div>

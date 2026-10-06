@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, MapPin, Link2, Lock, Receipt, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fadeSlideUp } from "@/lib/motion";
 import type { AnnotatedTrip } from "@/lib/tripFilters";
 import type { SettlementMethod, SettlementGroup } from "@/types";
@@ -41,17 +42,17 @@ export interface DashboardViewProps {
 function TripCardSkeleton() {
   return (
     <Card className="rounded-xl p-6 shadow-sm">
-      <div className="flex animate-pulse flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between">
-          <div className="h-5 w-32 rounded bg-muted" />
-          <div className="h-5 w-20 rounded-full bg-muted" />
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-20 rounded-full" />
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-muted" />
-          <div className="h-7 w-7 rounded-full bg-muted" />
-          <div className="h-4 w-24 rounded bg-muted" />
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-4 w-24" />
         </div>
-        <div className="h-3 w-20 rounded bg-muted" />
+        <Skeleton className="h-3 w-20" />
       </div>
     </Card>
   );
