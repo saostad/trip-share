@@ -36,6 +36,11 @@ function errorMessage(err: unknown): string {
   return err instanceof Error && err.message ? err.message : "Something went wrong.";
 }
 
+/** Strips one trailing period so an inserted server message never doubles up with ours. */
+function withoutTrailingPeriod(message: string): string {
+  return message.endsWith(".") ? message.slice(0, -1) : message;
+}
+
 function formatUpdatedAt(value: string): string | null {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : format(date, "PPpp");
@@ -343,8 +348,9 @@ function AiReceiptSection() {
           </div>
           {status.settingsStatus === "invalid" && (
             <p className="text-amber-600" role="alert">
-              The saved settings are invalid: {status.settingsError ?? "unknown error"}. Saving
-              will replace the stored settings.
+              The saved settings are invalid:{" "}
+              {withoutTrailingPeriod(status.settingsError ?? "unknown error")}. Saving will
+              replace the stored settings.
             </p>
           )}
           {status.keysStatus === "invalid" && (
@@ -432,7 +438,8 @@ function AiReceiptSection() {
             {modelsLoading && <p className="text-xs text-muted-foreground">Loading models…</p>}
             {modelsError !== null && (
               <p className="text-xs text-muted-foreground">
-                Couldn&apos;t load the model list: {modelsError}. You can still paste a model ID.
+                Couldn&apos;t load the model list: {withoutTrailingPeriod(modelsError)}. You can
+                still paste a model ID.
               </p>
             )}
             {selectedProvider !== undefined && (

@@ -117,14 +117,15 @@ describe("AdminPage AI section", () => {
       ...statusFixture,
       settings: null,
       settingsStatus: "invalid",
-      settingsError: "Invalid 'model': must not be empty",
+      settingsError: "Invalid 'model': must not be empty.",
       updatedAt: null,
       updatedBy: null,
     });
     renderPage();
     const warning = await screen.findByText(/Saving will replace the stored settings\./);
     expect(warning).toBeInTheDocument();
-    expect(warning.textContent).toContain("Invalid 'model': must not be empty");
+    expect(warning.textContent).toContain("Invalid 'model': must not be empty. Saving");
+    expect(warning.textContent).not.toContain("..");
   });
 
   it("shows the invalid-keys warning with the fix command", async () => {
