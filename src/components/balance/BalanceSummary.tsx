@@ -7,6 +7,7 @@ import {
 } from "@/lib/settlementGroups";
 import { formatCurrency } from "@/lib/formatters";
 import { CountUp } from "@/components/CountUp";
+import { ViewModeToggle } from "./ViewModeToggle";
 import type {
   Expense,
   Payment,
@@ -78,38 +79,11 @@ export function BalanceSummary({
               ? "Groups are combined: each group pays or receives as one."
               : "Individual balances"}
           </p>
-          <div
-            className="inline-flex rounded-md border border-border p-0.5 text-xs"
-            role="radiogroup"
-            aria-label="Balance view"
-          >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={viewMode === "group"}
-              className={`relative rounded px-2.5 py-1 outline-none transition-colors after:absolute after:-inset-y-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring ${
-                viewMode === "group"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setViewMode("group")}
-            >
-              By group
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={viewMode === "person"}
-              className={`relative rounded px-2.5 py-1 outline-none transition-colors after:absolute after:-inset-y-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring ${
-                viewMode === "person"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setViewMode("person")}
-            >
-              By person
-            </button>
-          </div>
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Balance view"
+          />
         </div>
       )}
 
