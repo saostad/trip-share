@@ -107,7 +107,7 @@ export function TripForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="trip-name" className="text-sm font-medium leading-none">
-          Trip Name
+          Trip name
         </label>
         <Input
           id="trip-name"
@@ -200,8 +200,8 @@ export function TripForm({
               ? "Saving..."
               : "Creating..."
             : isEditMode
-              ? "Save Changes"
-              : "Create Trip"}
+              ? "Save changes"
+              : "Create trip"}
         </Button>
       </div>
     </form>

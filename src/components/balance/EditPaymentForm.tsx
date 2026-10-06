@@ -171,7 +171,7 @@ export function EditPaymentForm({ payment, participants, tripId, onSubmit, onCan
         </Button>
         <Button type="submit" disabled={submitting} className="gap-1.5">
           {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {submitting ? "Saving..." : "Save Changes"}
+          {submitting ? "Saving..." : "Save changes"}
         </Button>
       </div>
     </form>

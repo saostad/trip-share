@@ -151,7 +151,7 @@ describe("CreateTripWizard payload", () => {
         onCancel={vi.fn()}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Trip Name"), {
+    fireEvent.change(screen.getByLabelText("Trip name"), {
       target: { value: "Bali" },
     });
     const input = screen.getByLabelText("Participant name");
@@ -161,7 +161,7 @@ describe("CreateTripWizard payload", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     fireEvent.click(screen.getByText("Advanced options"));
     fireEvent.click(screen.getByRole("radio", { name: /Minimize transactions/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Create Trip" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create trip" }));
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     return onSubmit.mock.calls[0][0];
   }

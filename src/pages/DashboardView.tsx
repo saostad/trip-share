@@ -190,7 +190,7 @@ export function DashboardView({
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Trip</DialogTitle>
+              <DialogTitle>Create a trip</DialogTitle>
             </DialogHeader>
             <CreateTripWizard
               creatorName={displayName}

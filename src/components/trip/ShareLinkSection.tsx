@@ -102,7 +102,7 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
           ) : (
             <Link className="h-3.5 w-3.5" />
           )}
-          {loading ? "Generating..." : "Generate Share Link"}
+          {loading ? "Generating..." : "Generate share link"}
         </Button>
       </div>
     );
@@ -136,7 +136,7 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
           ) : (
             <Link2Off className="h-3.5 w-3.5" />
           )}
-          {loading ? "Revoking..." : "Revoke Link"}
+          {loading ? "Turning off..." : "Turn off link"}
         </Button>
         <Button
           variant="outline"
@@ -150,9 +150,12 @@ export function ShareLinkSection({ trip }: ShareLinkSectionProps) {
           ) : (
             <RefreshCw className="h-3.5 w-3.5" />
           )}
-          {loading ? "Regenerating..." : "Regenerate Link"}
+          {loading ? "Making a new link..." : "Make a new link"}
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Making a new link turns off the old one.
+      </p>
     </div>
   );
 }

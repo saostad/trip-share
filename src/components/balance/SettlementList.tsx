@@ -74,7 +74,11 @@ export function SettlementList({
         <p className="text-xs text-muted-foreground">
           How payments are suggested: {settlementMethodLabel(method)} —{" "}
           {settlementMethodDescription(method)}
-          {groupMode && " · group mode"}
+          {groupMode
+            ? " · shown by group"
+            : hasGroups
+              ? " · shown by person"
+              : null}
         </p>
         {hasGroups && (
           <div

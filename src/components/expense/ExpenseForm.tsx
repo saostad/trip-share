@@ -765,7 +765,7 @@ export function ExpenseForm({
                   ? "Saving..."
                   : "Adding..."
                 : isEditMode
-                  ? "Save Changes"
+                  ? "Save changes"
                   : "Add Expense"}
             </Button>
           )}
