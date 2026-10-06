@@ -206,6 +206,88 @@ export function parseOpenAiCompatibleResponse(
   return text;
 }
 
+/**
+ * Thrown when a model's answer holds no JSON object. Carries the raw answer
+ * server-side so the admin test callable can show it; the callable protocol
+ * only ever sends the code and message to the client.
+ */
+export class JsonExtractionError extends HttpsError {
+  readonly rawText: string;
+
+  constructor(rawText: string) {
+    super("internal", "The model's answer had no JSON");
+    this.rawText = rawText;
+  }
+}
+
+function stripThinkBlocks(text: string): string {
+  return text.replace(/<think>[\s\S]*?<\/think>/gi, " ");
+}
+
+function stripCodeFences(text: string): string {
+  return text.replace(/```[a-zA-Z]*\r?\n?([\s\S]*?)```/g, "$1");
+}
+
+/**
+ * Pulls the first top-level JSON object out of a model answer. Pure.
+ * Strips `<think>` blocks and code fences, then scans for balanced `{…}`
+ * candidates while respecting strings and escapes. Throws
+ * `JsonExtractionError` when nothing parses — never an all-null result,
+ * which would report a failure as success.
+ */
+export function extractJsonObject(text: string): Record<string, unknown> {
+  const cleaned = stripCodeFences(stripThinkBlocks(text));
+  let index = 0;
+  while (index < cleaned.length) {
+    const start = cleaned.indexOf("{", index);
+    if (start === -1) {
+      break;
+    }
+    const end = findBalancedEnd(cleaned, start);
+    if (end === -1) {
+      break;
+    }
+    try {
+      const parsed: unknown = JSON.parse(cleaned.slice(start, end + 1));
+      if (isRecord(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // Not valid JSON: keep looking for a later candidate.
+    }
+    index = end + 1;
+  }
+  throw new JsonExtractionError(text);
+}
+
+/** Index of the `}` balancing the `{` at `start`, or -1 if unbalanced. */
+function findBalancedEnd(text: string, start: number): number {
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < text.length; i++) {
+    const char = text[i];
+    if (inString) {
+      if (char === "\\") {
+        i++;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+    } else if (char === "{") {
+      depth++;
+    } else if (char === "}") {
+      depth--;
+      if (depth === 0) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
 class AdapterHttpError extends HttpsError {
   readonly httpStatus: number;
 
