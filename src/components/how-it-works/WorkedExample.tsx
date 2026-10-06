@@ -23,6 +23,7 @@ function balanceLabel(name: string, net: number): string {
 }
 
 function DrawnArrow() {
+  const reduceMotion = useReducedMotion();
   return (
     <m.svg
       className="h-4 min-w-10 flex-1 text-primary"
@@ -38,7 +39,7 @@ function DrawnArrow() {
         stroke="currentColor"
         strokeWidth="2.5"
         strokeLinecap="round"
-        initial={{ pathLength: 0 }}
+        initial={reduceMotion ? false : { pathLength: 0 }}
         animate={{ pathLength: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       />
@@ -49,7 +50,7 @@ function DrawnArrow() {
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        initial={{ opacity: 0 }}
+        initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.2 }}
       />
