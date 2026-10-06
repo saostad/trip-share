@@ -59,7 +59,7 @@ export function TripShellView({
 
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <AvatarGroup>
+              <AvatarGroup className="-space-x-1">
                 {trip.participants.slice(0, 5).map((participant) => (
                   <Avatar key={participant} size="sm">
                     <AvatarFallback>{getInitials(participant)}</AvatarFallback>
