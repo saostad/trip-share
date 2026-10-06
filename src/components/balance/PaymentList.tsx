@@ -336,9 +336,9 @@ export function PaymentList({
               className="flex flex-col gap-1 rounded-lg border p-3 text-sm"
             >
               <div className="flex items-center gap-2">
-                <span className="min-w-0 truncate font-medium">{payment.from}</span>
+                <span className="min-w-[4ch] truncate font-medium">{payment.from}</span>
                 <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 truncate font-medium">{payment.to}</span>
+                <span className="min-w-[4ch] truncate font-medium">{payment.to}</span>
                 <span className="ml-auto shrink-0 font-semibold">
                   {formatCurrency(payment.amount)}
                 </span>
