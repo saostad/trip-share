@@ -40,35 +40,52 @@ function readProvider(value: unknown): ProviderId | undefined {
 }
 
 /**
- * Reads the stored `appConfig/ai` doc (`snapshot.data()`). Returns `null`
- * when the doc is missing or holds no usable settings — in particular when
- * the provider isn't in the registry. A missing `dailyLimitPerUser`
- * defaults to 30; a provider or model is never filled in.
+ * The state of the stored `appConfig/ai` doc (plan decision D16): nothing
+ * saved yet (`missing`), saved but unusable (`invalid`, with a reason naming
+ * the bad field), or valid (`ok`). Missing and invalid must never be
+ * confused: an invalid doc means auto-fill silently stays off.
  */
-export function parseAiSettings(data: unknown): AiSettings | null {
+export type AiSettingsState =
+  | { status: "missing" }
+  | { status: "invalid"; reason: string }
+  | { status: "ok"; settings: AiSettings };
+
+/**
+ * Reads the stored `appConfig/ai` doc (`snapshot.data()`). A missing
+ * `dailyLimitPerUser` defaults to 30; a provider or model is never filled
+ * in — an unknown provider makes the doc `invalid`, not defaulted.
+ */
+export function parseAiSettings(data: unknown): AiSettingsState {
   if (data === undefined || data === null) {
-    return null;
+    return { status: "missing" };
   }
   if (!isRecord(data)) {
-    return null;
+    return { status: "invalid", reason: "Invalid settings: expected an object." };
   }
   const provider = readProvider(data["provider"]);
   if (provider === undefined) {
-    return null;
+    const known = PROVIDERS.map((p) => p.id).join(", ");
+    return {
+      status: "invalid",
+      reason: `Invalid 'provider': must be one of ${known}.`,
+    };
   }
   if (typeof data["model"] !== "string" || data["model"].trim() === "") {
-    return null;
+    return { status: "invalid", reason: "Invalid 'model': must be a non-empty string." };
   }
   if (typeof data["enabled"] !== "boolean") {
-    return null;
+    return { status: "invalid", reason: "Invalid 'enabled': must be a boolean." };
   }
   const limit = data["dailyLimitPerUser"];
   if (limit === undefined) {
     return {
-      enabled: data["enabled"],
-      provider,
-      model: data["model"].trim(),
-      dailyLimitPerUser: DEFAULT_DAILY_LIMIT_PER_USER,
+      status: "ok",
+      settings: {
+        enabled: data["enabled"],
+        provider,
+        model: data["model"].trim(),
+        dailyLimitPerUser: DEFAULT_DAILY_LIMIT_PER_USER,
+      },
     };
   }
   if (
@@ -77,13 +94,19 @@ export function parseAiSettings(data: unknown): AiSettings | null {
     limit < MIN_DAILY_LIMIT_PER_USER ||
     limit > MAX_DAILY_LIMIT_PER_USER
   ) {
-    return null;
+    return {
+      status: "invalid",
+      reason: `Invalid 'dailyLimitPerUser': must be an integer from ${MIN_DAILY_LIMIT_PER_USER} to ${MAX_DAILY_LIMIT_PER_USER}.`,
+    };
   }
   return {
-    enabled: data["enabled"],
-    provider,
-    model: data["model"].trim(),
-    dailyLimitPerUser: limit,
+    status: "ok",
+    settings: {
+      enabled: data["enabled"],
+      provider,
+      model: data["model"].trim(),
+      dailyLimitPerUser: limit,
+    },
   };
 }
 

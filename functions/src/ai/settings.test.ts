@@ -16,62 +16,79 @@ function expectInvalidArgument(fn: () => unknown, field: string): void {
 }
 
 describe("parseAiSettings", () => {
-  it("returns null for a missing doc", () => {
-    expect(parseAiSettings(undefined)).toBeNull();
-    expect(parseAiSettings(null)).toBeNull();
+  it("reports missing for a missing doc", () => {
+    expect(parseAiSettings(undefined)).toEqual({ status: "missing" });
+    expect(parseAiSettings(null)).toEqual({ status: "missing" });
   });
 
-  it("returns null for a non-object doc", () => {
-    expect(parseAiSettings("gemini")).toBeNull();
-    expect(parseAiSettings(42)).toBeNull();
-    expect(parseAiSettings([])).toBeNull();
+  it("reports invalid for a non-object doc", () => {
+    for (const data of ["gemini", 42, []]) {
+      const state = parseAiSettings(data);
+      expect(state.status).toBe("invalid");
+    }
   });
 
-  it("returns null for an unknown provider without making one up", () => {
-    expect(
-      parseAiSettings({
-        enabled: true,
-        provider: "openai",
-        model: "gpt-4",
-        dailyLimitPerUser: 10,
-      }),
-    ).toBeNull();
-    expect(
-      parseAiSettings({ enabled: true, model: "gemini-2.0-flash", dailyLimitPerUser: 10 }),
-    ).toBeNull();
+  it("reports invalid for an unknown provider without making one up", () => {
+    const unknown = parseAiSettings({
+      enabled: true,
+      provider: "openai",
+      model: "gpt-4",
+      dailyLimitPerUser: 10,
+    });
+    expect(unknown.status).toBe("invalid");
+    if (unknown.status === "invalid") {
+      expect(unknown.reason).toContain("provider");
+    }
+    const missing = parseAiSettings({
+      enabled: true,
+      model: "gemini-2.0-flash",
+      dailyLimitPerUser: 10,
+    });
+    expect(missing.status).toBe("invalid");
   });
 
-  it("returns null when the model is missing or blank", () => {
-    expect(
-      parseAiSettings({ enabled: true, provider: "gemini", dailyLimitPerUser: 10 }),
-    ).toBeNull();
-    expect(
-      parseAiSettings({
-        enabled: true,
-        provider: "gemini",
-        model: "   ",
-        dailyLimitPerUser: 10,
-      }),
-    ).toBeNull();
+  it("reports invalid when the model is missing or blank", () => {
+    for (const model of [undefined, "   ", 42]) {
+      const state = parseAiSettings({ enabled: true, provider: "gemini", model, dailyLimitPerUser: 10 });
+      expect(state.status).toBe("invalid");
+      if (state.status === "invalid") {
+        expect(state.reason).toContain("model");
+      }
+    }
   });
 
-  it("returns null when enabled is not a boolean", () => {
-    expect(
-      parseAiSettings({ enabled: "yes", provider: "gemini", model: "m", dailyLimitPerUser: 10 }),
-    ).toBeNull();
+  it("reports invalid when enabled is not a boolean", () => {
+    const state = parseAiSettings({
+      enabled: "yes",
+      provider: "gemini",
+      model: "m",
+      dailyLimitPerUser: 10,
+    });
+    expect(state.status).toBe("invalid");
+    if (state.status === "invalid") {
+      expect(state.reason).toContain("enabled");
+    }
   });
 
   it("defaults a missing dailyLimitPerUser to 30", () => {
-    expect(
-      parseAiSettings({ enabled: false, provider: "nvidia", model: "meta/llama" }),
-    ).toEqual({ enabled: false, provider: "nvidia", model: "meta/llama", dailyLimitPerUser: 30 });
+    expect(parseAiSettings({ enabled: false, provider: "nvidia", model: "meta/llama" })).toEqual({
+      status: "ok",
+      settings: { enabled: false, provider: "nvidia", model: "meta/llama", dailyLimitPerUser: 30 },
+    });
   });
 
-  it("returns null for an invalid stored limit", () => {
+  it("reports invalid for an invalid stored limit", () => {
     for (const dailyLimitPerUser of [0, 501, 1.5, "30", null]) {
-      expect(
-        parseAiSettings({ enabled: true, provider: "gemini", model: "m", dailyLimitPerUser }),
-      ).toBeNull();
+      const state = parseAiSettings({
+        enabled: true,
+        provider: "gemini",
+        model: "m",
+        dailyLimitPerUser,
+      });
+      expect(state.status).toBe("invalid");
+      if (state.status === "invalid") {
+        expect(state.reason).toContain("dailyLimitPerUser");
+      }
     }
   });
 
@@ -84,10 +101,13 @@ describe("parseAiSettings", () => {
         dailyLimitPerUser: 10,
       }),
     ).toEqual({
-      enabled: true,
-      provider: "together",
-      model: "meta-llama/Llama-3",
-      dailyLimitPerUser: 10,
+      status: "ok",
+      settings: {
+        enabled: true,
+        provider: "together",
+        model: "meta-llama/Llama-3",
+        dailyLimitPerUser: 10,
+      },
     });
   });
 });

@@ -19,9 +19,13 @@ export interface AiProviderStatus {
   keyConfigured: boolean;
 }
 
+export type AiSettingsStatus = "missing" | "invalid" | "ok";
+
 export interface AiAdminStatusResponse {
   providers: AiProviderStatus[];
   settings: AiSettings | null;
+  settingsStatus: AiSettingsStatus;
+  settingsError: string | null;
   updatedAt: string | null;
   updatedBy: string | null;
 }
@@ -86,13 +90,16 @@ export const getAiAdminStatus = onCall(
     await requireAdmin(request);
     const snapshot = await getFirestore().doc("appConfig/ai").get();
     const data = snapshot.data();
+    const state = parseAiSettings(data);
     return {
       providers: PROVIDERS.map((provider) => ({
         id: provider.id,
         label: provider.label,
         keyConfigured: isKeyConfigured(provider.secret.value()),
       })),
-      settings: parseAiSettings(data),
+      settings: state.status === "ok" ? state.settings : null,
+      settingsStatus: state.status,
+      settingsError: state.status === "invalid" ? state.reason : null,
       updatedAt: readUpdatedAt(data),
       updatedBy: readUpdatedBy(data),
     };

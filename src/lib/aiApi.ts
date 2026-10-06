@@ -23,9 +23,13 @@ export interface AiProviderStatus {
   keyConfigured: boolean;
 }
 
+export type AiSettingsStatus = "missing" | "invalid" | "ok";
+
 export interface AiAdminStatusResponse {
   providers: AiProviderStatus[];
   settings: AiSettings | null;
+  settingsStatus: AiSettingsStatus;
+  settingsError: string | null;
   updatedAt: string | null;
   updatedBy: string | null;
 }
