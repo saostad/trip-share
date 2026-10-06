@@ -71,9 +71,15 @@ interface FileUploadProps {
   value?: FileAttachment | null;
   /** Called when file is uploaded or removed */
   onChange: (file: FileAttachment | null) => void;
+  /**
+   * Called with the original file right after the size check passes, before
+   * compression and upload. Only the expense start-screen uploader uses this,
+   * for receipt auto-fill.
+   */
+  onFileSelected?: (file: File) => void;
 }
 
-export function FileUpload({ storagePath, value, onChange }: FileUploadProps) {
+export function FileUpload({ storagePath, value, onChange, onFileSelected }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +93,8 @@ export function FileUpload({ storagePath, value, onChange }: FileUploadProps) {
       alert("File must be smaller than 10MB");
       return;
     }
+
+    onFileSelected?.(file);
 
     setUploading(true);
     setProgress(0);
