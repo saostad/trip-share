@@ -314,7 +314,7 @@ export function PaymentForm({ participants, tripId, defaultFrom, prefill, onSubm
                             value={personAmounts[person] ?? ""}
                             onChange={(e) => handlePersonAmountChange(person, e.target.value)}
                             placeholder="0.00"
-                            className="h-8 pl-5 text-xs"
+                            className="h-8 pl-5 md:text-xs"
                           />
                         </div>
                       </div>

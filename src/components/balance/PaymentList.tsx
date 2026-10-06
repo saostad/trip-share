@@ -172,7 +172,7 @@ export function PaymentList({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search payments…"
-          className="h-8 pl-8 pr-8 text-sm"
+          className="h-8 pl-8 pr-8 text-base md:text-sm"
           aria-label="Search payments"
         />
         {hasSearch && (

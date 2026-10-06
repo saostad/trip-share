@@ -195,7 +195,7 @@ export function ExpenseList({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search expenses…"
-          className="h-8 pl-8 pr-8 text-sm"
+          className="h-8 pl-8 pr-8 text-base md:text-sm"
           aria-label="Search expenses"
         />
         {hasSearch && (
