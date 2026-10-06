@@ -53,8 +53,8 @@ export function TripShellView({
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <Link
               to="/"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted"
-              aria-label="Back to Dashboard"
+              className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg outline-none after:absolute after:-inset-2 after:content-[''] hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Back to dashboard"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>

@@ -144,7 +144,7 @@ export function TripPage() {
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/80"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            Back to dashboard
           </Link>
         </div>
       </div>
