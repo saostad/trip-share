@@ -9,11 +9,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
+import { useTour } from "@/components/tour/useTour";
 import {
   CircleHelp,
   LogOut,
   Moon,
   Plane,
+  RotateCcw,
   ShieldCheck,
   Sun,
 } from "lucide-react";
@@ -34,6 +36,7 @@ export interface HeaderViewProps {
   buildTime: string;
   onToggleTheme: () => void;
   onSignOut: () => void;
+  onReplayTour?: () => void;
 }
 
 function initialsFor(name: string | null): string {
@@ -81,6 +84,7 @@ export function HeaderView({
   buildTime,
   onToggleTheme,
   onSignOut,
+  onReplayTour,
 }: HeaderViewProps) {
   const initials = initialsFor(user?.displayName ?? null);
 
@@ -133,6 +137,12 @@ export function HeaderView({
                 <CircleHelp className="size-4" aria-hidden />
                 How it works
               </DropdownMenuItem>
+              {onReplayTour && (
+                <DropdownMenuItem onClick={onReplayTour}>
+                  <RotateCcw className="size-4" aria-hidden />
+                  Replay welcome tour
+                </DropdownMenuItem>
+              )}
               {isAdmin && (
                 <DropdownMenuItem render={<Link to="/admin" />}>
                   <ShieldCheck className="size-4" aria-hidden />
@@ -168,6 +178,7 @@ function buildInfo(): { commit: string; time: string } {
 export function Header() {
   const { user, isAdmin, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { openTour } = useTour();
   const navigate = useNavigate();
   const { commit, time } = buildInfo();
 
@@ -198,6 +209,7 @@ export function Header() {
       buildTime={time}
       onToggleTheme={toggleTheme}
       onSignOut={handleSignOut}
+      onReplayTour={openTour}
     />
   );
 }

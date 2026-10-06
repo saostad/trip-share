@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { Toaster } from "sonner";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { InstallPrompt } from "@/components/layout/InstallPrompt";
+import { TourProvider } from "@/components/tour/TourProvider";
 import { LoginPage } from "@/pages/LoginPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { TripPage } from "@/pages/trip/TripPage";
@@ -44,6 +45,7 @@ function App() {
       <InstallPrompt />
       <Toaster richColors position="top-right" />
       <div className="min-h-dvh">
+        <TourProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -109,6 +111,7 @@ function App() {
             />
           )}
         </Routes>
+        </TourProvider>
       </div>
     </BrowserRouter>
   );

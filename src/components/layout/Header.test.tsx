@@ -58,6 +58,21 @@ describe("HeaderView", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows Replay welcome tour only with a handler", () => {
+    const props = baseProps({ onReplayTour: vi.fn() });
+    const { unmount } = renderHeader(props);
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Replay welcome tour" }));
+    expect(props.onReplayTour).toHaveBeenCalledTimes(1);
+    unmount();
+
+    renderHeader(baseProps({ onReplayTour: undefined }));
+    openMenu();
+    expect(
+      screen.queryByRole("menuitem", { name: "Replay welcome tour" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("calls onSignOut when Sign out is clicked", () => {
     const props = baseProps();
     renderHeader(props);

@@ -1,14 +1,27 @@
+import { useEffect } from "react";
 import { collection, addDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/Header";
 import { useTrips } from "@/hooks/useTrips";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
+import { useTour } from "@/components/tour/useTour";
+import { hasSeenTour } from "@/components/tour/tourStorage";
 import { DashboardView, type CreateTripData } from "./DashboardView";
 
 export function DashboardPage() {
   const { trips, loading, error } = useTrips();
   const { user, canCreateTrips, accessLoading } = useAuth();
+  const { openTour } = useTour();
+
+  const settled = !loading && !accessLoading && error === null;
+  const inviteFirstRun = settled && !canCreateTrips && trips.length === 0;
+
+  useEffect(() => {
+    if (settled && !inviteFirstRun && !hasSeenTour()) {
+      openTour();
+    }
+  }, [settled, inviteFirstRun, openTour]);
 
   async function handleCreateTrip(data: CreateTripData): Promise<boolean> {
     if (!user) return false;
