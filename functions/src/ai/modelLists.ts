@@ -138,9 +138,10 @@ async function fetchJson(
   headers: Record<string, string>,
   providerLabel: string,
   fetchImpl: FetchImpl,
+  timeoutMs: number,
 ): Promise<unknown> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), MODELS_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
     response = await fetchImpl(url, { signal: controller.signal, headers });
@@ -166,6 +167,7 @@ async function fetchGeminiModelIds(
   provider: ProviderDef,
   apiKey: string,
   fetchImpl: FetchImpl,
+  timeoutMs: number,
 ): Promise<string[]> {
   const ids: string[] = [];
   let pageToken: string | undefined;
@@ -175,7 +177,7 @@ async function fetchGeminiModelIds(
       url += `&pageToken=${encodeURIComponent(pageToken)}`;
     }
     // The URL holds the key: it must never be logged or returned.
-    const body = await fetchJson(url, {}, provider.label, fetchImpl);
+    const body = await fetchJson(url, {}, provider.label, fetchImpl, timeoutMs);
     const parsed = parseGeminiModelsPage(body, provider.label);
     ids.push(...parsed.ids);
     if (parsed.nextPageToken === undefined) {
@@ -191,24 +193,36 @@ async function fetchOpenAiCompatibleModelIds(
   apiKey: string,
   chatOnly: boolean,
   fetchImpl: FetchImpl,
+  timeoutMs: number,
 ): Promise<string[]> {
   const body = await fetchJson(
     `${provider.baseUrl}/models`,
     { Authorization: `Bearer ${apiKey}` },
     provider.label,
     fetchImpl,
+    timeoutMs,
   );
   return parseOpenAiCompatibleModels(body, provider.label, chatOnly);
 }
 
-/** Fetches every usable model id for a provider, following Gemini paging. */
+/**
+ * Fetches every usable model id for a provider, following Gemini paging.
+ * `timeoutMs` is injectable for tests; production uses the 15s default.
+ */
 export async function fetchProviderModelIds(
   provider: ProviderDef,
   apiKey: string,
   fetchImpl: FetchImpl = fetch,
+  timeoutMs: number = MODELS_TIMEOUT_MS,
 ): Promise<string[]> {
   if (provider.modelsFilter === "generate-content") {
-    return fetchGeminiModelIds(provider, apiKey, fetchImpl);
+    return fetchGeminiModelIds(provider, apiKey, fetchImpl, timeoutMs);
   }
-  return fetchOpenAiCompatibleModelIds(provider, apiKey, provider.modelsFilter === "chat", fetchImpl);
+  return fetchOpenAiCompatibleModelIds(
+    provider,
+    apiKey,
+    provider.modelsFilter === "chat",
+    fetchImpl,
+    timeoutMs,
+  );
 }
