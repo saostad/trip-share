@@ -41,11 +41,13 @@ function Hero({
   isOwner,
   isArchived,
   onAddExpense,
+  onEditTrip,
 }: {
   position: MyPosition;
   isOwner: boolean;
   isArchived: boolean;
   onAddExpense: () => void;
+  onEditTrip: () => void;
 }) {
   if (position.kind === "empty") {
     return (
@@ -80,11 +82,20 @@ function Hero({
           <p className="text-sm text-muted-foreground">
             {formatCurrency(position.perPersonAverage)} per person
           </p>
-          <p className="pt-2 text-sm">
-            {isOwner
-              ? "Link yourself to a name in People to see your own balance."
-              : "Ask the trip creator to link your account to a name to see your own balance."}
-          </p>
+          {isOwner && !isArchived ? (
+            <div className="pt-2">
+              <Button variant="outline" size="sm" onClick={onEditTrip}>
+                Choose which name is you
+              </Button>
+            </div>
+          ) : (
+            !isOwner && (
+              <p className="pt-2 text-sm">
+                Ask the trip creator to link your account to a name to see your
+                own balance.
+              </p>
+            )
+          )}
         </CardContent>
       </Card>
     );
@@ -358,6 +369,7 @@ export function OverviewTabView({
         isOwner={isOwner}
         isArchived={isArchived}
         onAddExpense={onAddExpense}
+        onEditTrip={onEditTrip}
       />
       <QuickActions isOwner={isOwner} isArchived={isArchived} onAddExpense={onAddExpense} />
       {showChecklist && (
