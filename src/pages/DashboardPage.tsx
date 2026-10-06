@@ -12,16 +12,16 @@ import { DashboardView, type CreateTripData } from "./DashboardView";
 export function DashboardPage() {
   const { trips, loading, error } = useTrips();
   const { user, canCreateTrips, accessLoading } = useAuth();
-  const { openTour } = useTour();
+  const { autoOpenTour } = useTour();
 
   const settled = !loading && !accessLoading && error === null;
   const inviteFirstRun = settled && !canCreateTrips && trips.length === 0;
 
   useEffect(() => {
     if (settled && !inviteFirstRun && !hasSeenTour()) {
-      openTour();
+      autoOpenTour();
     }
-  }, [settled, inviteFirstRun, openTour]);
+  }, [settled, inviteFirstRun, autoOpenTour]);
 
   async function handleCreateTrip(data: CreateTripData): Promise<boolean> {
     if (!user) return false;

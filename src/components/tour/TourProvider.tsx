@@ -1,18 +1,30 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { TourContext } from "./TourContext";
 import { WelcomeTour } from "./WelcomeTour";
 import { markTourSeen } from "./tourStorage";
 
 export function TourProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const autoShownRef = useRef(false);
 
   const openTour = useCallback(() => setOpen(true), []);
+  const autoOpenTour = useCallback(() => {
+    if (autoShownRef.current) return;
+    autoShownRef.current = true;
+    setOpen(true);
+  }, []);
   const closeTour = useCallback(() => {
     markTourSeen();
     setOpen(false);
   }, []);
 
-  const value = useMemo(() => ({ openTour }), [openTour]);
+  const value = useMemo(() => ({ openTour, autoOpenTour }), [openTour, autoOpenTour]);
 
   return (
     <TourContext.Provider value={value}>

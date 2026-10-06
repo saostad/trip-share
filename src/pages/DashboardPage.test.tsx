@@ -115,4 +115,30 @@ describe("DashboardPage welcome tour", () => {
     renderDashboard();
     expect(screen.queryByText("Create a trip")).not.toBeInTheDocument();
   });
+
+  it("auto-opens at most once per load when writes fail", () => {
+    mockUseTrips.mockReturnValue({ trips: [], loading: false, error: null });
+    const realSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(
+      (key: string, value: string) => {
+        if (key === TOUR_SEEN_KEY) throw new Error("blocked");
+        realSetItem.call(localStorage, key, value);
+      },
+    );
+    function Shell({ show }: { show: boolean }) {
+      return (
+        <MemoryRouter>
+          <TourProvider>{show ? <DashboardPage /> : null}</TourProvider>
+        </MemoryRouter>
+      );
+    }
+    const { rerender } = render(<Shell show />);
+    expect(screen.getByText("Create a trip")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+
+    rerender(<Shell show={false} />);
+    rerender(<Shell show />);
+    expect(screen.queryByText("Create a trip")).not.toBeInTheDocument();
+    expect(localStorage.getItem(TOUR_SEEN_KEY)).toBeNull();
+  });
 });
