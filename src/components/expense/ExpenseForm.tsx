@@ -275,16 +275,17 @@ export function ExpenseForm({
     requestTokenRef.current += 1;
     const token = requestTokenRef.current;
     const activeTripId = tripId;
+    const isPhoto = file.type.startsWith("image/");
     setAutofill({ status: "idle" });
-    if (!file.type.startsWith("image/")) {
-      setAutofill({ status: "skipped" });
-      return;
-    }
     // Runs alongside the upload; never blocks the wizard.
     void (async () => {
       const enabled = await enabledPromise;
       if (token !== requestTokenRef.current || !mountedRef.current) return;
       if (!enabled) return;
+      if (!isPhoto) {
+        setAutofill({ status: "skipped" });
+        return;
+      }
       setAutofill({ status: "running" });
       try {
         const image = await fileToReceiptImage(file);
