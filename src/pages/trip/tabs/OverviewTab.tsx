@@ -1,15 +1,380 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { formatDistanceToNow, parseISO } from "date-fns";
+import {
+  Banknote,
+  Check,
+  HandCoins,
+  Plus,
+  Receipt,
+  UserPlus,
+} from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/formatters";
+import { resolveExpenseCategory } from "@/lib/expenseCategories";
+import {
+  checklistState,
+  myPosition,
+  recentActivity,
+  type ChecklistState,
+  type MyPosition,
+  type RecentActivityItem,
+} from "@/lib/tripOverview";
+import { useTripPage } from "../useTripPage";
+import { cn } from "@/lib/utils";
 
-export function OverviewTabView() {
+export interface OverviewTabViewProps {
+  position: MyPosition;
+  isOwner: boolean;
+  isArchived: boolean;
+  checklist: ChecklistState;
+  checklistDismissed: boolean;
+  activity: RecentActivityItem[];
+  onAddExpense: () => void;
+  onEditTrip: () => void;
+  onDismissChecklist: () => void;
+}
+
+function Hero({ position, isOwner }: { position: MyPosition; isOwner: boolean }) {
+  if (position.kind === "unlinked") {
+    return (
+      <Card>
+        <CardContent className="space-y-1 pt-6">
+          <p className="text-sm text-muted-foreground">Total spent</p>
+          <p className="text-2xl font-bold tabular-nums">
+            {formatCurrency(position.totalSpent)}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {formatCurrency(position.perPersonAverage)} per person
+          </p>
+          <p className="pt-2 text-sm">
+            {isOwner
+              ? "Link yourself to a name in People to see your own balance."
+              : "Ask the trip creator to link your account to a name to see your own balance."}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const title =
+    position.kind === "owed"
+      ? `You get back ${formatCurrency(position.amount)}`
+      : position.kind === "owes"
+        ? `You owe ${formatCurrency(position.amount)}`
+        : "You're all square";
+  const titleClass =
+    position.kind === "owed"
+      ? "text-positive"
+      : position.kind === "owes"
+        ? "text-negative"
+        : "text-foreground";
+
   return (
     <Card>
-      <CardContent className="py-8 text-center text-sm text-muted-foreground">
-        Overview
+      <CardContent className="space-y-2 pt-6">
+        <p className={cn("text-2xl font-bold tabular-nums", titleClass)}>{title}</p>
+        {position.counterparties.map((c) => (
+          <p
+            key={`${c.direction}-${c.name}`}
+            className={cn(
+              "text-sm tabular-nums",
+              c.direction === "owesMe" ? "text-positive" : "text-negative",
+            )}
+          >
+            {c.direction === "owesMe"
+              ? `${c.name} owes you ${formatCurrency(c.amount)}`
+              : `You owe ${c.name} ${formatCurrency(c.amount)}`}
+          </p>
+        ))}
+        {position.inGroup && (
+          <p className="text-xs text-muted-foreground">
+            Your group settles as one;{" "}
+            <Link to="settle" className="underline underline-offset-2 hover:text-foreground">
+              see Settle up
+            </Link>
+            .
+          </p>
+        )}
       </CardContent>
     </Card>
   );
 }
 
+function QuickActions({
+  isOwner,
+  isArchived,
+  onAddExpense,
+}: {
+  isOwner: boolean;
+  isArchived: boolean;
+  onAddExpense: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {!isArchived && (
+        <Button onClick={onAddExpense} className="gap-1.5">
+          <Plus className="size-4" data-icon="inline-start" />
+          Add expense
+        </Button>
+      )}
+      <Link to="settle" className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
+        <HandCoins />
+        Settle up
+      </Link>
+      {isOwner && (
+        <Link to="people#invite" className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
+          <UserPlus />
+          Invite people
+        </Link>
+      )}
+    </div>
+  );
+}
+
+const CHECKLIST_LABELS: Record<string, string> = {
+  people: "Add people",
+  expense: "Add your first expense",
+  invite: "Invite friends",
+  settle: "Settle up",
+};
+
+function Checklist({
+  checklist,
+  isOwner,
+  onAddExpense,
+  onEditTrip,
+  onDismiss,
+}: {
+  checklist: ChecklistState;
+  isOwner: boolean;
+  onAddExpense: () => void;
+  onEditTrip: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Getting started</CardTitle>
+        <Button variant="ghost" size="sm" onClick={onDismiss}>
+          Dismiss
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-3">
+          {checklist.steps.map((step) => (
+            <li key={step.id} className="flex items-center gap-3 text-sm">
+              {step.done ? (
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-positive/15 text-positive">
+                  <Check className="size-3.5" aria-hidden />
+                </span>
+              ) : (
+                <span className="size-6 shrink-0 rounded-full border-2 border-border" aria-hidden />
+              )}
+              <span className={step.done ? "text-muted-foreground" : "font-medium"}>
+                {CHECKLIST_LABELS[step.id] ?? step.id}
+              </span>
+              {!step.done && step.id === "people" && isOwner && (
+                <Button variant="outline" size="sm" className="ml-auto" onClick={onEditTrip}>
+                  Edit trip
+                </Button>
+              )}
+              {!step.done && step.id === "people" && !isOwner && (
+                <span className="ml-auto text-xs text-muted-foreground">
+                  The trip creator adds people
+                </span>
+              )}
+              {!step.done && step.id === "expense" && (
+                <Button variant="outline" size="sm" className="ml-auto" onClick={onAddExpense}>
+                  Add expense
+                </Button>
+              )}
+              {!step.done && step.id === "invite" && (
+                <Link
+                  to="people#invite"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-auto")}
+                >
+                  Invite
+                </Link>
+              )}
+              {!step.done && step.id === "settle" && (
+                <Link
+                  to="settle"
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-auto")}
+                >
+                  Settle up
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActivityRow({ item }: { item: RecentActivityItem }) {
+  if (item.kind === "expense") {
+    const { expense } = item;
+    const category = resolveExpenseCategory(expense.category, expense.description);
+    const Icon = category?.icon ?? Receipt;
+    return (
+      <li className="flex items-center gap-3 py-2">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{expense.description}</span>
+          <span className="block text-xs text-muted-foreground">
+            {expense.paidBy} paid ·{" "}
+            {formatDistanceToNow(parseISO(expense.date), { addSuffix: true })}
+          </span>
+        </span>
+        <span className="shrink-0 text-sm font-semibold tabular-nums">
+          {formatCurrency(expense.amount)}
+        </span>
+      </li>
+    );
+  }
+
+  const { payment } = item;
+  return (
+    <li className="flex items-center gap-3 py-2">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Banknote className="size-4" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium">Payment</span>
+        <span className="block truncate text-xs text-muted-foreground">
+          {payment.from} paid {payment.to} ·{" "}
+          {formatDistanceToNow(parseISO(payment.date), { addSuffix: true })}
+        </span>
+      </span>
+      <span className="shrink-0 text-sm font-semibold tabular-nums">
+        {formatCurrency(payment.amount)}
+      </span>
+    </li>
+  );
+}
+
+function RecentActivity({ activity }: { activity: RecentActivityItem[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent activity</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {activity.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No activity yet.</p>
+        ) : (
+          <>
+            <ul className="divide-y divide-border">
+              {activity.map((item) => (
+                <ActivityRow
+                  key={`${item.kind}-${item.kind === "expense" ? item.expense.id : item.payment.id}`}
+                  item={item}
+                />
+              ))}
+            </ul>
+            <Link
+              to="expenses"
+              className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
+            >
+              See all expenses
+            </Link>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function OverviewTabView({
+  position,
+  isOwner,
+  isArchived,
+  checklist,
+  checklistDismissed,
+  activity,
+  onAddExpense,
+  onEditTrip,
+  onDismissChecklist,
+}: OverviewTabViewProps) {
+  const showChecklist =
+    !isArchived && !checklistDismissed && !checklist.complete;
+  return (
+    <div className="space-y-4">
+      <Hero position={position} isOwner={isOwner} />
+      <QuickActions isOwner={isOwner} isArchived={isArchived} onAddExpense={onAddExpense} />
+      {showChecklist && (
+        <Checklist
+          checklist={checklist}
+          isOwner={isOwner}
+          onAddExpense={onAddExpense}
+          onEditTrip={onEditTrip}
+          onDismiss={onDismissChecklist}
+        />
+      )}
+      <RecentActivity activity={activity} />
+    </div>
+  );
+}
+
+function dismissedKey(tripId: string): string {
+  return `tripshare.checklist.dismissed.${tripId}`;
+}
+
+function readDismissed(tripId: string): boolean {
+  try {
+    return localStorage.getItem(dismissedKey(tripId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function OverviewTab() {
-  return <OverviewTabView />;
+  const {
+    tripId,
+    trip,
+    expenses,
+    payments,
+    isOwner,
+    isArchived,
+    myName,
+    openAddExpense,
+    openEditTrip,
+  } = useTripPage();
+
+  const position = myPosition(trip, expenses, payments, myName);
+  const checklist = checklistState(trip, expenses, payments, isOwner);
+  const activity = recentActivity(expenses, payments);
+  const [dismissed, setDismissed] = useState(() => readDismissed(tripId));
+
+  useEffect(() => {
+    setDismissed(readDismissed(tripId));
+  }, [tripId]);
+
+  function handleDismiss() {
+    try {
+      localStorage.setItem(dismissedKey(tripId), "1");
+    } catch {
+      // Private mode: dismissal lasts for this visit only.
+    }
+    setDismissed(true);
+  }
+
+  return (
+    <OverviewTabView
+      position={position}
+      isOwner={isOwner}
+      isArchived={isArchived}
+      checklist={checklist}
+      checklistDismissed={dismissed}
+      activity={activity}
+      onAddExpense={openAddExpense}
+      onEditTrip={openEditTrip}
+      onDismissChecklist={handleDismiss}
+    />
+  );
 }
