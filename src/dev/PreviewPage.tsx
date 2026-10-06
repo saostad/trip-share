@@ -539,6 +539,7 @@ function TripSettleSection({ theme }: { theme: "light" | "dark" }) {
       theme={theme}
     >
       <SettleTabView
+        tripId={previewTrip.id}
         expenses={previewExpenses}
         participants={previewTrip.participants}
         payments={previewPayments}

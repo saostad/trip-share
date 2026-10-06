@@ -15,6 +15,13 @@ import type {
   SettlementMethod,
 } from "@/types";
 import { useTripPage } from "../useTripPage";
+import { useMemo } from "react";
+import {
+  computeSettlements,
+  normalizeSettlementMethod,
+} from "@/lib/balances";
+import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
+import { SettleCelebration } from "@/components/balance/SettleCelebration";
 
 export interface MarkPaidTransfer {
   from: string;
@@ -23,6 +30,7 @@ export interface MarkPaidTransfer {
 }
 
 export interface SettleTabViewProps {
+  tripId: string;
   expenses: Expense[];
   participants: string[];
   payments: Payment[];
@@ -40,6 +48,7 @@ export interface SettleTabViewProps {
 }
 
 export function SettleTabView({
+  tripId,
   expenses,
   participants,
   payments,
@@ -55,8 +64,26 @@ export function SettleTabView({
   onOpenReport,
   onDownloadExcel,
 }: SettleTabViewProps) {
+  const hasGroups = hasUsableSettlementGroups(settlementGroups);
+  const transfers = useMemo(
+    () =>
+      computeSettlements(
+        normalizeSettlementMethod(settlementMethod),
+        expenses,
+        participants,
+        payments,
+        { groupMode: hasGroups, groups: settlementGroups ?? [] },
+      ),
+    [settlementMethod, expenses, participants, payments, hasGroups, settlementGroups],
+  );
   return (
     <div className="space-y-4">
+      <SettleCelebration
+        tripId={tripId}
+        expenses={expenses}
+        payments={payments}
+        hasTransfers={transfers.length > 0}
+      />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-1">
@@ -177,6 +204,7 @@ export function SettleTab() {
   } = useTripPage();
   return (
     <SettleTabView
+      tripId={trip.id}
       expenses={expenses}
       participants={trip.participants}
       payments={payments}
