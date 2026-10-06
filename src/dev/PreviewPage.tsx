@@ -441,7 +441,7 @@ function TripOverviewSection({ theme, state }: { theme: "light" | "dark"; state:
       trip={trip}
       isOwner={isOwner}
       isArchived={isArchived}
-      showFab
+      showFab={false}
       theme={theme}
     >
       <OverviewTabView

@@ -17,8 +17,7 @@ export function Fab({ onAdd }: { onAdd: () => void }) {
 
 export function TripFab() {
   const { isArchived, openAddExpense } = useTripPage();
-  const isOverview = useMatch("/trip/:tripId") !== null;
-  const isExpenses = useMatch("/trip/:tripId/expenses") !== null;
-  if (isArchived || (!isOverview && !isExpenses)) return null;
+  const isExpenses = useMatch("/trip/:tripId/expenses/*") !== null;
+  if (isArchived || !isExpenses) return null;
   return <Fab onAdd={openAddExpense} />;
 }

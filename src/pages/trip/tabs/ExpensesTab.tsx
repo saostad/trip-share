@@ -25,7 +25,8 @@ export function ExpensesTabView({
 }: ExpensesTabViewProps) {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   return (
-    <div>
+    // Extra bottom room so the last row scrolls clear of the Fab and bottom bar.
+    <div className="pb-16 md:pb-0">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold">Expenses</h2>
