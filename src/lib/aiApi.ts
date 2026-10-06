@@ -49,6 +49,59 @@ export interface ListAiModelsResponse {
 
 export type SaveAiSettingsInput = AiSettings;
 
+export interface ExtractionImageInput {
+  mimeType: string;
+  base64: string;
+}
+
+export interface ExtractionCategoryInput {
+  id: string;
+  label: string;
+}
+
+export interface ExtractReceiptRequest {
+  tripId: string;
+  image: ExtractionImageInput;
+  categories: ExtractionCategoryInput[];
+}
+
+export interface ExtractionFields {
+  description: string | null;
+  category: string | null;
+  date: string | null;
+  amount: number | null;
+  currency: string | null;
+}
+
+export interface ExtractReceiptResponse {
+  fields: ExtractionFields;
+  missing: string[];
+}
+
+export interface TestReceiptExtractionRequest {
+  provider: string;
+  model: string;
+  image: ExtractionImageInput;
+  categories: ExtractionCategoryInput[];
+}
+
+export interface TestExtractionSuccess {
+  fields: ExtractionFields;
+  missing: string[];
+  rawText: string;
+  latencyMs: number;
+}
+
+export interface TestExtractionDiagnostic {
+  fields: null;
+  missing: string[];
+  rawText: string;
+  latencyMs: number;
+  error: string;
+}
+
+export type TestReceiptExtractionResponse = TestExtractionSuccess | TestExtractionDiagnostic;
+
 export async function getAiAdminStatus(): Promise<AiAdminStatusResponse> {
   const callable = httpsCallable<void, AiAdminStatusResponse>(functions, "getAiAdminStatus");
   const result = await callable();
@@ -66,6 +119,26 @@ export async function listAiModels(provider: string): Promise<ListAiModelsRespon
 
 export async function saveAiSettings(input: SaveAiSettingsInput): Promise<AiSettings> {
   const callable = httpsCallable<SaveAiSettingsInput, AiSettings>(functions, "saveAiSettings");
+  const result = await callable(input);
+  return result.data;
+}
+
+export async function extractReceipt(input: ExtractReceiptRequest): Promise<ExtractReceiptResponse> {
+  const callable = httpsCallable<ExtractReceiptRequest, ExtractReceiptResponse>(
+    functions,
+    "extractReceipt",
+  );
+  const result = await callable(input);
+  return result.data;
+}
+
+export async function testReceiptExtraction(
+  input: TestReceiptExtractionRequest,
+): Promise<TestReceiptExtractionResponse> {
+  const callable = httpsCallable<TestReceiptExtractionRequest, TestReceiptExtractionResponse>(
+    functions,
+    "testReceiptExtraction",
+  );
   const result = await callable(input);
   return result.data;
 }
