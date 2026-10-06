@@ -12,6 +12,10 @@ const AdminPage = lazy(() =>
   import('@/pages/AdminPage').then((m) => ({ default: m.AdminPage })),
 )
 
+const DevPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('@/dev/PreviewPage').then((m) => ({ default: m.PreviewPage })))
+  : null
+
 function AdminFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -66,6 +70,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {import.meta.env.DEV && DevPreviewPage && (
+            <Route
+              path="/dev/preview"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <DevPreviewPage />
+                </Suspense>
+              }
+            />
+          )}
         </Routes>
       </div>
     </BrowserRouter>
