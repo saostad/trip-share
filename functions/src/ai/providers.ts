@@ -9,12 +9,20 @@ import { defineSecret, type SecretParam } from "firebase-functions/params";
 
 export type ProviderKind = "gemini" | "openai-compatible";
 
+/**
+ * Which entries of the provider's live model list are usable for receipt
+ * extraction (plan decision D8). Kept in the registry so no other file
+ * branches on provider ids.
+ */
+export type ModelsFilter = "generate-content" | "chat" | "all";
+
 export interface ProviderDef {
   readonly id: string;
   readonly label: string;
   readonly kind: ProviderKind;
   readonly baseUrl: string;
   readonly secret: SecretParam;
+  readonly modelsFilter: ModelsFilter;
 }
 
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
@@ -28,6 +36,7 @@ export const PROVIDERS = [
     kind: "gemini",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
     secret: geminiApiKey,
+    modelsFilter: "generate-content",
   },
   {
     id: "together",
@@ -35,6 +44,7 @@ export const PROVIDERS = [
     kind: "openai-compatible",
     baseUrl: "https://api.together.ai/v1",
     secret: togetherApiKey,
+    modelsFilter: "chat",
   },
   {
     id: "nvidia",
@@ -42,6 +52,7 @@ export const PROVIDERS = [
     kind: "openai-compatible",
     baseUrl: "https://integrate.api.nvidia.com/v1",
     secret: nvidiaApiKey,
+    modelsFilter: "all",
   },
 ] as const satisfies ReadonlyArray<ProviderDef>;
 
