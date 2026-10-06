@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +11,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { HeaderView } from "@/components/layout/Header";
-import { DashboardView } from "@/pages/DashboardView";
+import { DashboardView, TripCardSkeleton } from "@/pages/DashboardView";
+import { TripPageSkeleton } from "@/pages/trip/TripPage";
 import {
   HowItWorksContent,
   HowItWorksSignedOutBar,
@@ -29,6 +30,9 @@ import {
   MethodExplainer,
 } from "@/components/trip/settlementExplainers";
 import { ExpenseList } from "@/components/expense/ExpenseList";
+import { CountUp } from "@/components/CountUp";
+import { SettleCelebration } from "@/components/balance/SettleCelebration";
+import { clearCelebratedSignature } from "@/components/balance/celebrationStorage";
 import { PaymentList } from "@/components/balance/PaymentList";
 import { SettlementList } from "@/components/balance/SettlementList";
 import { SettlementHelpDialog } from "@/components/balance/SettlementHelpDialog";
@@ -72,7 +76,10 @@ type Section =
   | "tour"
   | "wizard"
   | "infotips"
-  | "empty-states";
+  | "empty-states"
+  | "settled"
+  | "skeletons"
+  | "motion";
 
 const SECTIONS: Section[] = [
   "tokens",
@@ -91,6 +98,9 @@ const SECTIONS: Section[] = [
   "wizard",
   "infotips",
   "empty-states",
+  "settled",
+  "skeletons",
+  "motion",
 ];
 
 const SECTION_LABELS: Record<Section, string> = {
@@ -110,6 +120,9 @@ const SECTION_LABELS: Record<Section, string> = {
   wizard: "Wizard",
   infotips: "InfoTips",
   "empty-states": "Empty states",
+  settled: "Settled",
+  skeletons: "Skeletons",
+  motion: "Motion",
 };
 
 function sectionFromParam(value: string | null): Section {
@@ -796,6 +809,173 @@ function EmptyStatesSection() {
   );
 }
 
+const SETTLED_PREVIEW_TRIP_ID = "preview-settled";
+
+function SettledSection() {
+  const [round, setRound] = useState(0);
+  const [settled, setSettled] = useState(false);
+  const timer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  function replay() {
+    clearCelebratedSignature(SETTLED_PREVIEW_TRIP_ID);
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    // Remount with transfers, then settle on the next tick so the
+    // fresh-transition confetti plays again.
+    setSettled(false);
+    setRound((r) => r + 1);
+    timer.current = window.setTimeout(() => setSettled(true), 150);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => setSettled(true)} disabled={settled}>
+          Simulate settling
+        </Button>
+        <Button variant="outline" onClick={replay}>
+          Replay confetti
+        </Button>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Replay clears this trip&apos;s celebrated key, then re-settles so the
+        one-time burst plays again. Reloading the page does not replay it.
+      </p>
+      <SettleCelebration
+        key={round}
+        tripId={SETTLED_PREVIEW_TRIP_ID}
+        expenses={previewExpenses}
+        payments={previewPayments}
+        hasTransfers={!settled}
+        onDownloadExcel={() => toast.success("Excel export (preview)")}
+      />
+    </div>
+  );
+}
+
+function SkeletonsSection({ theme }: { theme: "light" | "dark" }) {
+  const header = (
+    <HeaderView
+      user={{ displayName: "Ava Example", email: "ava@example.com", photoURL: null }}
+      isAdmin={false}
+      theme={theme}
+      buildCommit="abc1234"
+      buildTime="2026-10-06T12:00:00.000Z"
+      onToggleTheme={noop}
+      onSignOut={noop}
+    />
+  );
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Dashboard</h2>
+        <DashboardView
+          displayName="Ava Example"
+          creatorUid="fake-uid-ava"
+          trips={[]}
+          loading
+          loadError={false}
+          canCreateTrips
+          accessLoading={false}
+          accountOptions={[]}
+          onCreateTrip={() => true}
+          header={header}
+        />
+      </div>
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Trip cards</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TripCardSkeleton />
+          <TripCardSkeleton />
+          <TripCardSkeleton />
+        </div>
+      </div>
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Trip page</h2>
+        <TripPageSkeleton />
+      </div>
+    </div>
+  );
+}
+
+let fakeRowId = 0;
+
+function makeFakeExpense(): Expense {
+  fakeRowId += 1;
+  return {
+    id: `fake-row-${fakeRowId}`,
+    description: `Fake pastries ${fakeRowId}`,
+    category: "food",
+    date: "2026-10-06",
+    amount: 12.5 + fakeRowId,
+    paidBy: "Ava",
+    sharedBy: ["Ava", "Liam"],
+    createdAt: previewTimestamp("2026-10-06T12:00:00.000Z"),
+  };
+}
+
+function MotionSection() {
+  const [expenses, setExpenses] = useState<Expense[]>(() =>
+    previewExpenses.slice(0, 3),
+  );
+  const [heroAmount, setHeroAmount] = useState(128.5);
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Count-up</h2>
+        <p className="text-4xl font-bold">
+          <CountUp value={heroAmount} format={formatCurrency} />
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setHeroAmount((v) => v + 42.75)}
+          >
+            Add $42.75
+          </Button>
+          <Button variant="outline" onClick={() => setHeroAmount(128.5)}>
+            Reset
+          </Button>
+        </div>
+      </div>
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">List rows</h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setExpenses((prev) => [makeFakeExpense(), ...prev])}
+          >
+            Add a row
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setExpenses((prev) => prev.slice(1))}
+            disabled={expenses.length === 0}
+          >
+            Remove a row
+          </Button>
+        </div>
+        <ExpenseList
+          expenses={expenses}
+          participants={previewTrip.participants}
+          onEdit={noop}
+          onDelete={(expense) =>
+            setExpenses((prev) => prev.filter((e) => e.id !== expense.id))
+          }
+          onAdd={() => setExpenses((prev) => [makeFakeExpense(), ...prev])}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function PreviewPage() {
   const [params] = useSearchParams();
   const section = sectionFromParam(params.get("section"));
@@ -922,6 +1102,9 @@ export function PreviewPage() {
         )}
         {section === "infotips" && <InfoTipsSection />}
         {section === "empty-states" && <EmptyStatesSection />}
+        {section === "settled" && <SettledSection />}
+        {section === "skeletons" && <SkeletonsSection theme={forcedTheme} />}
+        {section === "motion" && <MotionSection />}
       </div>
     </div>
   );
