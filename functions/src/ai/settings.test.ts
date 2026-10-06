@@ -187,4 +187,23 @@ describe("shared field validators", () => {
     expectInvalidArgument(() => validateModelField(""), "model");
     expectInvalidArgument(() => validateModelField("x".repeat(201)), "model");
   });
+
+  it("rejects a pasted page URL with the paste-the-ID message", () => {
+    try {
+      validateModelField("https://example.com/models/gemini-x");
+    } catch (error) {
+      expect(error).toBeInstanceOf(HttpsError);
+      expect((error as HttpsError).code).toBe("invalid-argument");
+      expect((error as HttpsError).message).toBe(
+        "Invalid 'model': paste the model ID, not the page URL.",
+      );
+      return;
+    }
+    expect.unreachable("expected an invalid-argument HttpsError");
+  });
+
+  it("drops a leading models/ prefix", () => {
+    expect(validateModelField("models/gemini-2.0-flash")).toBe("gemini-2.0-flash");
+    expectInvalidArgument(() => validateModelField("models/"), "model");
+  });
 });

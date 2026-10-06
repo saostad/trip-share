@@ -129,7 +129,15 @@ export function validateModelField(value: unknown): string {
   if (typeof value !== "string") {
     throw new HttpsError("invalid-argument", "Invalid 'model': must be a string.");
   }
-  const model = value.trim();
+  const trimmed = value.trim();
+  if (trimmed.includes("://")) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Invalid 'model': paste the model ID, not the page URL.",
+    );
+  }
+  // D8: Gemini's models/ prefix is dropped, so the stored ID is always bare.
+  const model = trimmed.startsWith("models/") ? trimmed.slice("models/".length) : trimmed;
   if (model.length < 1 || model.length > MAX_MODEL_LENGTH) {
     throw new HttpsError(
       "invalid-argument",
