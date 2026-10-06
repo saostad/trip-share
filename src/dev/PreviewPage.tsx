@@ -23,13 +23,24 @@ function sectionFromParam(value: string | null): Section {
   return "tokens";
 }
 
-function TokenSwatch({ name, className, value }: { name: string; className: string; value: string }) {
+function TokenSwatch({
+  name,
+  className,
+  light,
+  dark,
+}: {
+  name: string;
+  className: string;
+  light: string;
+  dark: string;
+}) {
   return (
     <div className="overflow-hidden rounded-lg border border-border">
       <div className={`h-12 ${className}`} aria-hidden />
-      <div className="bg-card px-2 py-1.5">
+      <div className="space-y-0.5 bg-card px-2 py-1.5">
         <div className="truncate text-xs font-medium">{name}</div>
-        <div className="truncate font-mono text-[10px] text-muted-foreground">{value}</div>
+        <div className="truncate font-mono text-[10px] text-muted-foreground">L {light}</div>
+        <div className="truncate font-mono text-[10px] text-muted-foreground">D {dark}</div>
       </div>
     </div>
   );
@@ -41,25 +52,25 @@ function TokensSection() {
       <div>
         <h2 className="mb-3 text-lg font-semibold">Swatches</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          <TokenSwatch name="background" className="bg-background" value="oklch(0.985 0.004 95)" />
-          <TokenSwatch name="foreground" className="bg-foreground" value="oklch(0.22 0.02 250)" />
-          <TokenSwatch name="card" className="bg-card" value="oklch(1 0 0)" />
-          <TokenSwatch name="primary" className="bg-primary" value="oklch(0.50 0.11 195)" />
-          <TokenSwatch name="primary-foreground" className="bg-primary-foreground" value="white" />
-          <TokenSwatch name="secondary" className="bg-secondary" value="oklch(0.94 0.005 95)" />
-          <TokenSwatch name="muted" className="bg-muted" value="oklch(0.94 0.005 95)" />
-          <TokenSwatch name="muted-foreground" className="bg-muted-foreground" value="oklch(0.50 0.02 250)" />
-          <TokenSwatch name="accent" className="bg-accent" value="oklch(0.94 0.005 95)" />
-          <TokenSwatch name="destructive" className="bg-destructive" value="oklch(0.577 0.245 27)" />
-          <TokenSwatch name="positive" className="bg-positive" value="oklch(0.52 0.13 155)" />
-          <TokenSwatch name="negative" className="bg-negative" value="oklch(0.55 0.15 30)" />
-          <TokenSwatch name="warning" className="bg-warning" value="oklch(0.85 0.12 80)" />
-          <TokenSwatch name="warning-foreground" className="bg-warning-foreground" value="oklch(0.38 0.08 60)" />
-          <TokenSwatch name="border" className="bg-border" value="oklch(0.90 0.005 95)" />
-          <TokenSwatch name="ring" className="bg-ring" value="= primary" />
+          <TokenSwatch name="background" className="bg-background" light="oklch(0.985 0.004 95)" dark="oklch(0.17 0.015 250)" />
+          <TokenSwatch name="foreground" className="bg-foreground" light="oklch(0.22 0.02 250)" dark="oklch(0.93 0.01 250)" />
+          <TokenSwatch name="card" className="bg-card" light="oklch(1 0 0)" dark="oklch(0.21 0.015 250)" />
+          <TokenSwatch name="primary" className="bg-primary" light="oklch(0.5 0.11 195)" dark="oklch(0.74 0.11 190)" />
+          <TokenSwatch name="primary-foreground" className="bg-primary-foreground" light="oklch(1 0 0)" dark="oklch(0.22 0.02 250)" />
+          <TokenSwatch name="secondary" className="bg-secondary" light="oklch(0.94 0.005 95)" dark="oklch(0.27 0.015 250)" />
+          <TokenSwatch name="muted" className="bg-muted" light="oklch(0.94 0.005 95)" dark="oklch(0.27 0.015 250)" />
+          <TokenSwatch name="muted-foreground" className="bg-muted-foreground" light="oklch(0.5 0.02 250)" dark="oklch(0.7 0.015 250)" />
+          <TokenSwatch name="accent" className="bg-accent" light="oklch(0.94 0.005 95)" dark="oklch(0.27 0.015 250)" />
+          <TokenSwatch name="destructive" className="bg-destructive" light="oklch(0.577 0.245 27.325)" dark="oklch(0.704 0.191 22.216)" />
+          <TokenSwatch name="positive" className="bg-positive" light="oklch(0.52 0.13 155)" dark="oklch(0.76 0.14 155)" />
+          <TokenSwatch name="negative" className="bg-negative" light="oklch(0.55 0.15 30)" dark="oklch(0.74 0.14 30)" />
+          <TokenSwatch name="warning" className="bg-warning" light="oklch(0.85 0.12 80)" dark="oklch(0.35 0.08 60)" />
+          <TokenSwatch name="warning-foreground" className="bg-warning-foreground" light="oklch(0.38 0.08 60)" dark="oklch(0.85 0.12 80)" />
+          <TokenSwatch name="border" className="bg-border" light="oklch(0.9 0.005 95)" dark="oklch(1 0 0 / 10%)" />
+          <TokenSwatch name="ring" className="bg-ring" light="= primary" dark="= primary" />
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Values shown are light theme. Dark theme uses the dark tokens from src/index.css.
+          L is the light value, D the dark value. The swatch shows the current theme.
         </p>
       </div>
       <div>
