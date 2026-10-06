@@ -120,6 +120,7 @@ export function SettleTabView({
             payments={payments}
             participants={participants}
             readOnly={isArchived}
+            onAdd={onAddPayment}
             onEdit={isArchived ? undefined : onEditPayment}
             onDelete={isArchived ? undefined : onDeletePayment}
           />

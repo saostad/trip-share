@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/EmptyState";
 import { formatCurrency } from "@/lib/formatters";
 import { resolveExpenseCategory } from "@/lib/expenseCategories";
 import {
@@ -325,7 +326,20 @@ function RecentActivity({ activity }: { activity: RecentActivityItem[] }) {
       </CardHeader>
       <CardContent>
         {activity.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No activity yet.</p>
+          <EmptyState
+            icons={[
+              {
+                Icon: Receipt,
+                circleClassName: "bg-primary/10 text-primary",
+              },
+              {
+                Icon: Banknote,
+                circleClassName: "bg-muted text-muted-foreground",
+              },
+            ]}
+            title="No activity yet"
+            description="Expenses and payments will show up here."
+          />
         ) : (
           <>
             <ul className="divide-y divide-border">

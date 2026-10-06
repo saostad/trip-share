@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
-import { Receipt, Filter, X, ArrowUpDown, Search } from "lucide-react";
+import { Link } from "react-router";
+import { Receipt, Filter, X, ArrowUpDown, Search, Camera, Pencil } from "lucide-react";
 import { ExpenseItem } from "@/components/expense/ExpenseItem";
 import { ExpenseDetailDialog } from "@/components/expense/ExpenseDetailDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -35,6 +37,7 @@ interface ExpenseListProps {
   participants?: string[];
   onEdit?: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
+  onAdd?: () => void;
   readOnly?: boolean;
 }
 
@@ -63,6 +66,7 @@ export function ExpenseList({
   participants = [],
   onEdit,
   onDelete,
+  onAdd,
   readOnly = false,
 }: ExpenseListProps) {
   const [search, setSearch] = useState("");
@@ -140,14 +144,27 @@ export function ExpenseList({
 
   if (expenses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-        <Receipt className="h-10 w-10 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          {readOnly
-            ? "No expenses on this trip."
-            : "No expenses yet. Add your first expense to get started."}
-        </p>
-      </div>
+      <EmptyState
+        icons={[
+          { Icon: Receipt, circleClassName: "bg-positive/10 text-positive" },
+          { Icon: Camera, circleClassName: "bg-primary/10 text-primary" },
+          { Icon: Pencil, circleClassName: "bg-warning/15 text-warning-foreground" },
+        ]}
+        title="No expenses yet"
+        actions={
+          <>
+            {!readOnly && onAdd && (
+              <Button onClick={onAdd}>Add your first expense</Button>
+            )}
+            <Link
+              to="/how-it-works"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              How it works
+            </Link>
+          </>
+        }
+      />
     );
   }
 

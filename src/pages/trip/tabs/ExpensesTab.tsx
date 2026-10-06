@@ -48,6 +48,7 @@ export function ExpensesTabView({
             expenses={expenses}
             participants={participants}
             readOnly={isArchived}
+            onAdd={onAddExpense}
             onEdit={isArchived ? undefined : onEditExpense}
             onDelete={isArchived ? undefined : onDeleteExpense}
           />

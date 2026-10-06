@@ -10,9 +10,18 @@ import {
 import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
 import { formatCurrency } from "@/lib/formatters";
 import { SettlementLineReportDialog } from "@/components/balance/SettlementLineReportDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { InfoTip } from "@/components/InfoTip";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Receipt,
+  Scale,
+} from "lucide-react";
 import type {
   Expense,
   Payment,
@@ -96,9 +105,29 @@ export function SettlementList({
       </div>
 
       {transactions.length === 0 ? (
-        <p className="rounded-lg border border-positive/20 bg-positive/5 px-3 py-3 text-sm text-positive">
-          Everyone is all square! No payments needed.
-        </p>
+        expenses.length === 0 && payments.length === 0 ? (
+          <EmptyState
+            icons={[
+              {
+                Icon: Receipt,
+                circleClassName: "bg-muted text-muted-foreground",
+              },
+              { Icon: Scale, circleClassName: "bg-primary/10 text-primary" },
+            ]}
+            title="Add expenses to see who owes whom"
+          />
+        ) : (
+          <EmptyState
+            icons={[
+              { Icon: Scale, circleClassName: "bg-primary/10 text-primary" },
+              {
+                Icon: Check,
+                circleClassName: "bg-positive/10 text-positive",
+              },
+            ]}
+            title="Everyone is all square"
+          />
+        )
       ) : (
         <ul className="space-y-2">
           {transactions.map((transaction) => {

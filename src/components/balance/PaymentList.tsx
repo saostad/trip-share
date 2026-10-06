@@ -9,7 +9,9 @@ import {
   Paperclip,
   ArrowUpDown,
   Search,
+  HandCoins,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,6 +46,7 @@ interface PaymentListProps {
   participants?: string[];
   onEdit?: (payment: Payment) => void;
   onDelete?: (payment: Payment) => void;
+  onAdd?: () => void;
   readOnly?: boolean;
 }
 
@@ -71,6 +74,7 @@ export function PaymentList({
   participants = [],
   onEdit,
   onDelete,
+  onAdd,
   readOnly = false,
 }: PaymentListProps) {
   const [search, setSearch] = useState("");
@@ -144,10 +148,20 @@ export function PaymentList({
 
   if (payments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-        <Banknote className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No payments recorded yet.</p>
-      </div>
+      <EmptyState
+        icons={[
+          { Icon: Banknote, circleClassName: "bg-muted text-muted-foreground" },
+          { Icon: HandCoins, circleClassName: "bg-primary/10 text-primary" },
+        ]}
+        title="No payments yet"
+        description="When someone pays someone back, record it here."
+        actions={
+          !readOnly &&
+          onAdd && (
+            <Button onClick={onAdd}>Record a payment</Button>
+          )
+        }
+      />
     );
   }
 
