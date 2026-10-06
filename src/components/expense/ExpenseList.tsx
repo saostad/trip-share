@@ -236,7 +236,7 @@ export function ExpenseList({
             if (v && v in SORT_LABELS) setSortKey(v as SortKey);
           }}
         >
-          <SelectTrigger className="h-8 w-auto min-w-[9.5rem] gap-1.5 text-xs">
+          <SelectTrigger className="h-8 w-auto min-w-[9.5rem] gap-1.5 md:text-xs">
             <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate">{SORT_LABELS[sortKey]}</span>
             <SelectValue className="sr-only" />
@@ -274,7 +274,7 @@ export function ExpenseList({
                 value={filterPaidBy}
                 onValueChange={(val) => setFilterPaidBy(val ?? "all")}
               >
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger className="h-8 md:text-xs">
                   <SelectValue placeholder="Anyone" />
                 </SelectTrigger>
                 <SelectContent>
@@ -298,7 +298,7 @@ export function ExpenseList({
                 value={filterSharedBy}
                 onValueChange={(val) => setFilterSharedBy(val ?? "all")}
               >
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger className="h-8 md:text-xs">
                   <SelectValue placeholder="Anyone" />
                 </SelectTrigger>
                 <SelectContent>
@@ -322,7 +322,7 @@ export function ExpenseList({
                 type="date"
                 value={filterDateFrom}
                 onChange={(e) => setFilterDateFrom(e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 md:text-xs"
               />
             </div>
             <div className="space-y-1">
@@ -333,7 +333,7 @@ export function ExpenseList({
                 type="date"
                 value={filterDateTo}
                 onChange={(e) => setFilterDateTo(e.target.value)}
-                className="h-8 text-xs"
+                className="h-8 md:text-xs"
               />
             </div>
           </div>

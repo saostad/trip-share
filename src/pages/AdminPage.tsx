@@ -548,7 +548,7 @@ function TestResultView({ result }: { result: TestReceiptExtractionResponse }) {
         <p className="text-muted-foreground">Took {result.latencyMs} ms.</p>
         {result.rawText !== "" && (
           <details>
-            <summary className="cursor-pointer font-medium">Model output</summary>
+            <summary className="-m-1 cursor-pointer rounded-md p-1 font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring">Model output</summary>
             <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
               {result.rawText}
             </pre>
@@ -580,7 +580,7 @@ function TestResultView({ result }: { result: TestReceiptExtractionResponse }) {
       <p className="text-muted-foreground">Took {result.latencyMs} ms.</p>
       {result.rawText !== "" && (
         <details>
-          <summary className="cursor-pointer font-medium">Model output</summary>
+          <summary className="-m-1 cursor-pointer rounded-md p-1 font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring">Model output</summary>
           <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
             {result.rawText}
           </pre>

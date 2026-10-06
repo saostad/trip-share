@@ -133,7 +133,7 @@ export function HowItWorksContent({ onWatchVideo }: { onWatchVideo: () => void }
                 key={faq.question}
                 className="group rounded-lg border border-border bg-card"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
                   {faq.question}
                   <ChevronDown
                     className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"

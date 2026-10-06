@@ -31,7 +31,7 @@ export function SettlementMethodPicker({
           <label
             key={method}
             className={cn(
-              "flex cursor-pointer gap-3 rounded-lg border p-3",
+              "flex cursor-pointer gap-3 rounded-lg border p-3 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
               value === method
                 ? "border-primary bg-primary/5"
                 : "border-border hover:bg-muted/40",
@@ -43,7 +43,7 @@ export function SettlementMethodPicker({
               value={method}
               checked={value === method}
               onChange={() => onChange(method)}
-              className="mt-0.5 size-4 shrink-0 accent-primary"
+              className="mt-0.5 size-4 shrink-0 accent-primary focus-visible:outline-none"
             />
             <span>
               <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
