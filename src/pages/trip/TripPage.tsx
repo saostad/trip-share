@@ -48,6 +48,8 @@ import {
 } from "@/lib/useLinkedParticipant";
 import { TripPageContext, type PaymentPrefill } from "./TripPageContext";
 import { TripShellView } from "./TripShellView";
+import { TripTabs } from "./TripTabs";
+import { TripFab } from "./Fab";
 
 type ExpenseFormData = {
   description: string;
@@ -333,8 +335,8 @@ export function TripPage() {
         isOwner={isOwner}
         isArchived={isArchived}
         header={<Header />}
-        tabs={null}
-        fab={null}
+        tabs={<TripTabs />}
+        fab={<TripFab />}
       >
         <Outlet />
       </TripShellView>

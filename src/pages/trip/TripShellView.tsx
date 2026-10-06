@@ -76,7 +76,7 @@ export function TripShellView({
         </div>
 
         {tabs}
-        {children}
+        <div className="pb-24 md:pb-0">{children}</div>
       </div>
       {fab}
     </div>

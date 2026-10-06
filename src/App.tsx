@@ -1,11 +1,15 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { Toaster } from 'sonner'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { InstallPrompt } from '@/components/layout/InstallPrompt'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { TripPage } from '@/pages/trip/TripPage'
+import { OverviewTab } from '@/pages/trip/tabs/OverviewTab'
+import { ExpensesTab } from '@/pages/trip/tabs/ExpensesTab'
+import { SettleTab } from '@/pages/trip/tabs/SettleTab'
+import { PeopleTab } from '@/pages/trip/tabs/PeopleTab'
 import { JoinTripPage } from '@/pages/JoinTripPage'
 
 const AdminPage = lazy(() =>
@@ -51,7 +55,13 @@ function App() {
                 <TripPage />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<OverviewTab />} />
+            <Route path="expenses" element={<ExpensesTab />} />
+            <Route path="settle" element={<SettleTab />} />
+            <Route path="people" element={<PeopleTab />} />
+            <Route path="*" element={<Navigate to="." replace />} />
+          </Route>
           <Route
             path="/join/:shareToken"
             element={
