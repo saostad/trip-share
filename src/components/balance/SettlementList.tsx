@@ -151,14 +151,14 @@ export function SettlementList({
                     ) : (
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
-                    <span className="min-w-[10ch] flex-1 truncate font-medium text-negative">
+                    <span className="min-w-0 truncate font-medium text-negative">
                       {transaction.from}
                     </span>
                     <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-[10ch] flex-1 truncate font-medium text-positive">
+                    <span className="min-w-0 truncate font-medium text-positive">
                       {transaction.to}
                     </span>
-                    <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
+                    <span className="ml-auto shrink-0 text-base font-semibold whitespace-nowrap tabular-nums">
                       {formatCurrency(transaction.amount)}
                     </span>
                   </button>
