@@ -82,6 +82,7 @@ export async function runExtractionPipeline(
       apiKey: input.apiKey,
       image: input.image,
       prompt,
+      categoryIds: input.categories.map((category) => category.id),
     },
     deps.fetchImpl,
     deps.timeoutMs,

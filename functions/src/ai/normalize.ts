@@ -107,9 +107,11 @@ export function normalizeExtraction(
       ? (raw as Record<string, unknown>)
       : {};
   const description = cleanLabel(record["description"]) || cleanLabel(record["merchant"]) || null;
+  const rawCategory = record["category"];
+  // Case-insensitive match, returning the request's canonical id.
   const category =
-    typeof record["category"] === "string" && categoryIds.includes(record["category"])
-      ? record["category"]
+    typeof rawCategory === "string"
+      ? (categoryIds.find((id) => id.toLowerCase() === rawCategory.toLowerCase()) ?? null)
       : null;
   const date = normalizeDate(record["date"], todayYmd);
   const amount = normalizeAmount(record["total"]);

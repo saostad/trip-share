@@ -14,6 +14,7 @@ export interface AdapterCall {
   readonly apiKey: string;
   readonly image: ExtractionImage;
   readonly prompt: string;
+  readonly categoryIds: readonly string[];
 }
 
 export interface AdapterResult {
@@ -71,7 +72,13 @@ export function buildGeminiRequest(call: AdapterCall): BuiltRequest {
           properties: {
             merchant: { type: "STRING", nullable: true },
             description: { type: "STRING", nullable: true },
-            category: { type: "STRING", nullable: true },
+            category: {
+              type: "STRING",
+              nullable: true,
+              // Constrain the model to the request's ids; omitted when empty
+              // so a caller bug degrades to free text instead of a 400.
+              ...(call.categoryIds.length > 0 ? { enum: [...call.categoryIds] } : {}),
+            },
             date: { type: "STRING", nullable: true },
             total: { type: "NUMBER", nullable: true },
             currency: { type: "STRING", nullable: true },

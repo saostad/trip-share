@@ -30,6 +30,7 @@ function geminiCall(): AdapterCall {
     apiKey: FAKE_KEY,
     image: { mimeType: "image/jpeg", base64: "aGVsbG8=" },
     prompt: "Do it.",
+    categoryIds: ["food", "hotel"],
   };
 }
 
@@ -40,6 +41,7 @@ function openAiCall(): AdapterCall {
     apiKey: FAKE_KEY,
     image: { mimeType: "image/png", base64: "aGVsbG8=" },
     prompt: "Do it.",
+    categoryIds: ["food"],
   };
 }
 
@@ -123,6 +125,8 @@ describe("buildGeminiRequest", () => {
       "merchant",
       "total",
     ]);
+    const properties = schema["properties"] as Record<string, Record<string, unknown>>;
+    expect(properties["category"]?.["enum"]).toEqual(["food", "hotel"]);
   });
 
   it("sets no small maxOutputTokens", () => {

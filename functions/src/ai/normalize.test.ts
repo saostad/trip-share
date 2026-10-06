@@ -65,8 +65,13 @@ describe("normalizeExtraction category", () => {
     expect(normalizeExtraction({ category: "food" }, IDS, TODAY).fields.category).toBe("food");
   });
 
-  it("rejects unknown, mistyped and non-string categories", () => {
-    for (const category of ["snacks", "Food", "", 42, null]) {
+  it("matches ids case-insensitively and returns the canonical id", () => {
+    expect(normalizeExtraction({ category: "FOOD" }, IDS, TODAY).fields.category).toBe("food");
+    expect(normalizeExtraction({ category: "Hotel" }, IDS, TODAY).fields.category).toBe("hotel");
+  });
+
+  it("rejects unknown and non-string categories", () => {
+    for (const category of ["snacks", "", 42, null]) {
       expect(normalizeExtraction({ category }, IDS, TODAY).fields.category).toBeNull();
     }
   });
