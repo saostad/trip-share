@@ -48,7 +48,7 @@ describe("SettleCelebration reduced motion", () => {
         hasTransfers={false}
       />,
     );
-    expect(screen.getByText("Everyone is all square")).toBeInTheDocument();
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
     expect(
       container.querySelector('div[aria-hidden="true"]'),
     ).not.toBeInTheDocument();

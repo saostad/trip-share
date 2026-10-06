@@ -83,6 +83,7 @@ export function SettleTabView({
         expenses={expenses}
         payments={payments}
         hasTransfers={transfers.length > 0}
+        onDownloadExcel={onDownloadExcel}
       />
       <Card>
         <CardHeader>

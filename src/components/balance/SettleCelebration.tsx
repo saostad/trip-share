@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { m, useReducedMotion } from "motion/react";
-import { PartyPopper } from "lucide-react";
+import { Download, PartyPopper } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   readCelebratedSignature,
@@ -36,13 +37,13 @@ function buildPieces(count: number): ConfettiPiece[] {
     drift: ((i * 53) % 41) - 20,
     fall: 140 + ((i * 37) % 81),
     spin: (i * 89) % 360,
-    duration: 1.4 + (i % 5) * 0.1,
+    duration: 0.8 + (i % 5) * 0.05,
     delay: (i % 7) * 0.05,
   }));
 }
 
 function Confetti() {
-  const pieces = useMemo(() => buildPieces(40), []);
+  const pieces = useMemo(() => buildPieces(20), []);
   return (
     <div
       aria-hidden
@@ -76,6 +77,7 @@ export interface SettleCelebrationProps {
   expenses: Expense[];
   payments: Payment[];
   hasTransfers: boolean;
+  onDownloadExcel?: () => void;
 }
 
 /**
@@ -88,6 +90,7 @@ export function SettleCelebration({
   expenses,
   payments,
   hasTransfers,
+  onDownloadExcel,
 }: SettleCelebrationProps) {
   const reduceMotion = useReducedMotion();
   const signature = useMemo(
@@ -122,16 +125,22 @@ export function SettleCelebration({
   return (
     <Card className="relative overflow-hidden border-positive/30 bg-positive/5">
       {!reduceMotion && <Confetti />}
-      <CardContent className="flex items-center gap-3">
+      <CardContent className="flex flex-wrap items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-positive/15 text-positive">
           <PartyPopper className="size-5" aria-hidden />
         </span>
-        <div>
-          <p className="font-semibold text-positive">Everyone is all square</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-positive">All settled! 🎉</p>
           <p className="text-sm text-muted-foreground">
-            Nothing left to pay.
+            Everyone&apos;s paid back. Nice trip.
           </p>
         </div>
+        {onDownloadExcel && (
+          <Button variant="outline" size="sm" onClick={onDownloadExcel}>
+            <Download className="size-4" aria-hidden />
+            Download Excel
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

@@ -21,3 +21,12 @@ export function writeCelebratedSignature(tripId: string, signature: string): voi
     // Private mode or blocked storage: the card may show again.
   }
 }
+
+/** Clears a trip's celebrated signature so it can celebrate again. Never throws. */
+export function clearCelebratedSignature(tripId: string): void {
+  try {
+    localStorage.removeItem(keyFor(tripId));
+  } catch {
+    // Nothing to clear.
+  }
+}

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { SettleCelebration } from "./SettleCelebration";
+import { clearCelebratedSignature } from "./celebrationStorage";
 import type { Expense, Payment } from "@/types";
 
 function expense(id: string): Expense {
@@ -64,7 +65,7 @@ describe("SettleCelebration", () => {
   it("appears on a fresh transition and disappears with transfers", () => {
     const { rerender, unmount } = renderCelebration("t1", [], true);
     expect(
-      screen.queryByText("Everyone is all square"),
+      screen.queryByText("All settled! 🎉"),
     ).not.toBeInTheDocument();
 
     rerender(
@@ -75,8 +76,8 @@ describe("SettleCelebration", () => {
         hasTransfers={false}
       />,
     );
-    expect(screen.getByText("Everyone is all square")).toBeInTheDocument();
-    expect(screen.getByText("Nothing left to pay.")).toBeInTheDocument();
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+    expect(screen.getByText("Everyone's paid back. Nice trip.")).toBeInTheDocument();
 
     rerender(
       <SettleCelebration
@@ -87,7 +88,7 @@ describe("SettleCelebration", () => {
       />,
     );
     expect(
-      screen.queryByText("Everyone is all square"),
+      screen.queryByText("All settled! 🎉"),
     ).not.toBeInTheDocument();
     unmount();
   });
@@ -95,7 +96,7 @@ describe("SettleCelebration", () => {
   it("stays hidden when mounting already empty", () => {
     renderCelebration("t2", [], false);
     expect(
-      screen.queryByText("Everyone is all square"),
+      screen.queryByText("All settled! 🎉"),
     ).not.toBeInTheDocument();
   });
 
@@ -109,7 +110,7 @@ describe("SettleCelebration", () => {
         hasTransfers={false}
       />,
     );
-    expect(screen.getByText("Everyone is all square")).toBeInTheDocument();
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
     first.unmount();
 
     const second = renderCelebration("t3", [], true);
@@ -122,7 +123,7 @@ describe("SettleCelebration", () => {
       />,
     );
     expect(
-      screen.queryByText("Everyone is all square"),
+      screen.queryByText("All settled! 🎉"),
     ).not.toBeInTheDocument();
     second.unmount();
 
@@ -136,7 +137,7 @@ describe("SettleCelebration", () => {
         hasTransfers={false}
       />,
     );
-    expect(screen.getByText("Everyone is all square")).toBeInTheDocument();
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
     third.unmount();
   });
 
@@ -151,7 +152,60 @@ describe("SettleCelebration", () => {
       />,
     );
     const box = container.querySelector('div[aria-hidden="true"]');
-    expect(box?.childElementCount).toBe(40);
+    expect(box?.childElementCount).toBe(20);
     unmount();
+  });
+
+  it("offers the Excel download when a handler is provided", () => {
+    const onDownloadExcel = vi.fn();
+    const { rerender, unmount } = render(
+      <SettleCelebration
+        tripId="t5"
+        expenses={EXPENSES}
+        payments={[]}
+        hasTransfers
+        onDownloadExcel={onDownloadExcel}
+      />,
+    );
+    rerender(
+      <SettleCelebration
+        tripId="t5"
+        expenses={EXPENSES}
+        payments={[]}
+        hasTransfers={false}
+        onDownloadExcel={onDownloadExcel}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Download Excel" });
+    fireEvent.click(button);
+    expect(onDownloadExcel).toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it("celebrates again after the signature is cleared", () => {
+    const { rerender, unmount } = renderCelebration("t6", [], true);
+    rerender(
+      <SettleCelebration
+        tripId="t6"
+        expenses={EXPENSES}
+        payments={[]}
+        hasTransfers={false}
+      />,
+    );
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+    unmount();
+
+    clearCelebratedSignature("t6");
+    const second = renderCelebration("t6", [], true);
+    second.rerender(
+      <SettleCelebration
+        tripId="t6"
+        expenses={EXPENSES}
+        payments={[]}
+        hasTransfers={false}
+      />,
+    );
+    expect(screen.getByText("All settled! 🎉")).toBeInTheDocument();
+    second.unmount();
   });
 });
