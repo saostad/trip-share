@@ -15,6 +15,7 @@ export interface Counterparty {
 }
 
 export type MyPosition =
+  | { kind: "empty" }
   | { kind: "unlinked"; totalSpent: number; perPersonAverage: number }
   | {
       kind: "owed" | "owes" | "square";
@@ -37,6 +38,9 @@ export function myPosition(
   myName: string | null,
 ): MyPosition {
   const participants = trip.participants;
+  if (expenses.length === 0 && payments.length === 0) {
+    return { kind: "empty" };
+  }
   if (!myName || !participants.includes(myName)) {
     const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
     return {

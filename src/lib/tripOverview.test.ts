@@ -68,7 +68,16 @@ describe("myPosition", () => {
   });
 
   it("reports square at zero and at the $0.004 edge", () => {
-    expect(myPosition(trip(), [], [], "Ava").kind).toBe("square");
+    const even = myPosition(
+      trip(),
+      [
+        expense({ id: "e1", amount: 50, paidBy: "Ava" }),
+        expense({ id: "e2", amount: 50, paidBy: "Liam" }),
+      ],
+      [],
+      "Ava",
+    );
+    expect(even.kind).toBe("square");
     const tiny = myPosition(
       trip(),
       [expense({ id: "e1", amount: 0.008, sharedBy: ["Ava", "Liam"] })],
@@ -105,8 +114,26 @@ describe("myPosition", () => {
     });
     const position = myPosition(grouped, [expense({ id: "e1" })], [], "Ava");
     expect(position.kind).toBe("owed");
-    if (position.kind === "unlinked") return;
+    if (position.kind !== "owed") return;
     expect(position.inGroup).toBe(true);
+  });
+
+  it("reports empty when there are no expenses and no payments", () => {
+    expect(myPosition(trip(), [], [], "Ava")).toEqual({ kind: "empty" });
+  });
+
+  it("reports empty for an unlinked user when there is nothing yet", () => {
+    expect(myPosition(trip(), [], [], null)).toEqual({ kind: "empty" });
+  });
+
+  it("reports a linked position once there is at least one expense", () => {
+    const position = myPosition(trip(), [expense({ id: "e1" })], [], "Ava");
+    expect(position.kind).toBe("owed");
+  });
+
+  it("reports a linked position once there is at least one payment", () => {
+    const position = myPosition(trip(), [], [payment({ id: "p1" })], "Ava");
+    expect(position.kind).toBe("owes");
   });
 });
 

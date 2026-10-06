@@ -36,7 +36,39 @@ export interface OverviewTabViewProps {
   onDismissChecklist: () => void;
 }
 
-function Hero({ position, isOwner }: { position: MyPosition; isOwner: boolean }) {
+function Hero({
+  position,
+  isOwner,
+  isArchived,
+  onAddExpense,
+}: {
+  position: MyPosition;
+  isOwner: boolean;
+  isArchived: boolean;
+  onAddExpense: () => void;
+}) {
+  if (position.kind === "empty") {
+    return (
+      <Card>
+        <CardContent className="space-y-1 pt-6">
+          <p className="text-2xl font-bold">No expenses yet</p>
+          <p className="text-sm text-muted-foreground">
+            Add the first expense and TripShare keeps a running balance for
+            everyone.
+          </p>
+          {!isArchived && (
+            <div className="pt-2">
+              <Button onClick={onAddExpense} className="gap-1.5">
+                <Plus className="size-4" data-icon="inline-start" />
+                Add expense
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (position.kind === "unlinked") {
     return (
       <Card>
@@ -305,7 +337,12 @@ export function OverviewTabView({
     !isArchived && !checklistDismissed && !checklist.complete;
   return (
     <div className="space-y-4">
-      <Hero position={position} isOwner={isOwner} />
+      <Hero
+        position={position}
+        isOwner={isOwner}
+        isArchived={isArchived}
+        onAddExpense={onAddExpense}
+      />
       <QuickActions isOwner={isOwner} isArchived={isArchived} onAddExpense={onAddExpense} />
       {showChecklist && (
         <Checklist
