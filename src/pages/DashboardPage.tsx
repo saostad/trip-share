@@ -62,6 +62,7 @@ export function DashboardPage() {
   return (
     <DashboardView
       displayName={user?.displayName ?? null}
+      creatorUid={user?.uid ?? null}
       trips={trips}
       loading={loading}
       loadError={error !== null}

@@ -27,6 +27,8 @@ interface ParticipantInputProps {
   links?: Record<string, string>;
   onLinksChange?: (links: Record<string, string>) => void;
   members?: Record<string, UserProfile>;
+  /** Allow renaming names in place; used by the create wizard only. */
+  editableNames?: boolean;
 }
 
 function formatAccountOption(opt: AccountOption): string {
@@ -43,6 +45,7 @@ export function ParticipantInput({
   accountOptions = [],
   links = {},
   onLinksChange,
+  editableNames = false,
 }: ParticipantInputProps) {
   const [inputValue, setInputValue] = useState("");
 
@@ -75,6 +78,21 @@ export function ParticipantInput({
     if (e.key === "Enter") {
       e.preventDefault();
       handleAdd();
+    }
+  }
+
+  function handleRename(oldName: string, input: HTMLInputElement) {
+    const next = input.value.trim();
+    if (!next || next === oldName || participants.includes(next)) {
+      input.value = oldName;
+      return;
+    }
+    onChange(participants.map((p) => (p === oldName ? next : p)));
+    if (onLinksChange && links[oldName]) {
+      const updated = { ...links };
+      delete updated[oldName];
+      updated[next] = links[oldName];
+      onLinksChange(updated);
     }
   }
 
@@ -136,7 +154,23 @@ export function ParticipantInput({
                 className="flex flex-col gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-center justify-between gap-2 sm:flex-1">
-                  <span className="truncate font-medium">{name}</span>
+                  {editableNames ? (
+                    <Input
+                      key={name}
+                      defaultValue={name}
+                      aria-label={`Rename ${name}`}
+                      className="h-8 min-w-0 flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      onBlur={(e) => handleRename(name, e.currentTarget)}
+                    />
+                  ) : (
+                    <span className="truncate font-medium">{name}</span>
+                  )}
                   {isRemovable ? (
                     <Button
                       type="button"

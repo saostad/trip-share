@@ -583,6 +583,7 @@ function DashboardSection({ theme }: { theme: "light" | "dark" }) {
     <div className="space-y-8">
       <DashboardView
         displayName="Ava Example"
+        creatorUid="fake-uid-ava"
         trips={DASHBOARD_TRIPS}
         loading={false}
         loadError={false}
@@ -597,6 +598,7 @@ function DashboardSection({ theme }: { theme: "light" | "dark" }) {
         <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
           <DashboardView
             displayName="Ava Example"
+            creatorUid="fake-uid-ava"
             trips={[]}
             loading={false}
             loadError={false}

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { TripCard } from "@/components/trip/TripCard";
-import { TripForm } from "@/components/trip/TripForm";
+import { CreateTripWizard } from "@/components/trip/CreateTripWizard";
 import type { AccountOption } from "@/components/trip/ParticipantInput";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ export interface CreateTripData {
 
 export interface DashboardViewProps {
   displayName: string | null;
+  creatorUid: string | null;
   trips: AnnotatedTrip[];
   loading: boolean;
   loadError: boolean;
@@ -81,6 +82,7 @@ function InviteOnlyPanel() {
 
 export function DashboardView({
   displayName,
+  creatorUid,
   trips,
   loading,
   loadError,
@@ -182,9 +184,10 @@ export function DashboardView({
             <DialogHeader>
               <DialogTitle>Create New Trip</DialogTitle>
             </DialogHeader>
-            <TripForm
+            <CreateTripWizard
+              creatorName={displayName}
+              creatorUid={creatorUid}
               accountOptions={accountOptions}
-              showSettlementMethod
               onSubmit={async (data) => {
                 const created = await onCreateTrip(data);
                 if (created) setShowCreateDialog(false);
