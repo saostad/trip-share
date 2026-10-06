@@ -37,7 +37,10 @@ export function TripCard({ trip, role }: TripCardProps) {
   const isArchived = Boolean(trip.archived);
 
   return (
-    <Link to={`/trip/${trip.id}`} className="block">
+    <Link
+      to={`/trip/${trip.id}`}
+      className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       <Card
         className={`transition-all hover:-translate-y-0.5 hover:shadow-md ${
           isArchived ? "opacity-80" : ""

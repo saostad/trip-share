@@ -78,7 +78,7 @@ function Hero({
       <Card>
         <CardContent className="space-y-1">
           <p className="text-sm text-muted-foreground">Total spent</p>
-          <p className="text-3xl font-bold tabular-nums">
+          <p className="text-3xl font-bold break-all tabular-nums">
             <CountUp value={position.totalSpent} format={formatCurrency} />
           </p>
           <p className="text-sm text-muted-foreground">
@@ -129,13 +129,16 @@ function Hero({
     <Card>
       <CardContent className="space-y-2">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className={cn("text-3xl font-bold tabular-nums", amountClass)}>
+        <p className={cn("text-3xl font-bold break-all tabular-nums", amountClass)}>
           <CountUp value={position.amount} format={formatCurrency} />
         </p>
         {position.counterparties.length > 0 && (
           <ul className="space-y-1">
             {position.counterparties.map((c) => (
-              <li key={`${c.direction}-${c.name}`} className="text-sm tabular-nums">
+              <li
+                key={`${c.direction}-${c.name}`}
+                className="text-sm break-words tabular-nums"
+              >
                 {c.direction === "owesMe" ? `${c.name} owes you ` : `You owe ${c.name} `}
                 <span
                   className={cn(

@@ -156,7 +156,7 @@ export function BalanceSummary({
               </div>
 
               <span
-                className={`shrink-0 text-base font-semibold tabular-nums ${amountClass}`}
+                className={`shrink-0 text-base font-semibold break-all tabular-nums ${amountClass}`}
               >
                 <CountUp value={Math.abs(balance)} format={formatCurrency} />
               </span>
