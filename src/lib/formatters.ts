@@ -1,10 +1,16 @@
 import { format, parseISO } from 'date-fns';
 
+const groupedTwoDecimals = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 /**
- * Formats a number as currency: $X.XX
+ * Formats a number as currency: $X.XX with thousands separators.
+ * Callers show direction in words, so the value is always non-negative.
  */
 export function formatCurrency(amount: number): string {
-  return `$${Math.abs(amount).toFixed(2)}`;
+  return `$${groupedTwoDecimals.format(Math.abs(amount))}`;
 }
 
 /**
