@@ -21,8 +21,11 @@ describe("CountUp reduced motion", () => {
         dispatchEvent: vi.fn(),
       })),
     });
-    render(<CountUp value={130} format={formatCurrency} />);
-    expect(screen.getByText("$130.00")).toBeInTheDocument();
+    const { container } = render(<CountUp value={130} format={formatCurrency} />);
+    expect(
+      container.querySelector('span[aria-hidden="true"]'),
+    ).toHaveTextContent("$130.00");
+    expect(container.querySelector(".sr-only")).toHaveTextContent("$130.00");
     expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
   });
 });
