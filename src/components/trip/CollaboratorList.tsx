@@ -75,7 +75,7 @@ export function CollaboratorList({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-muted"
+        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="View collaborators"
       >
         <Users className="h-4 w-4 text-muted-foreground" />

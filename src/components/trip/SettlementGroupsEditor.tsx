@@ -104,7 +104,7 @@ export function SettlementGroupsEditor({
       <div className="flex items-center gap-1 px-3 py-2.5 hover:bg-muted/40">
         <button
           type="button"
-          className="flex w-full min-w-0 items-center gap-2 text-left"
+          className="flex w-full min-w-0 items-center gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
         >

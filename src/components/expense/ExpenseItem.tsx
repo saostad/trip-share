@@ -47,7 +47,7 @@ export function ExpenseItem({
     >
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-start gap-3 p-3 text-left"
+        className="flex min-w-0 flex-1 items-start gap-3 rounded-lg p-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={() => onView?.(expense)}
         aria-label={`View details for ${expense.description}`}
       >

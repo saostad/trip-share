@@ -100,7 +100,7 @@ export function InstallPrompt() {
             </Button>
             <button
               onClick={handleDismiss}
-              className="rounded-full p-1 hover:bg-primary-foreground/20"
+              className="relative rounded-full p-1 outline-none after:absolute after:-inset-2.5 after:content-[''] hover:bg-primary-foreground/20 focus-visible:ring-2 focus-visible:ring-primary-foreground"
               aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
@@ -132,7 +132,7 @@ export function InstallPrompt() {
           </div>
           <button
             onClick={handleDismiss}
-            className="rounded-full p-1 hover:bg-primary-foreground/20 shrink-0"
+            className="relative shrink-0 rounded-full p-1 outline-none after:absolute after:-inset-2.5 after:content-[''] hover:bg-primary-foreground/20 focus-visible:ring-2 focus-visible:ring-primary-foreground"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />

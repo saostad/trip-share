@@ -201,7 +201,7 @@ export function ExpenseList({
         {hasSearch && (
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+            className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5 text-muted-foreground outline-none after:absolute after:-inset-x-1.5 after:-inset-y-3 after:content-[''] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             onClick={() => setSearch("")}
             aria-label="Clear search"
           >

@@ -588,7 +588,11 @@ export function ExpenseForm({
               What was it for?
               {receiptFilled.includes("category") && <FromReceiptMarker />}
             </label>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            <div
+              className="grid grid-cols-3 gap-2 sm:grid-cols-4"
+              role="radiogroup"
+              aria-label="Category"
+            >
               {EXPENSE_CATEGORIES.map((c) => {
                 const Icon = c.icon;
                 const selected = category === c.id;
@@ -596,9 +600,11 @@ export function ExpenseForm({
                   <button
                     key={c.id}
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
                     onClick={() => selectPreset(c.id, c.label)}
                     className={
-                      "flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-center transition-colors " +
+                      "flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring " +
                       (selected
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-input bg-background hover:bg-muted/60")

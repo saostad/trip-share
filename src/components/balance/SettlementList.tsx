@@ -77,10 +77,16 @@ export function SettlementList({
           {groupMode && " · group mode"}
         </p>
         {hasGroups && (
-          <div className="inline-flex rounded-md border border-border p-0.5 text-xs">
+          <div
+            className="inline-flex rounded-md border border-border p-0.5 text-xs"
+            role="radiogroup"
+            aria-label="Settlement view"
+          >
             <button
               type="button"
-              className={`rounded px-2.5 py-1 transition-colors ${
+              role="radio"
+              aria-checked={viewMode === "group"}
+              className={`relative rounded px-2.5 py-1 outline-none transition-colors after:absolute after:-inset-y-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring ${
                 viewMode === "group"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -91,7 +97,9 @@ export function SettlementList({
             </button>
             <button
               type="button"
-              className={`rounded px-2.5 py-1 transition-colors ${
+              role="radio"
+              aria-checked={viewMode === "person"}
+              className={`relative rounded px-2.5 py-1 outline-none transition-colors after:absolute after:-inset-y-2.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring ${
                 viewMode === "person"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -142,7 +150,7 @@ export function SettlementList({
                 <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
                   <button
                     type="button"
-                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setOpenKey(isOpen ? null : key)}
                     aria-expanded={isOpen}
                   >
