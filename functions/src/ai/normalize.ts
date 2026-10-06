@@ -46,7 +46,9 @@ function normalizeAmount(total: unknown): number | null {
     if (!Number.isFinite(total) || total <= 0 || total > MAX_AMOUNT) {
       return null;
     }
-    return roundToCents(total);
+    // Check after rounding: anything under half a cent becomes null, never 0.
+    const rounded = roundToCents(total);
+    return rounded > 0 ? rounded : null;
   }
   if (typeof total !== "string") {
     return null;
@@ -61,7 +63,8 @@ function normalizeAmount(total: unknown): number | null {
   if (!Number.isFinite(value) || value <= 0 || value > MAX_AMOUNT) {
     return null;
   }
-  return roundToCents(value);
+  const rounded = roundToCents(value);
+  return rounded > 0 ? rounded : null;
 }
 
 function addDaysUtc(ymd: string, days: number): string {

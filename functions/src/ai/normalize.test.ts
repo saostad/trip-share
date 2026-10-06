@@ -17,6 +17,12 @@ describe("normalizeExtraction amount", () => {
     }
   });
 
+  it("checks the rounded value: 0.004 is null, 0.005 is 0.01", () => {
+    expect(normalizeExtraction({ total: 0.004 }, IDS, TODAY).fields.amount).toBeNull();
+    expect(normalizeExtraction({ total: "0.004" }, IDS, TODAY).fields.amount).toBeNull();
+    expect(normalizeExtraction({ total: 0.005 }, IDS, TODAY).fields.amount).toBe(0.01);
+  });
+
   it("accepts US-format strings like $1,234.56", () => {
     expect(normalizeExtraction({ total: "$1,234.56" }, IDS, TODAY).fields.amount).toBe(1234.56);
     expect(normalizeExtraction({ total: "42" }, IDS, TODAY).fields.amount).toBe(42);
