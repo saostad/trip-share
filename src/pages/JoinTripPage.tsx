@@ -122,7 +122,7 @@ export function JoinTripPage() {
 
   return (
     <div className="container mx-auto px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold text-destructive">Invalid Link</h1>
+      <h1 className="text-2xl font-bold text-destructive">Invalid link</h1>
       <p className="mt-4 text-muted-foreground">
         This link is invalid or has expired.
       </p>

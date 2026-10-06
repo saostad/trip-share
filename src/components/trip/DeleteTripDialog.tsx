@@ -59,7 +59,7 @@ export function DeleteTripDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Trip</AlertDialogTitle>
+          <AlertDialogTitle>Delete trip</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to delete &apos;{tripName}&apos;? This action
             cannot be undone. All expenses will be deleted.

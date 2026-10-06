@@ -385,7 +385,7 @@ export function TripPage() {
       <Dialog open={addExpenseOpen} onOpenChange={setAddExpenseOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Expense</DialogTitle>
+            <DialogTitle>Add expense</DialogTitle>
           </DialogHeader>
           <ExpenseForm
             participants={trip.participants}
@@ -403,7 +403,7 @@ export function TripPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Expense</DialogTitle>
+            <DialogTitle>Edit expense</DialogTitle>
           </DialogHeader>
           {editingExpense && (
             <ExpenseForm
@@ -423,7 +423,7 @@ export function TripPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Expense</AlertDialogTitle>
+            <AlertDialogTitle>Delete expense</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingExpense?.description}"?
               This action cannot be undone.
@@ -472,7 +472,7 @@ export function TripPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Payment</DialogTitle>
+            <DialogTitle>Edit payment</DialogTitle>
           </DialogHeader>
           {editingPayment && (
             <EditPaymentForm
@@ -492,7 +492,7 @@ export function TripPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogTitle>Delete payment</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this payment of{" "}
               {deletingPayment ? `$${deletingPayment.amount.toFixed(2)}` : ""} from{" "}

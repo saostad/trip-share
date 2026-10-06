@@ -691,7 +691,7 @@ export function ExpenseForm({
           <div className="space-y-2 rounded-lg border border-input p-3">
             <div className="flex items-center gap-2">
               <Checkbox id="select-all" checked={allSelected} onCheckedChange={handleSelectAll} />
-              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">Select All</label>
+              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">Select all</label>
             </div>
             <div className="h-px bg-border" />
             {participants.map((participant) => (
@@ -766,7 +766,7 @@ export function ExpenseForm({
                   : "Adding..."
                 : isEditMode
                   ? "Save changes"
-                  : "Add Expense"}
+                  : "Add expense"}
             </Button>
           )}
         </div>

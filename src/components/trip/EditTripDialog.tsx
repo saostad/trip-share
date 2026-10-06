@@ -73,7 +73,7 @@ export function EditTripDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] w-full max-w-[calc(100%-2rem)] flex-col gap-4 overflow-hidden sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
         <DialogHeader className="shrink-0">
-          <DialogTitle>Edit Trip</DialogTitle>
+          <DialogTitle>Edit trip</DialogTitle>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <TripForm
