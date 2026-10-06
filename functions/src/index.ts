@@ -2,9 +2,13 @@ import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "./auth";
+import { checkTripAccess, runExtractionPipeline } from "./ai/extract";
+import { validateExtractInput } from "./ai/extractInput";
 import { fetchProviderModelIds, toListedModels, type ListedModel } from "./ai/modelLists";
+import type { NormalizedFields } from "./ai/normalize";
 import { getProvider, isKeyConfigured, PROVIDERS, type ProviderDef } from "./ai/providers";
 import { parseAiSettings, validateAiSettingsInput, type AiSettings } from "./ai/settings";
+import { checkAndIncrementUsage } from "./ai/usage";
 
 initializeApp();
 
@@ -39,6 +43,23 @@ export interface ListAiModelsResponse {
 }
 
 export type SaveAiSettingsResponse = AiSettings;
+
+export interface ExtractReceiptRequest {
+  tripId: string;
+  image: {
+    mimeType: string;
+    base64: string;
+  };
+  categories: Array<{
+    id: string;
+    label: string;
+  }>;
+}
+
+export interface ExtractReceiptResponse {
+  fields: NormalizedFields;
+  missing: string[];
+}
 
 // Every callable below serves a provider chosen at request time, and secret
 // binding is static per function, so each one binds all three provider
@@ -121,6 +142,53 @@ export const listAiModels = onCall(
     }
     const ids = await fetchProviderModelIds(provider, apiKey);
     return { models: toListedModels(ids) };
+  },
+);
+
+/** Extracts receipt fields for a trip member, under the daily cap. */
+export const extractReceipt = onCall(
+  { ...callableOptions, timeoutSeconds: 60, memory: "512MiB" },
+  async (request): Promise<ExtractReceiptResponse> => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+    const uid = request.auth.uid;
+    const input = validateExtractInput(request.data);
+    const tripSnapshot = await getFirestore().doc(`trips/${input.tripId}`).get();
+    const access = checkTripAccess(tripSnapshot.data(), uid);
+    if (access.archived) {
+      throw new HttpsError("failed-precondition", "This trip is archived");
+    }
+    // Settings are re-read on every call; nothing is cached between calls.
+    const settingsSnapshot = await getFirestore().doc("appConfig/ai").get();
+    const state = parseAiSettings(settingsSnapshot.data());
+    if (state.status === "missing") {
+      throw new HttpsError("failed-precondition", "Receipt auto-fill isn't set up");
+    }
+    if (state.status === "invalid") {
+      throw new HttpsError("failed-precondition", "AI settings are invalid; ask an admin");
+    }
+    const settings = state.settings;
+    if (!settings.enabled) {
+      throw new HttpsError("failed-precondition", "Receipt auto-fill is turned off");
+    }
+    const provider = getProvider(settings.provider);
+    if (provider === undefined) {
+      throw new HttpsError("internal", "Saved provider is unknown.");
+    }
+    const apiKey = provider.secret.value();
+    if (!isKeyConfigured(apiKey)) {
+      throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
+    }
+    await checkAndIncrementUsage(getFirestore(), uid, settings.dailyLimitPerUser);
+    const result = await runExtractionPipeline({
+      provider,
+      model: settings.model,
+      apiKey,
+      image: input.image,
+      categories: input.categories,
+    });
+    return { fields: result.fields, missing: result.missing };
   },
 );
 
