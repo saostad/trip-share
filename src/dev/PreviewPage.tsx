@@ -52,6 +52,7 @@ import {
   myPosition,
   recentActivity,
 } from "@/lib/tripOverview";
+import { hasUsableSettlementGroups } from "@/lib/settlementGroups";
 import {
   previewExpenses,
   previewPayments,
@@ -506,6 +507,8 @@ function TripOverviewSection({ theme, state }: { theme: "light" | "dark"; state:
     >
       <OverviewTabView
         position={myPosition(trip, expenses, payments, myName)}
+        groupPosition={myPosition(trip, expenses, payments, myName, "group")}
+        hasGroups={hasUsableSettlementGroups(trip.settlementGroups)}
         isOwner={isOwner}
         isArchived={isArchived}
         checklist={checklistState(trip, expenses, payments, isOwner)}
