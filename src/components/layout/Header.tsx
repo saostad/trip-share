@@ -9,7 +9,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
-import { LogOut, Moon, Plane, ShieldCheck, Sun } from "lucide-react";
+import {
+  CircleHelp,
+  LogOut,
+  Moon,
+  Plane,
+  ShieldCheck,
+  Sun,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -51,6 +58,21 @@ function formatBuildDate(buildTime: string): string {
   });
 }
 
+export function HeaderLogo() {
+  return (
+    <Link
+      to="/"
+      className="flex items-center gap-2"
+      aria-label="TripShare home"
+    >
+      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <Plane className="size-4" aria-hidden />
+      </span>
+      <span className="text-xl font-bold text-foreground">TripShare</span>
+    </Link>
+  );
+}
+
 export function HeaderView({
   user,
   isAdmin,
@@ -64,62 +86,70 @@ export function HeaderView({
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
-      <Link to="/" className="flex items-center gap-2" aria-label="TripShare home">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Plane className="size-4" aria-hidden />
-        </span>
-        <span className="text-xl font-bold text-foreground">TripShare</span>
-      </Link>
+      <HeaderLogo />
 
       {user && (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="User menu"
-            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <div className="flex items-center gap-1">
+          <Link
+            to="/how-it-works"
+            aria-label="How it works"
+            className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Avatar size="default">
-              <AvatarImage
-                src={user.photoURL ?? undefined}
-                alt={user.displayName ?? "User avatar"}
-              />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8}>
-            <DropdownMenuLabel>
-              <div className="truncate text-sm font-medium">
-                {user.displayName ?? "Account"}
-              </div>
-              {user.email && (
-                <div className="truncate text-xs text-muted-foreground">
-                  {user.email}
+            <CircleHelp className="size-5" aria-hidden />
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="User menu"
+              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Avatar size="default">
+                <AvatarImage
+                  src={user.photoURL ?? undefined}
+                  alt={user.displayName ?? "User avatar"}
+                />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8}>
+              <DropdownMenuLabel>
+                <div className="truncate text-sm font-medium">
+                  {user.displayName ?? "Account"}
                 </div>
-              )}
-            </DropdownMenuLabel>
-            <DropdownMenuItem onClick={onToggleTheme}>
-              {theme === "dark" ? (
-                <Sun className="size-4" aria-hidden />
-              ) : (
-                <Moon className="size-4" aria-hidden />
-              )}
-              {theme === "dark" ? "Light" : "Dark"}
-            </DropdownMenuItem>
-            {isAdmin && (
-              <DropdownMenuItem render={<Link to="/admin" />}>
-                <ShieldCheck className="size-4" aria-hidden />
-                Admin
+                {user.email && (
+                  <div className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </div>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={onToggleTheme}>
+                {theme === "dark" ? (
+                  <Sun className="size-4" aria-hidden />
+                ) : (
+                  <Moon className="size-4" aria-hidden />
+                )}
+                {theme === "dark" ? "Light" : "Dark"}
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Version {buildCommit} · {formatBuildDate(buildTime)}
-            </DropdownMenuLabel>
-            <DropdownMenuItem onClick={onSignOut}>
-              <LogOut className="size-4" aria-hidden />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem render={<Link to="/how-it-works" />}>
+                <CircleHelp className="size-4" aria-hidden />
+                How it works
+              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem render={<Link to="/admin" />}>
+                  <ShieldCheck className="size-4" aria-hidden />
+                  Admin
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                Version {buildCommit} · {formatBuildDate(buildTime)}
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={onSignOut}>
+                <LogOut className="size-4" aria-hidden />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
     </header>
   );

@@ -1,35 +1,41 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
-import { Toaster } from 'sonner'
-import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
-import { InstallPrompt } from '@/components/layout/InstallPrompt'
-import { LoginPage } from '@/pages/LoginPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { TripPage } from '@/pages/trip/TripPage'
-import { OverviewTab } from '@/pages/trip/tabs/OverviewTab'
-import { ExpensesTab } from '@/pages/trip/tabs/ExpensesTab'
-import { SettleTab } from '@/pages/trip/tabs/SettleTab'
-import { PeopleTab } from '@/pages/trip/tabs/PeopleTab'
-import { JoinTripPage } from '@/pages/JoinTripPage'
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { Toaster } from "sonner";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { InstallPrompt } from "@/components/layout/InstallPrompt";
+import { LoginPage } from "@/pages/LoginPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { TripPage } from "@/pages/trip/TripPage";
+import { OverviewTab } from "@/pages/trip/tabs/OverviewTab";
+import { ExpensesTab } from "@/pages/trip/tabs/ExpensesTab";
+import { SettleTab } from "@/pages/trip/tabs/SettleTab";
+import { PeopleTab } from "@/pages/trip/tabs/PeopleTab";
+import { JoinTripPage } from "@/pages/JoinTripPage";
 
 const AdminPage = lazy(() =>
-  import('@/pages/AdminPage').then((m) => ({ default: m.AdminPage })),
-)
+  import("@/pages/AdminPage").then((m) => ({ default: m.AdminPage })),
+);
+
+const HowItWorksPage = lazy(() =>
+  import("@/pages/HowItWorksPage").then((m) => ({ default: m.HowItWorksPage })),
+);
 
 const DevPreviewPage = import.meta.env.DEV
-  ? lazy(() => import('@/dev/PreviewPage').then((m) => ({ default: m.PreviewPage })))
-  : null
+  ? lazy(() =>
+      import("@/dev/PreviewPage").then((m) => ({ default: m.PreviewPage })),
+    )
+  : null;
 
-function AdminFallback() {
+function LazyPageFallback({ label }: { label: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div
         className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary"
         role="status"
-        aria-label="Loading admin page"
+        aria-label={label}
       />
     </div>
-  )
+  );
 }
 
 function App() {
@@ -40,6 +46,14 @@ function App() {
       <div className="min-h-dvh">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/how-it-works"
+            element={
+              <Suspense fallback={<LazyPageFallback label="Loading page" />}>
+                <HowItWorksPage />
+              </Suspense>
+            }
+          />
           <Route
             path="/"
             element={
@@ -74,7 +88,9 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute>
-                <Suspense fallback={<AdminFallback />}>
+                <Suspense
+                  fallback={<LazyPageFallback label="Loading admin page" />}
+                >
                   <AdminPage />
                 </Suspense>
               </ProtectedRoute>
@@ -84,7 +100,9 @@ function App() {
             <Route
               path="/dev/preview"
               element={
-                <Suspense fallback={<AdminFallback />}>
+                <Suspense
+                  fallback={<LazyPageFallback label="Loading preview" />}
+                >
                   <DevPreviewPage />
                 </Suspense>
               }
@@ -93,7 +111,7 @@ function App() {
         </Routes>
       </div>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

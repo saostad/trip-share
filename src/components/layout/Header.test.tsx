@@ -5,7 +5,11 @@ import { HeaderView, type HeaderViewProps } from "./Header";
 
 function baseProps(overrides: Partial<HeaderViewProps> = {}): HeaderViewProps {
   return {
-    user: { displayName: "Ava Example", email: "ava@example.com", photoURL: null },
+    user: {
+      displayName: "Ava Example",
+      email: "ava@example.com",
+      photoURL: null,
+    },
     isAdmin: false,
     theme: "light",
     buildCommit: "abc1234",
@@ -38,6 +42,20 @@ describe("HeaderView", () => {
     renderHeader(baseProps({ isAdmin: false }));
     openMenu();
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
+  });
+
+  it("links the Help button to How it works", () => {
+    renderHeader(baseProps());
+    const help = screen.getByRole("link", { name: "How it works" });
+    expect(help).toHaveAttribute("href", "/how-it-works");
+  });
+
+  it("has a How it works menu item", () => {
+    renderHeader(baseProps());
+    openMenu();
+    expect(
+      screen.getByRole("menuitem", { name: "How it works" }),
+    ).toBeInTheDocument();
   });
 
   it("calls onSignOut when Sign out is clicked", () => {

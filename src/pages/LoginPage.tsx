@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router";
+import { Link, Navigate } from "react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -76,6 +76,15 @@ export function LoginPage() {
           )}
           {signingIn ? "Signing in..." : "Sign in with Google"}
         </Button>
+
+        <p className="mt-6 text-center text-sm">
+          <Link
+            to="/how-it-works"
+            className="font-medium text-primary hover:underline"
+          >
+            See how it works
+          </Link>
+        </p>
       </div>
     </div>
   );
