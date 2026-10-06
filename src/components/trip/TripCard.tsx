@@ -39,7 +39,7 @@ export function TripCard({ trip, role }: TripCardProps) {
   return (
     <Link to={`/trip/${trip.id}`} className="block">
       <Card
-        className={`rounded-xl shadow-sm transition-shadow hover:shadow-md ${
+        className={`transition-all hover:-translate-y-0.5 hover:shadow-md ${
           isArchived ? "opacity-80" : ""
         }`}
       >

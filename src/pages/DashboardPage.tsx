@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, MapPin, Link2, Lock } from "lucide-react";
+import { Plus, MapPin, Link2, Lock, Receipt, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { SettlementMethod, SettlementGroup } from "@/types";
 
@@ -68,6 +68,7 @@ export function DashboardPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const showCreateControls = canCreateTrips && !accessLoading;
+  const firstName = user?.displayName?.trim().split(/\s+/)[0] ?? null;
 
   async function handleCreateTrip(data: {
     name: string;
@@ -116,7 +117,12 @@ export function DashboardPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold text-foreground">My Trips</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {firstName ? `Hi, ${firstName}` : "Hi there"}
+            </h1>
+            <p className="text-sm text-muted-foreground">Your trips</p>
+          </div>
           {showCreateControls && (
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="size-4" data-icon="inline-start" />
@@ -145,7 +151,17 @@ export function DashboardPage() {
 
         {!loading && !accessLoading && !error && canCreateTrips && trips.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <MapPin className="mb-4 size-12 text-muted-foreground/50" />
+            <div className="mb-4 flex items-center justify-center gap-3" aria-hidden>
+              <span className="flex size-12 items-center justify-center rounded-full bg-positive/10 text-positive">
+                <Receipt className="size-5" />
+              </span>
+              <span className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <MapPin className="size-7" />
+              </span>
+              <span className="flex size-12 items-center justify-center rounded-full bg-warning/15 text-warning-foreground">
+                <Users className="size-5" />
+              </span>
+            </div>
             <h2 className="mb-2 text-lg font-semibold text-foreground">
               No trips yet
             </h2>
