@@ -2,7 +2,12 @@ import {
   calculateBalances,
   computeSettlements,
 } from "@/lib/balances";
-import type { Expense, Payment, Trip } from "@/types";
+import {
+  buildGroupByRepresentative,
+  collapseBalancesForGroups,
+  hasUsableSettlementGroups,
+} from "@/lib/settlementGroups";
+import type { Expense, Payment, SettlementViewMode, Trip } from "@/types";
 
 /** Matches the $0.01 threshold used by BalanceSummary. */
 const SQUARE_THRESHOLD = 0.01;
@@ -12,6 +17,11 @@ export interface Counterparty {
   amount: number;
   /** "owesMe": they pay me. "iOwe": I pay them. */
   direction: "owesMe" | "iOwe";
+  /**
+   * Display name: the group's name when the counterparty key is a group
+   * representative, otherwise the person's name. Set in group mode only.
+   */
+  label?: string;
 }
 
 export type MyPosition =
@@ -23,19 +33,25 @@ export type MyPosition =
       amount: number;
       counterparties: Counterparty[];
       inGroup: boolean;
+      /** My group when the position was computed in group mode and I'm in one. */
+      group?: { name: string; representative: string };
     };
 
 /**
- * My personal position on a trip. The hero amount is my individual net
- * balance using the same math as the Balances card. Counterparties come
- * from the trip's settlement method in person mode, filtered to transfers
- * that involve me.
+ * My personal position on a trip. In person mode (the default) the hero
+ * amount is my individual net balance using the same math as the Balances
+ * card, and counterparties come from the trip's settlement method in
+ * person mode, filtered to transfers that involve me. In group mode the
+ * amount is my unit's collapsed net and counterparties come from the same
+ * group-mode computation the Settle tab uses, so the hero always agrees
+ * with it. Without usable groups the mode has no effect.
  */
 export function myPosition(
   trip: Pick<Trip, "participants" | "settlementMethod" | "settlementGroups">,
   expenses: Expense[],
   payments: Payment[],
   myName: string | null,
+  mode: SettlementViewMode = "person",
 ): MyPosition {
   const participants = trip.participants;
   if (expenses.length === 0 && payments.length === 0) {
@@ -48,6 +64,63 @@ export function myPosition(
       totalSpent,
       perPersonAverage:
         participants.length > 0 ? totalSpent / participants.length : 0,
+    };
+  }
+
+  const groups = trip.settlementGroups ?? [];
+  const inGroup = groups.some((g) => g.members.includes(myName));
+
+  if (mode === "group" && hasUsableSettlementGroups(groups)) {
+    const collapsed = collapseBalancesForGroups(
+      calculateBalances(expenses, participants, payments),
+      groups,
+    );
+    const myGroup = groups.find((g) => g.members.includes(myName));
+    const myKey = myGroup ? myGroup.representative : myName;
+    const net = collapsed[myKey] ?? 0;
+    const kind: "owed" | "owes" | "square" =
+      net > SQUARE_THRESHOLD
+        ? "owed"
+        : net < -SQUARE_THRESHOLD
+          ? "owes"
+          : "square";
+
+    // The exact group-mode call the Settle tab makes.
+    const settlements = computeSettlements(
+      trip.settlementMethod,
+      expenses,
+      participants,
+      payments,
+      { groupMode: true, groups },
+    );
+    const groupByRep = buildGroupByRepresentative(groups);
+    const counterparties: Counterparty[] = [];
+    for (const t of settlements) {
+      if (t.to === myKey) {
+        counterparties.push({
+          name: t.from,
+          amount: t.amount,
+          direction: "owesMe",
+          label: groupByRep[t.from]?.name ?? t.from,
+        });
+      } else if (t.from === myKey) {
+        counterparties.push({
+          name: t.to,
+          amount: t.amount,
+          direction: "iOwe",
+          label: groupByRep[t.to]?.name ?? t.to,
+        });
+      }
+    }
+
+    return {
+      kind,
+      amount: Math.abs(net),
+      counterparties,
+      inGroup,
+      ...(myGroup
+        ? { group: { name: myGroup.name, representative: myGroup.representative } }
+        : {}),
     };
   }
 
@@ -70,10 +143,6 @@ export function myPosition(
       counterparties.push({ name: t.to, amount: t.amount, direction: "iOwe" });
     }
   }
-
-  const inGroup = (trip.settlementGroups ?? []).some((g) =>
-    g.members.includes(myName),
-  );
 
   return { kind, amount: Math.abs(net), counterparties, inGroup };
 }

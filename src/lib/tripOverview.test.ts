@@ -4,7 +4,9 @@ import {
   myPosition,
   recentActivity,
 } from "./tripOverview";
-import type { Expense, Payment, Trip } from "@/types";
+import { calculateBalances, computeSettlements } from "./balances";
+import { collapseBalancesForGroups } from "./settlementGroups";
+import type { Expense, Payment, SettlementGroup, Trip } from "@/types";
 
 function expense(overrides: Partial<Expense> & { id: string }): Expense {
   return {
@@ -134,6 +136,179 @@ describe("myPosition", () => {
   it("reports a linked position once there is at least one payment", () => {
     const position = myPosition(trip(), [], [payment({ id: "p1" })], "Ava");
     expect(position.kind).toBe("owes");
+  });
+});
+
+describe("myPosition group mode", () => {
+  const groups: SettlementGroup[] = [
+    {
+      id: "g1",
+      name: "Ava family",
+      members: ["Ava", "Liam"],
+      representative: "Ava",
+    },
+    {
+      id: "g2",
+      name: "Maya family",
+      members: ["Maya", "Noah"],
+      representative: "Maya",
+    },
+  ];
+  const participants = ["Ava", "Liam", "Maya", "Noah"];
+  const groupedTrip = () =>
+    trip({ participants, settlementGroups: groups });
+  const familyExpense = () =>
+    expense({
+      id: "e1",
+      amount: 200,
+      paidBy: "Ava",
+      sharedBy: participants,
+    });
+
+  it("uses my group's collapsed net and group-mode transfers with group labels", () => {
+    const expenses = [familyExpense()];
+    const position = myPosition(groupedTrip(), expenses, [], "Ava", "group");
+    expect(position.kind).toBe("owed");
+    if (position.kind !== "owed") return;
+
+    const collapsed = collapseBalancesForGroups(
+      calculateBalances(expenses, participants, []),
+      groups,
+    );
+    expect(position.amount).toBeCloseTo(collapsed["Ava"] ?? 0, 5);
+    expect(position.amount).toBeCloseTo(100, 5);
+
+    const expected = computeSettlements("greedy", expenses, participants, [], {
+      groupMode: true,
+      groups,
+    }).filter((t) => t.from === "Ava" || t.to === "Ava");
+    expect(position.counterparties).toHaveLength(expected.length);
+    expect(position.counterparties).toEqual(
+      expected.map((t) => ({
+        name: t.to === "Ava" ? t.from : t.to,
+        amount: t.amount,
+        direction: t.to === "Ava" ? "owesMe" : "iOwe",
+        label: "Maya family",
+      })),
+    );
+    expect(position.group).toEqual({
+      name: "Ava family",
+      representative: "Ava",
+    });
+    expect(position.inGroup).toBe(true);
+  });
+
+  it("keeps my own key with group-mode transfers when I'm ungrouped", () => {
+    const soloGroups: SettlementGroup[] = [
+      {
+        id: "g1",
+        name: "Fam",
+        members: ["Ava", "Liam"],
+        representative: "Ava",
+      },
+    ];
+    const soloParticipants = ["Ava", "Liam", "Maya"];
+    const soloTrip = trip({
+      participants: soloParticipants,
+      settlementGroups: soloGroups,
+    });
+    const expenses = [
+      expense({
+        id: "e1",
+        amount: 120,
+        paidBy: "Maya",
+        sharedBy: soloParticipants,
+      }),
+    ];
+    const position = myPosition(soloTrip, expenses, [], "Maya", "group");
+    expect(position.kind).toBe("owed");
+    if (position.kind !== "owed") return;
+    expect(position.amount).toBeCloseTo(80, 5);
+    expect(position.counterparties).toEqual([
+      { name: "Ava", amount: 80, direction: "owesMe", label: "Fam" },
+    ]);
+    expect(position.group).toBeUndefined();
+    expect(position.inGroup).toBe(false);
+  });
+
+  it("ignores the mode when the trip has no groups", () => {
+    const expenses = [expense({ id: "e1" })];
+    const person = myPosition(trip(), expenses, [], "Ava", "person");
+    expect(myPosition(trip(), expenses, [], "Ava", "group")).toEqual(person);
+    const emptyGroups = trip({ settlementGroups: [] });
+    expect(myPosition(emptyGroups, expenses, [], "Ava", "group")).toEqual(
+      person,
+    );
+    if (person.kind !== "owed") return;
+    expect(person.counterparties).toEqual([
+      { name: "Liam", amount: 50, direction: "owesMe" },
+    ]);
+    expect(person.group).toBeUndefined();
+  });
+
+  it("collapses two 3-person families onto one transfer (user-trip shape)", () => {
+    const members = ["Saeid", "Aiden", "Daveen", "Ali", "Donya", "Sara"];
+    const families: SettlementGroup[] = [
+      {
+        id: "g1",
+        name: "Saeid family",
+        members: ["Saeid", "Aiden", "Daveen"],
+        representative: "Saeid",
+      },
+      {
+        id: "g2",
+        name: "Ali family",
+        members: ["Ali", "Donya", "Sara"],
+        representative: "Ali",
+      },
+    ];
+    const familyTrip = trip({
+      participants: members,
+      settlementGroups: families,
+    });
+    const expenses = [
+      expense({
+        id: "e1",
+        amount: 600,
+        paidBy: "Saeid",
+        sharedBy: members,
+      }),
+    ];
+
+    const person = myPosition(familyTrip, expenses, [], "Saeid", "person");
+    expect(person.kind).toBe("owed");
+    if (person.kind !== "owed") return;
+    // Person mode includes debts inside my own family.
+    expect(person.counterparties.map((c) => c.name).sort()).toEqual([
+      "Aiden",
+      "Ali",
+      "Daveen",
+      "Donya",
+      "Sara",
+    ]);
+
+    const group = myPosition(familyTrip, expenses, [], "Saeid", "group");
+    expect(group.kind).toBe("owed");
+    if (group.kind !== "owed") return;
+    const transfers = computeSettlements("greedy", expenses, members, [], {
+      groupMode: true,
+      groups: families,
+    });
+    expect(transfers).toHaveLength(1);
+    expect(group.counterparties).toHaveLength(1);
+    expect(group.counterparties).toEqual([
+      {
+        name: "Ali",
+        amount: transfers[0].amount,
+        direction: "owesMe",
+        label: "Ali family",
+      },
+    ]);
+    expect(group.amount).toBeCloseTo(300, 5);
+    expect(group.group).toEqual({
+      name: "Saeid family",
+      representative: "Saeid",
+    });
   });
 });
 
