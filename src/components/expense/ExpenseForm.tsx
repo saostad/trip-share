@@ -303,10 +303,12 @@ export function ExpenseForm({
           touchedRef.current,
           result.fields,
         );
-        setDescription(next.description);
-        setCategory(next.category);
-        setDate(next.date);
-        setAmount(next.amount);
+        // Write only filled fields: untouched-by-the-result fields keep
+        // whatever the user typed, even in the same tick as the result.
+        if (filled.includes("description")) setDescription(next.description);
+        if (filled.includes("category")) setCategory(next.category);
+        if (filled.includes("date")) setDate(next.date);
+        if (filled.includes("amount")) setAmount(next.amount);
         setReceiptFilled(filled);
         const hadReadable =
           result.fields.description !== null ||
