@@ -2,6 +2,18 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Button } from "./button";
 
+describe("Button reduced-motion press", () => {
+  it("resets scale and nudge while pressed", () => {
+    render(<Button>Tap</Button>);
+    const classes = screen.getByRole("button", { name: "Tap" }).className;
+    // Tailwind v4 scale/translate use their own CSS properties, so
+    // `transform: none` would not undo the press feedback.
+    expect(classes).toContain("motion-reduce:active:scale-100");
+    expect(classes).toContain("motion-reduce:active:translate-y-0");
+    expect(classes).not.toContain("motion-reduce:transform-none");
+  });
+});
+
 describe("Button hit-area expansion", () => {
   it.each([
     ["default", "after:-inset-y-1.5"],
