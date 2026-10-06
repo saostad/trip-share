@@ -184,6 +184,29 @@ describe("CreateTripWizard payload", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("does not submit when Next advances onto Review", () => {
+    const onSubmit = vi.fn();
+    render(
+      <CreateTripWizard
+        creatorName="Ava Example"
+        creatorUid="u1"
+        accountOptions={ACCOUNT_OPTIONS}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Trip name"), {
+      target: { value: "Bali" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText("Advanced options")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create trip" }),
+    ).toBeInTheDocument();
+  });
+
   it("starts at a given step when asked", () => {
     render(
       <CreateTripWizard

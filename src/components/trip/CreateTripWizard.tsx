@@ -262,11 +262,26 @@ export function CreateTripWizard({
           {step === 0 ? "Cancel" : "Back"}
         </Button>
         {step < LAST_STEP ? (
-          <Button type="button" onClick={goNext} disabled={submitting}>
+          <Button
+            key="next"
+            type="button"
+            onClick={(e) => {
+              // The click re-renders this button into a submit button while it
+              // is still being dispatched; block the default submit action.
+              e.preventDefault();
+              goNext();
+            }}
+            disabled={submitting}
+          >
             Next
           </Button>
         ) : (
-          <Button type="submit" disabled={submitting} className="gap-1.5">
+          <Button
+            key="submit"
+            type="submit"
+            disabled={submitting}
+            className="gap-1.5"
+          >
             {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {submitting ? "Creating..." : "Create trip"}
           </Button>
