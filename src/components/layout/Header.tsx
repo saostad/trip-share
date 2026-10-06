@@ -97,14 +97,14 @@ export function HeaderView({
           <Link
             to="/how-it-works"
             aria-label="How it works"
-            className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="relative inline-flex size-9 items-center justify-center rounded-full text-muted-foreground outline-none after:absolute after:-inset-1 after:content-[''] hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             <CircleHelp className="size-5" aria-hidden />
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label="User menu"
-              className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="relative rounded-full outline-none after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Avatar size="default">
                 <AvatarImage

@@ -23,7 +23,7 @@ export function InfoTip({ term, title, body, defaultOpen, className }: InfoTipPr
       <Popover.Trigger
         aria-label={`What does ${term} mean?`}
         className={cn(
-          "inline-flex size-6 shrink-0 items-center justify-center rounded-full align-middle text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+          "relative inline-flex size-6 shrink-0 items-center justify-center rounded-full align-middle text-muted-foreground outline-none after:absolute after:-inset-2.5 after:content-[''] hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
           className,
         )}
       >
