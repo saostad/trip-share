@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +22,19 @@ import {
 } from "lucide-react";
 import {
   EXPENSE_CATEGORIES,
+  expenseCategoryPayload,
   resolveExpenseCategory,
 } from "@/lib/expenseCategories";
+import { extractReceipt } from "@/lib/aiApi";
+import { fetchAutofillEnabled } from "@/lib/aiSettings";
+import {
+  applyReceiptExtraction,
+  touchedFieldsForEdit,
+  type AutofillCurrent,
+  type AutofillEdit,
+  type AutofillField,
+} from "@/lib/receiptAutofill";
+import { fileToReceiptImage } from "@/lib/receiptImage";
 import type { Expense, FileAttachment } from "@/types";
 
 interface ExpenseFormProps {
@@ -56,6 +68,102 @@ function initialCategory(expense?: Expense): string | null {
   if (!expense) return null;
   return (
     resolveExpenseCategory(expense.category, expense.description)?.id ?? null
+  );
+}
+
+type AutofillState =
+  | { status: "idle" }
+  | { status: "running" }
+  | {
+      status: "done";
+      filled: AutofillField[];
+      /** Whether the result had any non-null field to fill with. */
+      hadReadable: boolean;
+      currencyNote: string | null;
+    }
+  | { status: "failed"; message: string }
+  | { status: "skipped" };
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error && err.message ? err.message : "Something went wrong.";
+}
+
+function withoutTrailingPeriod(message: string): string {
+  return message.endsWith(".") ? message.slice(0, -1) : message;
+}
+
+function friendlyFieldList(filled: AutofillField[]): string {
+  return [...filled].sort().join(", ");
+}
+
+function AutofillBanner({
+  autofill,
+  attachmentName,
+}: {
+  autofill: AutofillState;
+  attachmentName: string | null;
+}) {
+  const style = "rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground";
+  switch (autofill.status) {
+    case "running":
+      return (
+        <p className={`flex items-center gap-2 ${style}`} role="status">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          Reading receipt…
+        </p>
+      );
+    case "done":
+      if (autofill.filled.length > 0) {
+        return (
+          <div className={`space-y-1 ${style}`}>
+            <p>
+              Filled from receipt: {friendlyFieldList(autofill.filled)}. Please check.
+            </p>
+            {autofill.currencyNote && <p>{autofill.currencyNote}</p>}
+          </div>
+        );
+      }
+      if (!autofill.hadReadable) {
+        return (
+          <p className={style}>
+            Couldn&apos;t read anything from this receipt. Fill in the details below.
+          </p>
+        );
+      }
+      if (!attachmentName) return null;
+      return (
+        <p className={style}>
+          Receipt attached: {attachmentName}. Fill in the details below.
+        </p>
+      );
+    case "failed":
+      return (
+        <p className={style}>
+          Couldn&apos;t read the receipt: {autofill.message}. Fill in the details below.
+        </p>
+      );
+    case "skipped":
+      if (!attachmentName) return null;
+      return (
+        <p className={style}>
+          Receipt attached: {attachmentName}. Auto-fill reads photos only.
+        </p>
+      );
+    case "idle":
+      if (!attachmentName) return null;
+      return (
+        <p className={style}>
+          Receipt attached: {attachmentName}. Fill in the details below.
+        </p>
+      );
+  }
+}
+
+function FromReceiptMarker() {
+  return (
+    <span className="ml-1.5 align-middle text-xs font-normal text-muted-foreground">
+      from receipt
+    </span>
   );
 }
 
@@ -98,19 +206,124 @@ export function ExpenseForm({
   const [paidByError, setPaidByError] = useState("");
   const [sharedByError, setSharedByError] = useState("");
 
+  // Receipt auto-fill (D14): fields the user changed since the file was picked
+  // are never overwritten, and stale results are ignored via requestTokenRef.
+  const [autofill, setAutofill] = useState<AutofillState>({ status: "idle" });
+  const [receiptFilled, setReceiptFilled] = useState<AutofillField[]>([]);
+  const touchedRef = useRef<Set<AutofillField>>(new Set());
+  const requestTokenRef = useRef(0);
+  const mountedRef = useRef(true);
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  const fieldsRef = useRef<AutofillCurrent>({ description, category, date, amount });
+  fieldsRef.current = { description, category, date, amount };
+  const autofillEnabledRef = useRef<Promise<boolean> | null>(null);
+
+  // Read the setting once. The same promise is awaited when a file is
+  // picked, so it's never read twice; the ref guard keeps re-runs free.
+  useEffect(() => {
+    mountedRef.current = true;
+    if (!isEditMode && tripId && autofillEnabledRef.current === null) {
+      autofillEnabledRef.current = fetchAutofillEnabled();
+    }
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [isEditMode, tripId]);
+
   const allSelected =
     participants.length > 0 && participants.every((p) => sharedBy.includes(p));
   const isLastStep = step === LAST_STEP_INDEX;
 
+  function markTouched(edit: AutofillEdit) {
+    const fields = touchedFieldsForEdit(edit);
+    for (const field of fields) touchedRef.current.add(field);
+    setReceiptFilled((prev) => prev.filter((field) => !fields.includes(field)));
+  }
+
   function selectPreset(id: string, label: string) {
+    markTouched("preset");
     setCategory(id);
     setDescription(label);
   }
 
   function handleDescriptionChange(value: string) {
+    markTouched("description");
     setDescription(value);
     const match = EXPENSE_CATEGORIES.find((c) => c.label === value);
     setCategory(match ? match.id : null);
+  }
+
+  function handleDateChange(value: string) {
+    markTouched("date");
+    setDate(value);
+  }
+
+  function handleAmountChange(value: string) {
+    markTouched("amount");
+    setAmount(value);
+    if (amountError) setAmountError("");
+  }
+
+  function handleReceiptFileSelected(file: File) {
+    if (isEditMode || !tripId) return;
+    const enabledPromise = autofillEnabledRef.current;
+    if (!enabledPromise) return;
+    if (!file.type.startsWith("image/")) {
+      setAutofill({ status: "skipped" });
+      return;
+    }
+    touchedRef.current = new Set();
+    setReceiptFilled([]);
+    requestTokenRef.current += 1;
+    const token = requestTokenRef.current;
+    const activeTripId = tripId;
+    setAutofill({ status: "idle" });
+    // Runs alongside the upload; never blocks the wizard.
+    void (async () => {
+      const enabled = await enabledPromise;
+      if (token !== requestTokenRef.current || !mountedRef.current) return;
+      if (!enabled) return;
+      setAutofill({ status: "running" });
+      try {
+        const image = await fileToReceiptImage(file);
+        if (token !== requestTokenRef.current || !mountedRef.current) return;
+        const result = await extractReceipt({
+          tripId: activeTripId,
+          image,
+          categories: expenseCategoryPayload(),
+        });
+        if (token !== requestTokenRef.current || !mountedRef.current) return;
+        const { next, filled } = applyReceiptExtraction(
+          fieldsRef.current,
+          touchedRef.current,
+          result.fields,
+        );
+        setDescription(next.description);
+        setCategory(next.category);
+        setDate(next.date);
+        setAmount(next.amount);
+        setReceiptFilled(filled);
+        const hadReadable =
+          result.fields.description !== null ||
+          result.fields.category !== null ||
+          result.fields.date !== null ||
+          result.fields.amount !== null;
+        const currencyNote =
+          result.fields.currency !== null &&
+          result.fields.currency !== "USD" &&
+          filled.includes("amount")
+            ? `The receipt total is in ${result.fields.currency}. The amount was filled as printed; check it.`
+            : null;
+        setAutofill({ status: "done", filled, hadReadable, currencyNote });
+        if (filled.length > 0 && stepRef.current >= 2) {
+          toast.success(`Filled from receipt: ${friendlyFieldList(filled)}`);
+        }
+      } catch (err: unknown) {
+        if (token !== requestTokenRef.current || !mountedRef.current) return;
+        setAutofill({ status: "failed", message: withoutTrailingPeriod(errorMessage(err)) });
+      }
+    })();
   }
 
   function handleToggleParticipant(participant: string) {
@@ -167,6 +380,9 @@ export function ExpenseForm({
 
   function handleBack() {
     if (step === 0 && !isEditMode) {
+      // A late result must not apply after leaving the form.
+      requestTokenRef.current += 1;
+      setAutofill({ status: "idle" });
       setPhase("start");
       return;
     }
@@ -183,6 +399,10 @@ export function ExpenseForm({
     if (file) {
       setPhase("form");
       setStep(0);
+    } else {
+      // The attachment is gone, so a late result for it must not apply.
+      requestTokenRef.current += 1;
+      setAutofill({ status: "idle" });
     }
   }
 
@@ -239,6 +459,11 @@ export function ExpenseForm({
         setAttachment(null);
         setStep(0);
         setPhase("start");
+        // A late result must not leak into the next expense.
+        requestTokenRef.current += 1;
+        setAutofill({ status: "idle" });
+        setReceiptFilled([]);
+        touchedRef.current = new Set();
       }
     } finally {
       setSubmitting(false);
@@ -280,6 +505,7 @@ export function ExpenseForm({
               storagePath={`trips/${tripId}/expenses`}
               value={attachment}
               onChange={handleStartAttachment}
+              onFileSelected={handleReceiptFileSelected}
             />
           </div>
         ) : (
@@ -342,15 +568,16 @@ export function ExpenseForm({
           style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
         />
       </div>
-      {attachment && step === 0 && (
-        <p className="rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
-          Receipt attached: {attachment.name}. Fill in the details below.
-        </p>
+      {(step === 0 || step === 1) && (
+        <AutofillBanner autofill={autofill} attachmentName={attachment?.name ?? null} />
       )}
       {step === 0 && (
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">What was it for?</label>
+            <label className="text-sm font-medium leading-none">
+              What was it for?
+              {receiptFilled.includes("category") && <FromReceiptMarker />}
+            </label>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {EXPENSE_CATEGORIES.map((c) => {
                 const Icon = c.icon;
@@ -375,7 +602,10 @@ export function ExpenseForm({
             </div>
           </div>
           <div className="space-y-2">
-            <label htmlFor="expense-description" className="text-sm font-medium leading-none">Description</label>
+            <label htmlFor="expense-description" className="text-sm font-medium leading-none">
+              Description
+              {receiptFilled.includes("description") && <FromReceiptMarker />}
+            </label>
             <Input
               id="expense-description"
               value={description}
@@ -385,14 +615,20 @@ export function ExpenseForm({
             <p className="text-xs text-muted-foreground">Tap a category above or type a custom description.</p>
           </div>
           <div className="space-y-2">
-            <label htmlFor="expense-date" className="text-sm font-medium leading-none">Date</label>
-            <Input id="expense-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <label htmlFor="expense-date" className="text-sm font-medium leading-none">
+              Date
+              {receiptFilled.includes("date") && <FromReceiptMarker />}
+            </label>
+            <Input id="expense-date" type="date" value={date} onChange={(e) => handleDateChange(e.target.value)} />
           </div>
         </div>
       )}
       {step === 1 && (
         <div className="space-y-2">
-          <label htmlFor="expense-amount" className="text-sm font-medium leading-none">Amount</label>
+          <label htmlFor="expense-amount" className="text-sm font-medium leading-none">
+            Amount
+            {receiptFilled.includes("amount") && <FromReceiptMarker />}
+          </label>
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
             <Input
@@ -401,10 +637,7 @@ export function ExpenseForm({
               step="0.01"
               min="0"
               value={amount}
-              onChange={(e) => {
-                setAmount(e.target.value);
-                if (amountError) setAmountError("");
-              }}
+              onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.00"
               className="pl-6"
               aria-invalid={!!amountError}
