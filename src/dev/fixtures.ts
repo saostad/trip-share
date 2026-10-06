@@ -15,7 +15,7 @@ export const previewTrip: Trip = {
   id: "preview-trip-1",
   ownerId: "fake-uid-ava",
   name: "Lisbon Weekend",
-  participants: ["Ava", "Liam", "Maya", "Noah"],
+  participants: ["Ava", "Liam", "Maya", "Noah", "Christopher-James"],
   collaboratorIds: ["fake-uid-liam"],
   participantLinks: {
     Ava: "fake-uid-ava",
@@ -116,6 +116,16 @@ export const previewExpenses: Expense[] = [
     sharedBy: ["Ava", "Liam", "Maya", "Noah"],
     createdAt: fakeTimestamp("2026-09-21T18:45:00.000Z"),
   },
+  {
+    id: "e9",
+    description: "Fado show tickets",
+    category: "tickets",
+    date: "2026-09-24",
+    amount: 120.0,
+    paidBy: "Christopher-James",
+    sharedBy: ["Ava", "Liam", "Maya", "Noah", "Christopher-James"],
+    createdAt: fakeTimestamp("2026-09-24T20:00:00.000Z"),
+  },
 ];
 
 export const previewPayments: Payment[] = [
@@ -136,5 +146,14 @@ export const previewPayments: Payment[] = [
     date: "2026-10-03",
     note: "",
     createdAt: fakeTimestamp("2026-10-03T17:20:00.000Z"),
+  },
+  {
+    id: "p3",
+    from: "Christopher-James",
+    to: "Ava",
+    amount: 40.0,
+    date: "2026-10-04",
+    note: "Show share",
+    createdAt: fakeTimestamp("2026-10-04T10:00:00.000Z"),
   },
 ];

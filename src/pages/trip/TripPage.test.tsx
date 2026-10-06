@@ -75,7 +75,7 @@ beforeEach(() => {
 describe("trip routes", () => {
   it.each([
     ["/trip/preview-trip-1", /You get back/],
-    ["/trip/preview-trip-1/expenses", /8 expenses/],
+    ["/trip/preview-trip-1/expenses", /9 expenses/],
     ["/trip/preview-trip-1/settle", /Suggested payments/],
     ["/trip/preview-trip-1/people", /Participants/],
   ])("renders the right tab for %s", async (path, pattern) => {
@@ -118,7 +118,7 @@ describe("archived gating", () => {
   it("hides the desktop Add button on expenses", async () => {
     mockTripData(archivedTrip);
     renderAt("/trip/preview-trip-1/expenses");
-    await screen.findByText(/8 expenses/);
+    await screen.findByText(/9 expenses/);
     expect(screen.queryByText("Add expense")).not.toBeInTheDocument();
   });
 
