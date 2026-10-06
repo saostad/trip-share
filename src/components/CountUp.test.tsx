@@ -37,6 +37,32 @@ describe("CountUp", () => {
     );
   });
 
+  it("never dips below the old value when the value rises", async () => {
+    stubMatchMedia(false);
+    const { container, rerender } = render(
+      <CountUp value={128.5} format={formatCurrency} />,
+    );
+    const animated = container.querySelector('span[aria-hidden="true"]');
+    await waitFor(
+      () => expect(animated).toHaveTextContent("$128.50"),
+      { timeout: 3000 },
+    );
+    rerender(<CountUp value={171.25} format={formatCurrency} />);
+    for (let i = 0; i < 15; i++) {
+      const text = animated ? animated.textContent || "" : "";
+      let digits = "";
+      for (const ch of text) {
+        if ((ch >= "0" && ch <= "9") || ch === ".") digits += ch;
+      }
+      expect(Number(digits)).toBeGreaterThanOrEqual(128.49);
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    }
+    await waitFor(
+      () => expect(animated).toHaveTextContent("$171.25"),
+      { timeout: 3000 },
+    );
+  });
+
   it("hides the animation from assistive tech", () => {
     stubMatchMedia(false);
     const { container } = render(<CountUp value={130} format={formatCurrency} />);
