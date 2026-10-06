@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { TripDetailPage } from '@/pages/TripDetailPage'
 import { JoinTripPage } from '@/pages/JoinTripPage'
+import { AdminPage } from '@/pages/AdminPage'
 
 function BuildFooter() {
   const builtAt = new Date(__BUILD_TIME__).toLocaleString(undefined, {
@@ -54,6 +55,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <JoinTripPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
               </ProtectedRoute>
             }
           />

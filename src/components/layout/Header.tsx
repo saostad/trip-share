@@ -2,12 +2,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun, ShieldCheck } from "lucide-react";
 import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 
 export function Header() {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -45,6 +45,16 @@ export function Header() {
         >
           {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </Button>
+
+        {user && isAdmin && (
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            <ShieldCheck className="size-4" />
+            <span className="hidden sm:inline">Admin</span>
+          </Link>
+        )}
 
         {user && (
           <>
