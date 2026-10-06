@@ -22,6 +22,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function hasControlCharacter(value: string): boolean {
+  for (const char of value) {
+    const code = char.codePointAt(0) ?? 0;
+    if ((code >= 0x00 && code <= 0x1f) || code === 0x7f) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function readProvider(value: unknown): ProviderId | undefined {
   if (typeof value !== "string" || getProvider(value) === undefined) {
     return undefined;
@@ -103,7 +113,7 @@ export function validateAiSettingsInput(input: unknown): AiSettings {
       `Invalid 'model': must be 1 to ${MAX_MODEL_LENGTH} characters.`,
     );
   }
-  if (/[\u0000-\u001F\u007F]/.test(model)) {
+  if (hasControlCharacter(model)) {
     throw new HttpsError(
       "invalid-argument",
       "Invalid 'model': must not contain control characters.",
