@@ -54,7 +54,12 @@ export function PeopleTabView({
 
   useEffect(() => {
     if (location.hash === "#invite") {
-      document.getElementById("invite")?.scrollIntoView({ behavior: "smooth" });
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      document
+        .getElementById("invite")
+        ?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
     }
   }, [location.hash]);
 
