@@ -148,7 +148,7 @@ export function HowItWorksContent({ onWatchVideo }: { onWatchVideo: () => void }
 
         <section
           aria-label="Video"
-          className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-5"
+          className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center"
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Play className="size-5" aria-hidden />
@@ -159,7 +159,12 @@ export function HowItWorksContent({ onWatchVideo }: { onWatchVideo: () => void }
               See how the settle-up math works in a short video.
             </p>
           </div>
-          <Button type="button" variant="outline" onClick={onWatchVideo}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onWatchVideo}
+            className="w-full sm:w-auto"
+          >
             Watch a 3-minute video
           </Button>
         </section>
