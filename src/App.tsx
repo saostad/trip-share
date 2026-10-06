@@ -60,7 +60,7 @@ function App() {
             <Route path="expenses" element={<ExpensesTab />} />
             <Route path="settle" element={<SettleTab />} />
             <Route path="people" element={<PeopleTab />} />
-            <Route path="*" element={<Navigate to="." replace />} />
+            <Route path="*" element={<Navigate to=".." replace />} />
           </Route>
           <Route
             path="/join/:shareToken"

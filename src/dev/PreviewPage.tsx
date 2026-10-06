@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,17 +11,82 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { HeaderView } from "@/components/layout/Header";
+import { DashboardView } from "@/pages/DashboardView";
+import { TripShellView } from "@/pages/trip/TripShellView";
+import { TripTabs, type TripTabId } from "@/pages/trip/TripTabs";
+import { Fab } from "@/pages/trip/Fab";
+import { OverviewTabView } from "@/pages/trip/tabs/OverviewTab";
+import { ExpensesTabView } from "@/pages/trip/tabs/ExpensesTab";
+import { SettleTabView } from "@/pages/trip/tabs/SettleTab";
+import { PeopleTabView } from "@/pages/trip/tabs/PeopleTab";
 import { formatCurrency } from "@/lib/formatters";
+import {
+  checklistState,
+  myPosition,
+  recentActivity,
+} from "@/lib/tripOverview";
+import {
+  previewExpenses,
+  previewPayments,
+  previewTimestamp,
+  previewTrip,
+} from "./fixtures";
+import type { Expense, Payment, Trip } from "@/types";
 
-type Section = "tokens" | "badges" | "buttons" | "cards" | "header";
+type Section =
+  | "tokens"
+  | "badges"
+  | "buttons"
+  | "cards"
+  | "header"
+  | "trip-overview"
+  | "trip-expenses"
+  | "trip-settle"
+  | "trip-people"
+  | "dashboard";
 
-const SECTIONS: Section[] = ["tokens", "badges", "buttons", "cards", "header"];
+const SECTIONS: Section[] = [
+  "tokens",
+  "badges",
+  "buttons",
+  "cards",
+  "header",
+  "trip-overview",
+  "trip-expenses",
+  "trip-settle",
+  "trip-people",
+  "dashboard",
+];
+
+const SECTION_LABELS: Record<Section, string> = {
+  tokens: "Tokens",
+  badges: "Badges",
+  buttons: "Buttons",
+  cards: "Cards",
+  header: "Header",
+  "trip-overview": "Trip · Overview",
+  "trip-expenses": "Trip · Expenses",
+  "trip-settle": "Trip · Settle",
+  "trip-people": "Trip · People",
+  dashboard: "Dashboard",
+};
 
 function sectionFromParam(value: string | null): Section {
-  if (value === "tokens" || value === "badges" || value === "buttons" || value === "cards" || value === "header") {
-    return value;
+  if (value !== null && (SECTIONS as string[]).includes(value)) {
+    return value as Section;
   }
   return "tokens";
+}
+
+type OverviewState = "owed" | "owes" | "square" | "unlinked" | "new" | "archived";
+
+const OVERVIEW_STATES: OverviewState[] = ["owed", "owes", "square", "unlinked", "new", "archived"];
+
+function overviewStateFromParam(value: string | null): OverviewState {
+  if (value !== null && (OVERVIEW_STATES as string[]).includes(value)) {
+    return value as OverviewState;
+  }
+  return "owed";
 }
 
 function TokenSwatch({
@@ -263,6 +329,289 @@ function HeaderSection({ theme }: { theme: "light" | "dark" }) {
   );
 }
 
+const noop = () => {};
+
+function TripPreviewShell({
+  activeTab,
+  trip,
+  isOwner,
+  isArchived,
+  showFab,
+  theme,
+  children,
+}: {
+  activeTab: TripTabId;
+  trip: Trip;
+  isOwner: boolean;
+  isArchived: boolean;
+  showFab: boolean;
+  theme: "light" | "dark";
+  children: ReactNode;
+}) {
+  return (
+    <TripShellView
+      trip={trip}
+      isOwner={isOwner}
+      isArchived={isArchived}
+      header={
+        <HeaderView
+          user={{ displayName: "Ava Example", email: "ava@example.com", photoURL: null }}
+          isAdmin={isOwner}
+          theme={theme}
+          buildCommit="abc1234"
+          buildTime="2026-10-06T12:00:00.000Z"
+          onToggleTheme={noop}
+          onSignOut={noop}
+        />
+      }
+      tabs={<TripTabs active={activeTab} />}
+      fab={showFab && !isArchived ? <Fab onAdd={noop} /> : null}
+    >
+      {children}
+    </TripShellView>
+  );
+}
+
+const SQUARE_EXPENSES: Expense[] = [
+  {
+    id: "sq1",
+    description: "Dinner",
+    category: "food",
+    date: "2026-10-01",
+    amount: 50,
+    paidBy: "Ava",
+    sharedBy: ["Ava", "Liam"],
+    createdAt: previewTimestamp("2026-10-01T19:00:00.000Z"),
+  },
+  {
+    id: "sq2",
+    description: "Lunch",
+    category: "food",
+    date: "2026-10-02",
+    amount: 50,
+    paidBy: "Liam",
+    sharedBy: ["Ava", "Liam"],
+    createdAt: previewTimestamp("2026-10-02T12:30:00.000Z"),
+  },
+];
+
+function TripOverviewSection({ theme, state }: { theme: "light" | "dark"; state: OverviewState }) {
+  let trip: Trip = previewTrip;
+  let expenses: Expense[] = previewExpenses;
+  let payments: Payment[] = previewPayments;
+  let myName: string | null = "Ava";
+  const isOwner = true;
+
+  if (state === "owes") {
+    myName = "Maya";
+  } else if (state === "square") {
+    trip = {
+      ...previewTrip,
+      participants: ["Ava", "Liam"],
+      participantLinks: {},
+      collaboratorIds: [],
+      settlementGroups: [],
+    };
+    expenses = SQUARE_EXPENSES;
+    payments = [];
+    myName = "Ava";
+  } else if (state === "unlinked") {
+    myName = null;
+  } else if (state === "new") {
+    trip = {
+      ...previewTrip,
+      participants: ["Ava"],
+      participantLinks: {},
+      collaboratorIds: [],
+      shareToken: null,
+      settlementGroups: [],
+    };
+    expenses = [];
+    payments = [];
+    myName = "Ava";
+  } else if (state === "archived") {
+    trip = { ...previewTrip, archived: true };
+    myName = "Ava";
+  }
+
+  const isArchived = trip.archived === true;
+  return (
+    <TripPreviewShell
+      activeTab="overview"
+      trip={trip}
+      isOwner={isOwner}
+      isArchived={isArchived}
+      showFab
+      theme={theme}
+    >
+      <OverviewTabView
+        position={myPosition(trip, expenses, payments, myName)}
+        isOwner={isOwner}
+        isArchived={isArchived}
+        checklist={checklistState(trip, expenses, payments, isOwner)}
+        checklistDismissed={false}
+        activity={recentActivity(expenses, payments)}
+        onAddExpense={noop}
+        onEditTrip={noop}
+        onDismissChecklist={noop}
+      />
+    </TripPreviewShell>
+  );
+}
+
+function TripExpensesSection({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <TripPreviewShell
+      activeTab="expenses"
+      trip={previewTrip}
+      isOwner
+      isArchived={false}
+      showFab
+      theme={theme}
+    >
+      <ExpensesTabView
+        expenses={previewExpenses}
+        participants={previewTrip.participants}
+        isArchived={false}
+        onAddExpense={noop}
+        onEditExpense={noop}
+        onDeleteExpense={noop}
+      />
+    </TripPreviewShell>
+  );
+}
+
+function TripSettleSection({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <TripPreviewShell
+      activeTab="settle"
+      trip={previewTrip}
+      isOwner
+      isArchived={false}
+      showFab={false}
+      theme={theme}
+    >
+      <SettleTabView
+        expenses={previewExpenses}
+        participants={previewTrip.participants}
+        payments={previewPayments}
+        tripName={previewTrip.name}
+        settlementMethod={previewTrip.settlementMethod}
+        settlementGroups={previewTrip.settlementGroups}
+        isArchived={false}
+        onMarkPaid={() => toast.success("Marked as paid (preview)")}
+        onAddPayment={noop}
+        onEditPayment={noop}
+        onDeletePayment={noop}
+        onOpenHelp={noop}
+        onOpenReport={noop}
+        onDownloadExcel={() => toast.success("Excel export (preview)")}
+      />
+    </TripPreviewShell>
+  );
+}
+
+function TripPeopleSection({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <TripPreviewShell
+      activeTab="people"
+      trip={previewTrip}
+      isOwner
+      isArchived={false}
+      showFab={false}
+      theme={theme}
+    >
+      <PeopleTabView
+        trip={previewTrip}
+        members={{}}
+        myName="Ava"
+        isOwner
+        isArchived={false}
+        archiving={false}
+        onEditTrip={noop}
+        onToggleArchive={noop}
+        onDeleteTrip={noop}
+      />
+    </TripPreviewShell>
+  );
+}
+
+const DASHBOARD_TRIPS = [
+  { trip: previewTrip, role: "owner" as const },
+  {
+    trip: {
+      ...previewTrip,
+      id: "preview-trip-2",
+      name: "Ski Weekend",
+      participants: ["Ava", "Liam", "Maya"],
+      updatedAt: previewTimestamp("2026-10-04T09:00:00.000Z"),
+    },
+    role: "collaborator" as const,
+  },
+  {
+    trip: {
+      ...previewTrip,
+      id: "preview-trip-3",
+      name: "Old Beach Trip",
+      archived: true,
+      updatedAt: previewTimestamp("2026-08-01T12:00:00.000Z"),
+    },
+    role: "owner" as const,
+  },
+];
+
+function DashboardSection({ theme }: { theme: "light" | "dark" }) {
+  const header = (
+    <HeaderView
+      user={{ displayName: "Ava Example", email: "ava@example.com", photoURL: null }}
+      isAdmin={false}
+      theme={theme}
+      buildCommit="abc1234"
+      buildTime="2026-10-06T12:00:00.000Z"
+      onToggleTheme={noop}
+      onSignOut={noop}
+    />
+  );
+  const accountOptions = [
+    { uid: "fake-uid-ava", label: "Ava Example", email: "ava@example.com" },
+  ];
+  async function handleCreate() {
+    toast.success("Trip created (preview)");
+    return true;
+  }
+  return (
+    <div className="space-y-8">
+      <DashboardView
+        displayName="Ava Example"
+        trips={DASHBOARD_TRIPS}
+        loading={false}
+        loadError={false}
+        canCreateTrips
+        accessLoading={false}
+        accountOptions={accountOptions}
+        onCreateTrip={handleCreate}
+        header={header}
+      />
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Empty state</h2>
+        <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
+          <DashboardView
+            displayName="Ava Example"
+            trips={[]}
+            loading={false}
+            loadError={false}
+            canCreateTrips
+            accessLoading={false}
+            accountOptions={accountOptions}
+            onCreateTrip={handleCreate}
+            header={null}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PreviewPage() {
   const [params] = useSearchParams();
   const section = sectionFromParam(params.get("section"));
@@ -321,17 +670,45 @@ export function PreviewPage() {
             <Link
               key={s}
               to={hrefFor(s)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize ${s === section ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${s === section ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
             >
-              {s}
+              {SECTION_LABELS[s]}
             </Link>
           ))}
         </nav>
+        {section === "trip-overview" && (
+          <nav className="mb-6 flex flex-wrap gap-2" aria-label="Overview states">
+            {OVERVIEW_STATES.map((st) => {
+              const next = new URLSearchParams(params);
+              next.set("state", st);
+              const active = overviewStateFromParam(params.get("state")) === st;
+              return (
+                <Link
+                  key={st}
+                  to={`?${next.toString()}`}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize ${active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+                >
+                  {st}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
         {section === "tokens" && <TokensSection />}
         {section === "badges" && <BadgesSection />}
         {section === "buttons" && <ButtonsSection />}
         {section === "cards" && <CardsSection />}
         {section === "header" && <HeaderSection theme={forcedTheme} />}
+        {section === "trip-overview" && (
+          <TripOverviewSection
+            theme={forcedTheme}
+            state={overviewStateFromParam(params.get("state"))}
+          />
+        )}
+        {section === "trip-expenses" && <TripExpensesSection theme={forcedTheme} />}
+        {section === "trip-settle" && <TripSettleSection theme={forcedTheme} />}
+        {section === "trip-people" && <TripPeopleSection theme={forcedTheme} />}
+        {section === "dashboard" && <DashboardSection theme={forcedTheme} />}
       </div>
     </div>
   );

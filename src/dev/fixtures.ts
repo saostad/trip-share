@@ -3,11 +3,13 @@ import type { Timestamp } from "firebase/firestore";
 
 // Minimal Timestamp stand-in for dev fixtures only.
 // TripCard checks `typeof timestamp.toDate === "function"`, so this is enough.
-function fakeTimestamp(iso: string): Timestamp {
+export function previewTimestamp(iso: string): Timestamp {
   return {
     toDate: () => new Date(iso),
   } as unknown as Timestamp;
 }
+
+const fakeTimestamp = previewTimestamp;
 
 export const previewTrip: Trip = {
   id: "preview-trip-1",
