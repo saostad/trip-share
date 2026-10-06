@@ -269,16 +269,17 @@ export function ExpenseForm({
     if (isEditMode || !tripId) return;
     const enabledPromise = autofillEnabledRef.current;
     if (!enabledPromise) return;
-    if (!file.type.startsWith("image/")) {
-      setAutofill({ status: "skipped" });
-      return;
-    }
+    // Every pick invalidates any running request, whatever the file type.
     touchedRef.current = new Set();
     setReceiptFilled([]);
     requestTokenRef.current += 1;
     const token = requestTokenRef.current;
     const activeTripId = tripId;
     setAutofill({ status: "idle" });
+    if (!file.type.startsWith("image/")) {
+      setAutofill({ status: "skipped" });
+      return;
+    }
     // Runs alongside the upload; never blocks the wizard.
     void (async () => {
       const enabled = await enabledPromise;
