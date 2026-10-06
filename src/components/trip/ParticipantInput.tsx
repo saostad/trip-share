@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,11 @@ interface ParticipantInputProps {
   members?: Record<string, UserProfile>;
   /** Allow renaming names in place; used by the create wizard only. */
   editableNames?: boolean;
+  /**
+   * Marks the row linked to this account with a "You" badge.
+   * Used by the create wizard only.
+   */
+  youUid?: string | null;
 }
 
 function formatAccountOption(opt: AccountOption): string {
@@ -46,6 +52,7 @@ export function ParticipantInput({
   links = {},
   onLinksChange,
   editableNames = false,
+  youUid = null,
 }: ParticipantInputProps) {
   const [inputValue, setInputValue] = useState("");
 
@@ -170,6 +177,11 @@ export function ParticipantInput({
                     />
                   ) : (
                     <span className="truncate font-medium">{name}</span>
+                  )}
+                  {youUid != null && links[name] === youUid && (
+                    <Badge variant="primary" className="shrink-0">
+                      You
+                    </Badge>
                   )}
                   {isRemovable ? (
                     <Button

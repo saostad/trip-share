@@ -68,6 +68,7 @@ describe("CreateTripWizard prefill", () => {
     expect(
       screen.getByText("Ava Example (ava@example.com)"),
     ).toBeInTheDocument();
+    expect(screen.getByText("You")).toBeInTheDocument();
   });
 
   it("falls back to Me without a display name", () => {
@@ -101,6 +102,7 @@ describe("CreateTripWizard prefill", () => {
     fireEvent.pointerUp(notLinked);
     fireEvent.click(notLinked);
     expect(screen.getByRole("combobox").textContent).toContain("Not linked");
+    expect(screen.queryByText("You")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Ava" }));
     expect(screen.queryByLabelText("Rename Ava")).not.toBeInTheDocument();

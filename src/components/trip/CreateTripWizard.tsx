@@ -208,6 +208,7 @@ export function CreateTripWizard({
             links={links}
             onLinksChange={setLinks}
             editableNames
+            youUid={creatorUid}
           />
         </div>
       )}
