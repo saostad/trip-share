@@ -63,20 +63,26 @@ export function parseGeminiModelsPage(
 
 /**
  * Parses an OpenAI-compatible `GET /models` body (Together, NVIDIA). Pure.
- * Malformed entries are skipped; an unrecognized envelope throws `internal`.
- * With `chatOnly`, only entries with `type === "chat"` are kept.
+ * Accepts both a top-level array (Together's `ModelInfoList`) and a
+ * `{ data: [...] }` envelope (NVIDIA). Malformed entries are skipped; an
+ * unrecognized envelope throws `internal`. With `chatOnly`, only entries
+ * with `type === "chat"` are kept.
  */
 export function parseOpenAiCompatibleModels(
   body: unknown,
   providerLabel: string,
   chatOnly: boolean,
 ): string[] {
-  if (!isRecord(body)) {
+  let data: unknown;
+  if (Array.isArray(body)) {
+    data = body;
+  } else if (isRecord(body)) {
+    data = body["data"];
+    if (data === undefined) {
+      return [];
+    }
+  } else {
     throw new HttpsError("internal", `${providerLabel} returned an unexpected model list.`);
-  }
-  const data = body["data"];
-  if (data === undefined) {
-    return [];
   }
   if (!Array.isArray(data)) {
     throw new HttpsError("internal", `${providerLabel} returned an unexpected model list.`);

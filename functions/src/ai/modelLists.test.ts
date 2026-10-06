@@ -101,14 +101,27 @@ const geminiPage2 = {
   ],
 };
 
-const togetherBody = {
+// Shape source: Together's GET /v1/models returns a bare JSON array
+// (OpenAPI schema `ModelInfoList: type: array`); each entry carries a `type`
+// such as "chat" or "embedding". There is no {object, data} envelope.
+const togetherBody = [
+  { id: "meta-llama/Llama-3-8b-chat", type: "chat" },
+  { id: "embed-model", type: "embedding" },
+  { id: "another-chat", type: "chat" },
+  { id: "", type: "chat" },
+  { id: "untyped" },
+  null,
+];
+
+// Shape source: NVIDIA's public GET /v1/models returns
+// {object: "list", data: [{id, object, created, owned_by}]} (checked against
+// the live endpoint). Entries have no `type` field.
+const nvidiaBody = {
   object: "list",
   data: [
-    { id: "meta-llama/Llama-3-8b-chat", type: "chat" },
-    { id: "embed-model", type: "embedding" },
-    { id: "another-chat", type: "chat" },
-    { id: "", type: "chat" },
-    { id: "untyped" },
+    { id: "meta/llama-3.2-11b-vision-instruct", object: "model", created: 1727790000, owned_by: "meta" },
+    { id: "nvidia/nv-embedqa-e5-v5", object: "model", created: 1727790000, owned_by: "nvidia" },
+    { id: "", object: "model", created: 1727790000, owned_by: "nvidia" },
     null,
   ],
 };
@@ -149,16 +162,19 @@ describe("parseOpenAiCompatibleModels", () => {
   });
 
   it("keeps everything with an id for NVIDIA", () => {
-    expect(parseOpenAiCompatibleModels(togetherBody, "NVIDIA", false)).toEqual([
-      "meta-llama/Llama-3-8b-chat",
-      "embed-model",
-      "another-chat",
-      "untyped",
+    expect(parseOpenAiCompatibleModels(nvidiaBody, "NVIDIA", false)).toEqual([
+      "meta/llama-3.2-11b-vision-instruct",
+      "nvidia/nv-embedqa-e5-v5",
     ]);
   });
 
+  it("reads an empty array or a missing data key as an empty list", () => {
+    expect(parseOpenAiCompatibleModels([], "Together.ai", true)).toEqual([]);
+    expect(parseOpenAiCompatibleModels({}, "NVIDIA", false)).toEqual([]);
+  });
+
   it("throws internal on an unexpected envelope", () => {
-    for (const body of [null, [], { data: "nope" }]) {
+    for (const body of [null, "models", 42, { data: "nope" }]) {
       try {
         parseOpenAiCompatibleModels(body, "NVIDIA", false);
       } catch (error) {
@@ -206,14 +222,9 @@ describe("fetchProviderModelIds", () => {
   });
 
   it("keeps every NVIDIA model", async () => {
-    const fetchImpl = mockFetch(() => ({ status: 200, body: togetherBody }), []);
+    const fetchImpl = mockFetch(() => ({ status: 200, body: nvidiaBody }), []);
     const ids = await fetchProviderModelIds(nvidia(), FAKE_KEY, fetchImpl);
-    expect(ids).toEqual([
-      "meta-llama/Llama-3-8b-chat",
-      "embed-model",
-      "another-chat",
-      "untyped",
-    ]);
+    expect(ids).toEqual(["meta/llama-3.2-11b-vision-instruct", "nvidia/nv-embedqa-e5-v5"]);
   });
 
   it("maps 401 and 403 to key-rejected failures", async () => {
