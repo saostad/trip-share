@@ -63,14 +63,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAdminLoading(false);
         } else {
           const email = firebaseUser.email;
+          const uid = firebaseUser.uid;
+          // Ignore a stale check that finishes after sign-out or an account
+          // switch, so it can't set the wrong user's admin state.
           void isAdminEmail(email)
-            .then(setIsAdmin)
+            .then((admin) => {
+              if (auth.currentUser?.uid === uid) setIsAdmin(admin);
+            })
             .catch((err: unknown) => {
               // Fail closed so admin UI stays hidden if the doc is unreadable.
               console.warn("[admin] could not load admins/{email}", err);
-              setIsAdmin(false);
+              if (auth.currentUser?.uid === uid) setIsAdmin(false);
             })
-            .finally(() => setAdminLoading(false));
+            .finally(() => {
+              if (auth.currentUser?.uid === uid) setAdminLoading(false);
+            });
         }
         setAccessLoading(true);
         setCanCreate(false);
