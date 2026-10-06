@@ -1,24 +1,18 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, Outlet } from "react-router";
 import { useTrip } from "@/hooks/useTrip";
 import { useExpenses } from "@/hooks/useExpenses";
 import { usePayments } from "@/hooks/usePayments";
 import { useMembers } from "@/hooks/useMembers";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout/Header";
-import { ExpenseList } from "@/components/expense/ExpenseList";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
 import { EditTripDialog } from "@/components/trip/EditTripDialog";
 import { DeleteTripDialog } from "@/components/trip/DeleteTripDialog";
-import { BalanceSummary } from "@/components/balance/BalanceSummary";
-import { SettlementList } from "@/components/balance/SettlementList";
 import { SettlementReportDialog } from "@/components/balance/SettlementReportDialog";
 import { SettlementHelpDialog } from "@/components/balance/SettlementHelpDialog";
 import { PaymentForm } from "@/components/balance/PaymentForm";
-import { PaymentList } from "@/components/balance/PaymentList";
 import { EditPaymentForm } from "@/components/balance/EditPaymentForm";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -35,22 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AvatarGroup } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShareLinkSection } from "@/components/trip/ShareLinkSection";
-import { CollaboratorList } from "@/components/trip/CollaboratorList";
-import {
-  ArrowLeft,
-  Pencil,
-  Trash2,
-  Plus,
-  FileText,
-  Sheet,
-  Archive,
-  ArchiveRestore,
-  CircleHelp,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { downloadTripExcel } from "@/lib/exportTripExcel";
 import {
   collection,
@@ -67,6 +46,8 @@ import {
   buildAccountOptions,
   linkedParticipantName,
 } from "@/lib/useLinkedParticipant";
+import { TripPageContext, type PaymentPrefill } from "./TripPageContext";
+import { TripShellView } from "./TripShellView";
 
 type ExpenseFormData = {
   description: string;
@@ -78,7 +59,7 @@ type ExpenseFormData = {
   attachment?: FileAttachment | null;
 };
 
-export function TripDetailPage() {
+export function TripPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const { trip, loading: tripLoading } = useTrip(tripId ?? "");
   const { expenses, loading: expensesLoading } = useExpenses(tripId ?? "");
@@ -311,251 +292,52 @@ export function TripDetailPage() {
     }
   }
 
-  function getInitials(name: string): string {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  async function handleDownloadExcel() {
+    if (!trip) return;
+    try {
+      await downloadTripExcel(trip, expenses, payments);
+      toast.success("Excel file downloaded");
+    } catch {
+      toast.error("Failed to export Excel. Please try again.");
+    }
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="container mx-auto max-w-6xl px-4 py-6">
-        <div className="mb-6">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <Link
-              to="/"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted"
-              aria-label="Back to Dashboard"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-2xl font-bold">{trip.name}</h1>
-            {isArchived && <Badge variant="warning">Archived</Badge>}
-          </div>
-
-          {isArchived && (
-            <div className="mb-4 rounded-lg border border-warning/30 bg-warning/15 px-3 py-2.5 text-sm text-warning-foreground">
-              This trip is archived. Expenses, payments, and trip settings cannot be changed.
-              {isOwner && " You can unarchive it to allow edits again."}
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <AvatarGroup>
-                {trip.participants.slice(0, 5).map((participant) => (
-                  <Avatar key={participant} size="sm">
-                    <AvatarFallback>{getInitials(participant)}</AvatarFallback>
-                  </Avatar>
-                ))}
-              </AvatarGroup>
-              {trip.participants.length > 5 && (
-                <span className="text-sm text-muted-foreground">
-                  +{trip.participants.length - 5} more
-                </span>
-              )}
-            </div>
-
-            <CollaboratorList
-              tripId={trip.id}
-              collaboratorIds={trip.collaboratorIds}
-              members={members}
-              isOwner={isOwner && !isArchived}
-              trip={trip}
-            />
-
-            {isOwner && (
-              <div className="ml-auto flex flex-wrap gap-2">
-                {!isArchived && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditTripOpen(true)}
-                  >
-                    <Pencil className="mr-1 h-3.5 w-3.5" />
-                    Edit Trip
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleToggleArchive}
-                  disabled={archiving}
-                  className="gap-1.5"
-                >
-                  {isArchived ? (
-                    <ArchiveRestore className="h-3.5 w-3.5" />
-                  ) : (
-                    <Archive className="h-3.5 w-3.5" />
-                  )}
-                  {archiving
-                    ? isArchived
-                      ? "Unarchiving..."
-                      : "Archiving..."
-                    : isArchived
-                      ? "Unarchive"
-                      : "Archive"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeleteTripOpen(true)}
-                  className="text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="mr-1 h-3.5 w-3.5" />
-                  Delete
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <Card className="rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Expenses</CardTitle>
-              {!isArchived && (
-                <Button
-                  size="sm"
-                  onClick={() => setAddExpenseOpen(true)}
-                  className="gap-1.5"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Expense
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <ExpenseList
-                expenses={expenses}
-                participants={trip.participants}
-                readOnly={isArchived}
-                onEdit={
-                  isArchived ? undefined : (expense) => setEditingExpense(expense)
-                }
-                onDelete={
-                  isArchived
-                    ? undefined
-                    : (expense) => setDeletingExpense(expense)
-                }
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl shadow-sm">
-            <CardHeader>
-              <CardTitle>Balances</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BalanceSummary
-                expenses={expenses}
-                participants={trip.participants}
-                payments={payments}
-                settlementGroups={trip.settlementGroups}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-              <CardTitle>Settle Up</CardTitle>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSettlementHelpOpen(true)}
-                  className="gap-1.5"
-                >
-                  <CircleHelp className="h-3.5 w-3.5" />
-                  How it works
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={async () => {
-                    try {
-                      await downloadTripExcel(trip, expenses, payments);
-                      toast.success("Excel file downloaded");
-                    } catch {
-                      toast.error("Failed to export Excel. Please try again.");
-                    }
-                  }}
-                  className="gap-1.5"
-                >
-                  <Sheet className="h-3.5 w-3.5" />
-                  Download Excel
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSettlementReportOpen(true)}
-                  className="gap-1.5"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  Settlement report
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <SettlementList
-                expenses={expenses}
-                participants={trip.participants}
-                payments={payments}
-                tripName={trip.name}
-                settlementMethod={trip.settlementMethod}
-                settlementGroups={trip.settlementGroups}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Payments</CardTitle>
-              {!isArchived && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setAddPaymentOpen(true)}
-                  className="gap-1.5"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Record Payment
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <PaymentList
-                payments={payments}
-                participants={trip.participants}
-                readOnly={isArchived}
-                onEdit={
-                  isArchived ? undefined : (payment) => setEditingPayment(payment)
-                }
-                onDelete={
-                  isArchived
-                    ? undefined
-                    : (payment) => setDeletingPayment(payment)
-                }
-              />
-            </CardContent>
-          </Card>
-
-          {isOwner && (
-            <Card className="rounded-xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Share Link</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ShareLinkSection trip={trip} />
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+    <TripPageContext.Provider
+      value={{
+        tripId: tripId ?? "",
+        trip,
+        expenses,
+        payments,
+        members,
+        isOwner,
+        isArchived,
+        myName: myParticipantName,
+        archiving,
+        openAddExpense: () => setAddExpenseOpen(true),
+        openEditExpense: (expense: Expense) => setEditingExpense(expense),
+        openDeleteExpense: (expense: Expense) => setDeletingExpense(expense),
+        openAddPayment: (_prefill?: PaymentPrefill) => setAddPaymentOpen(true),
+        openEditPayment: (payment: Payment) => setEditingPayment(payment),
+        openDeletePayment: (payment: Payment) => setDeletingPayment(payment),
+        openEditTrip: () => setEditTripOpen(true),
+        toggleArchive: () => void handleToggleArchive(),
+        openDeleteTrip: () => setDeleteTripOpen(true),
+        openReport: () => setSettlementReportOpen(true),
+        openHelp: () => setSettlementHelpOpen(true),
+        downloadExcel: () => void handleDownloadExcel(),
+      }}
+    >
+      <TripShellView
+        trip={trip}
+        isOwner={isOwner}
+        isArchived={isArchived}
+        header={<Header />}
+        tabs={null}
+        fab={null}
+      >
+        <Outlet />
+      </TripShellView>
 
       <SettlementHelpDialog
         open={settlementHelpOpen}
@@ -713,6 +495,6 @@ export function TripDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </TripPageContext.Provider>
   );
 }

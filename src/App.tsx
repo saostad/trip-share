@@ -5,7 +5,7 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { InstallPrompt } from '@/components/layout/InstallPrompt'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { TripDetailPage } from '@/pages/TripDetailPage'
+import { TripPage } from '@/pages/trip/TripPage'
 import { JoinTripPage } from '@/pages/JoinTripPage'
 
 const AdminPage = lazy(() =>
@@ -48,7 +48,7 @@ function App() {
             path="/trip/:tripId"
             element={
               <ProtectedRoute>
-                <TripDetailPage />
+                <TripPage />
               </ProtectedRoute>
             }
           />
