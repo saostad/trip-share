@@ -4,6 +4,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "./auth";
 import {
   checkTripAccess,
+  requireUsableSettings,
   runExtractionPipeline,
   runTestPipeline,
   withExtractionLog,
@@ -189,17 +190,7 @@ export const extractReceipt = onCall(
       }
       // Settings are re-read on every call; nothing is cached between calls.
       const settingsSnapshot = await getFirestore().doc("appConfig/ai").get();
-      const state = parseAiSettings(settingsSnapshot.data());
-      if (state.status === "missing") {
-        throw new HttpsError("failed-precondition", "Receipt auto-fill isn't set up");
-      }
-      if (state.status === "invalid") {
-        throw new HttpsError("failed-precondition", "AI settings are invalid; ask an admin");
-      }
-      const settings = state.settings;
-      if (!settings.enabled) {
-        throw new HttpsError("failed-precondition", "Receipt auto-fill is turned off");
-      }
+      const settings = requireUsableSettings(parseAiSettings(settingsSnapshot.data()));
       const provider = getProvider(settings.provider);
       if (provider === undefined) {
         throw new HttpsError("internal", "Saved provider is unknown.");

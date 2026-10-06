@@ -1,6 +1,11 @@
 import { HttpsError } from "firebase-functions/v2/https";
 import { describe, expect, it } from "vitest";
-import { parseAiSettings, validateAiSettingsInput } from "./settings";
+import {
+  parseAiSettings,
+  validateAiSettingsInput,
+  validateModelField,
+  validateProviderField,
+} from "./settings";
 
 /** Asserts a sync function throws the HttpsError code with the field named. */
 function expectInvalidArgument(fn: () => unknown, field: string): void {
@@ -167,5 +172,19 @@ describe("validateAiSettingsInput", () => {
     expectInvalidArgument(() => validateAiSettingsInput({ ...valid, enabled: undefined }), "enabled");
     expectInvalidArgument(() => validateAiSettingsInput({ ...valid, enabled: "true" }), "enabled");
     expectInvalidArgument(() => validateAiSettingsInput({ ...valid, enabled: 1 }), "enabled");
+  });
+});
+
+describe("shared field validators", () => {
+  it("validateProviderField accepts registry ids and rejects the rest", () => {
+    expect(validateProviderField("nvidia")).toBe("nvidia");
+    expectInvalidArgument(() => validateProviderField("openai"), "provider");
+    expectInvalidArgument(() => validateProviderField(undefined), "provider");
+  });
+
+  it("validateModelField trims and enforces the same rules as settings input", () => {
+    expect(validateModelField("  m  ")).toBe("m");
+    expectInvalidArgument(() => validateModelField(""), "model");
+    expectInvalidArgument(() => validateModelField("x".repeat(201)), "model");
   });
 });

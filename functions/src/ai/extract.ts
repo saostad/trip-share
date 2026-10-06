@@ -6,6 +6,7 @@ import type { FetchImpl } from "./modelLists";
 import { normalizeExtraction, type NormalizedFields } from "./normalize";
 import { buildReceiptPrompt } from "./prompt";
 import type { ProviderDef } from "./providers";
+import type { AiSettings, AiSettingsState } from "./settings";
 
 /**
  * The extraction orchestration both callables share: prompt, adapter call,
@@ -49,6 +50,24 @@ export function checkTripAccess(data: unknown, uid: string): { archived: boolean
     throw new HttpsError("permission-denied", "You don't have access to this trip.");
   }
   return { archived: record["archived"] === true };
+}
+
+/**
+ * Requires stored settings that extraction can run with. Pure: each state
+ * gets its own `failed-precondition` message so the caller can tell "not set
+ * up" from "broken" from "turned off".
+ */
+export function requireUsableSettings(state: AiSettingsState): AiSettings {
+  if (state.status === "missing") {
+    throw new HttpsError("failed-precondition", "Receipt auto-fill isn't set up");
+  }
+  if (state.status === "invalid") {
+    throw new HttpsError("failed-precondition", "AI settings are invalid; ask an admin");
+  }
+  if (!state.settings.enabled) {
+    throw new HttpsError("failed-precondition", "Receipt auto-fill is turned off");
+  }
+  return state.settings;
 }
 
 export async function runExtractionPipeline(
