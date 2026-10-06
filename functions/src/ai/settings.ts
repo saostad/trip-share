@@ -111,25 +111,25 @@ export function parseAiSettings(data: unknown): AiSettingsState {
 }
 
 /**
- * Validates a `saveAiSettings` request body and returns the normalized
- * settings. Throws `invalid-argument` with a message naming the bad field.
+ * Validates a provider id against the registry. Shared by
+ * `validateAiSettingsInput` and the `testReceiptExtraction` callable so both
+ * enforce the same rules.
  */
-export function validateAiSettingsInput(input: unknown): AiSettings {
-  if (!isRecord(input)) {
-    throw new HttpsError("invalid-argument", "Invalid settings: expected an object.");
-  }
-  const provider = readProvider(input["provider"]);
+export function validateProviderField(value: unknown): ProviderId {
+  const provider = readProvider(value);
   if (provider === undefined) {
     const known = PROVIDERS.map((p) => p.id).join(", ");
-    throw new HttpsError(
-      "invalid-argument",
-      `Invalid 'provider': must be one of ${known}.`,
-    );
+    throw new HttpsError("invalid-argument", `Invalid 'provider': must be one of ${known}.`);
   }
-  if (typeof input["model"] !== "string") {
+  return provider;
+}
+
+/** Validates a model id. Shared like `validateProviderField`. */
+export function validateModelField(value: unknown): string {
+  if (typeof value !== "string") {
     throw new HttpsError("invalid-argument", "Invalid 'model': must be a string.");
   }
-  const model = input["model"].trim();
+  const model = value.trim();
   if (model.length < 1 || model.length > MAX_MODEL_LENGTH) {
     throw new HttpsError(
       "invalid-argument",
@@ -137,11 +137,21 @@ export function validateAiSettingsInput(input: unknown): AiSettings {
     );
   }
   if (hasControlCharacter(model)) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Invalid 'model': must not contain control characters.",
-    );
+    throw new HttpsError("invalid-argument", "Invalid 'model': must not contain control characters.");
   }
+  return model;
+}
+
+/**
+ * Validates a `saveAiSettings` request body and returns the normalized
+ * settings. Throws `invalid-argument` with a message naming the bad field.
+ */
+export function validateAiSettingsInput(input: unknown): AiSettings {
+  if (!isRecord(input)) {
+    throw new HttpsError("invalid-argument", "Invalid settings: expected an object.");
+  }
+  const provider = validateProviderField(input["provider"]);
+  const model = validateModelField(input["model"]);
   const limit = input["dailyLimitPerUser"];
   if (
     typeof limit !== "number" ||

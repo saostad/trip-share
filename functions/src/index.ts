@@ -2,12 +2,18 @@ import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "./auth";
-import { checkTripAccess, runExtractionPipeline } from "./ai/extract";
-import { validateExtractInput } from "./ai/extractInput";
+import { checkTripAccess, runExtractionPipeline, runTestPipeline, type TestPipelineResult } from "./ai/extract";
+import { validateCategoriesField, validateExtractInput, validateImageField } from "./ai/extractInput";
 import { fetchProviderModelIds, toListedModels, type ListedModel } from "./ai/modelLists";
 import type { NormalizedFields } from "./ai/normalize";
 import { getProvider, isKeyConfigured, PROVIDERS, type ProviderDef } from "./ai/providers";
-import { parseAiSettings, validateAiSettingsInput, type AiSettings } from "./ai/settings";
+import {
+  parseAiSettings,
+  validateAiSettingsInput,
+  validateModelField,
+  validateProviderField,
+  type AiSettings,
+} from "./ai/settings";
 import { checkAndIncrementUsage } from "./ai/usage";
 
 initializeApp();
@@ -60,6 +66,21 @@ export interface ExtractReceiptResponse {
   fields: NormalizedFields;
   missing: string[];
 }
+
+export interface TestReceiptExtractionRequest {
+  provider: string;
+  model: string;
+  image: {
+    mimeType: string;
+    base64: string;
+  };
+  categories: Array<{
+    id: string;
+    label: string;
+  }>;
+}
+
+export type TestReceiptExtractionResponse = TestPipelineResult;
 
 // Every callable below serves a provider chosen at request time, and secret
 // binding is static per function, so each one binds all three provider
@@ -189,6 +210,35 @@ export const extractReceipt = onCall(
       categories: input.categories,
     });
     return { fields: result.fields, missing: result.missing };
+  },
+);
+
+/**
+ * Tests a provider/model pair on one image for the admin settings page. Uses
+ * the request's provider and model (not the saved settings) and doesn't
+ * count toward the usage cap.
+ */
+export const testReceiptExtraction = onCall(
+  { ...callableOptions, timeoutSeconds: 60, memory: "512MiB" },
+  async (request): Promise<TestReceiptExtractionResponse> => {
+    await requireAdmin(request);
+    const data =
+      typeof request.data === "object" && request.data !== null
+        ? (request.data as Record<string, unknown>)
+        : {};
+    const providerId = validateProviderField(data["provider"]);
+    const model = validateModelField(data["model"]);
+    const image = validateImageField(data["image"]);
+    const categories = validateCategoriesField(data["categories"]);
+    const provider = getProvider(providerId);
+    if (provider === undefined) {
+      throw new HttpsError("internal", "Validated provider is unknown.");
+    }
+    const apiKey = provider.secret.value();
+    if (!isKeyConfigured(apiKey)) {
+      throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
+    }
+    return runTestPipeline({ provider, model, apiKey, image, categories });
   },
 );
 

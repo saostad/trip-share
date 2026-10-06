@@ -1,5 +1,5 @@
 import { HttpsError } from "firebase-functions/v2/https";
-import { extractJsonObject, runAdapter } from "./adapters";
+import { extractJsonObject, JsonExtractionError, runAdapter } from "./adapters";
 import type { ValidatedCategory, ValidatedImage } from "./extractInput";
 import type { FetchImpl } from "./modelLists";
 import { normalizeExtraction, type NormalizedFields } from "./normalize";
@@ -72,4 +72,57 @@ export async function runExtractionPipeline(
     input.categories.map((category) => category.id),
   );
   return { fields, missing, rawText, httpStatus };
+}
+
+export interface TestPipelineSuccess {
+  readonly fields: NormalizedFields;
+  readonly missing: string[];
+  readonly rawText: string;
+  readonly latencyMs: number;
+}
+
+export interface TestPipelineDiagnostic {
+  readonly fields: null;
+  readonly missing: string[];
+  readonly rawText: string;
+  readonly latencyMs: number;
+  readonly error: string;
+}
+
+export type TestPipelineResult = TestPipelineSuccess | TestPipelineDiagnostic;
+
+const MAX_TEST_RAW_TEXT_CHARS = 2000;
+
+/**
+ * Runs the pipeline for the admin test callable. Unlike `extractReceipt`, a
+ * missing-JSON answer is returned as diagnostic data (`fields: null` plus
+ * the raw text and the error) instead of thrown — the one exception to
+ * "don't return failures as data", because the test is a diagnostic tool.
+ * Provider errors still throw.
+ */
+export async function runTestPipeline(
+  input: PipelineInput,
+  deps: PipelineDeps = {},
+): Promise<TestPipelineResult> {
+  const start = Date.now();
+  try {
+    const result = await runExtractionPipeline(input, deps);
+    return {
+      fields: result.fields,
+      missing: result.missing,
+      rawText: result.rawText.slice(0, MAX_TEST_RAW_TEXT_CHARS),
+      latencyMs: Date.now() - start,
+    };
+  } catch (error) {
+    if (error instanceof JsonExtractionError) {
+      return {
+        fields: null,
+        missing: [],
+        rawText: error.rawText.slice(0, MAX_TEST_RAW_TEXT_CHARS),
+        latencyMs: Date.now() - start,
+        error: error.message,
+      };
+    }
+    throw error;
+  }
 }
