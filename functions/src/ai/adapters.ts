@@ -302,42 +302,58 @@ export async function runAdapter(
       ? buildGeminiRequest(call)
       : buildOpenAiCompatibleRequest(call);
   const controller = new AbortController();
+  // The timer covers the body reads too: it clears only after the response
+  // is fully read, so a mid-body stall maps to deadline-exceeded instead of
+  // letting the function timeout kill the instance silently.
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let response: Response;
   try {
-    response = await fetchImpl(request.url, {
-      method: "POST",
-      headers: request.headers,
-      body: JSON.stringify(request.body),
-      signal: controller.signal,
-    });
-  } catch {
-    if (controller.signal.aborted) {
-      throw new HttpsError("deadline-exceeded", `${call.provider.label} did not respond in time.`);
+    let response: Response;
+    try {
+      response = await fetchImpl(request.url, {
+        method: "POST",
+        headers: request.headers,
+        body: JSON.stringify(request.body),
+        signal: controller.signal,
+      });
+    } catch {
+      if (controller.signal.aborted) {
+        throw new HttpsError("deadline-exceeded", `${call.provider.label} did not respond in time.`);
+      }
+      throw new HttpsError("unavailable", `${call.provider.label} could not be reached.`);
     }
-    throw new HttpsError("unavailable", `${call.provider.label} could not be reached.`);
+    if (!response.ok) {
+      let bodyText: string;
+      try {
+        bodyText = (await response.text()).slice(0, MAX_ERROR_BODY_CHARS);
+      } catch {
+        if (controller.signal.aborted) {
+          throw new HttpsError("deadline-exceeded", `${call.provider.label} did not respond in time.`);
+        }
+        bodyText = "";
+      }
+      throw toProviderHttpError({
+        providerLabel: call.provider.label,
+        model: call.model,
+        status: response.status,
+        bodyText,
+        apiKey: call.apiKey,
+      });
+    }
+    let parsed: unknown;
+    try {
+      parsed = (await response.json()) as unknown;
+    } catch {
+      if (controller.signal.aborted) {
+        throw new HttpsError("deadline-exceeded", `${call.provider.label} did not respond in time.`);
+      }
+      throw new HttpsError("internal", `${call.provider.label} returned an unreadable answer.`);
+    }
+    const rawText =
+      call.provider.kind === "gemini"
+        ? parseGeminiResponse(parsed, call.provider.label)
+        : parseOpenAiCompatibleResponse(parsed, call.provider.label);
+    return { rawText, httpStatus: response.status };
   } finally {
     clearTimeout(timer);
   }
-  if (!response.ok) {
-    const bodyText = (await response.text().catch(() => "")).slice(0, MAX_ERROR_BODY_CHARS);
-    throw toProviderHttpError({
-      providerLabel: call.provider.label,
-      model: call.model,
-      status: response.status,
-      bodyText,
-      apiKey: call.apiKey,
-    });
-  }
-  let parsed: unknown;
-  try {
-    parsed = (await response.json()) as unknown;
-  } catch {
-    throw new HttpsError("internal", `${call.provider.label} returned an unreadable answer.`);
-  }
-  const rawText =
-    call.provider.kind === "gemini"
-      ? parseGeminiResponse(parsed, call.provider.label)
-      : parseOpenAiCompatibleResponse(parsed, call.provider.label);
-  return { rawText, httpStatus: response.status };
 }

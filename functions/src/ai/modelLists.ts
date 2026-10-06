@@ -124,26 +124,41 @@ async function fetchJson(
   apiKey: string,
 ): Promise<unknown> {
   const controller = new AbortController();
+  // The timer covers the body reads too: it clears only after the response
+  // is fully read, so a mid-body stall maps to deadline-exceeded.
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  let response: Response;
   try {
-    response = await fetchImpl(url, { signal: controller.signal, headers });
-  } catch {
-    if (controller.signal.aborted) {
-      throw new HttpsError("deadline-exceeded", `${providerLabel} did not respond in time.`);
+    let response: Response;
+    try {
+      response = await fetchImpl(url, { signal: controller.signal, headers });
+    } catch {
+      if (controller.signal.aborted) {
+        throw new HttpsError("deadline-exceeded", `${providerLabel} did not respond in time.`);
+      }
+      throw new HttpsError("unavailable", `${providerLabel} could not be reached.`);
     }
-    throw new HttpsError("unavailable", `${providerLabel} could not be reached.`);
+    if (!response.ok) {
+      let bodyText: string;
+      try {
+        bodyText = (await response.text()).slice(0, MAX_ERROR_BODY_CHARS);
+      } catch {
+        if (controller.signal.aborted) {
+          throw new HttpsError("deadline-exceeded", `${providerLabel} did not respond in time.`);
+        }
+        bodyText = "";
+      }
+      throw toProviderHttpError({ providerLabel, status: response.status, bodyText, apiKey });
+    }
+    try {
+      return (await response.json()) as unknown;
+    } catch {
+      if (controller.signal.aborted) {
+        throw new HttpsError("deadline-exceeded", `${providerLabel} did not respond in time.`);
+      }
+      throw new HttpsError("internal", `${providerLabel} returned an unreadable model list.`);
+    }
   } finally {
     clearTimeout(timer);
-  }
-  if (!response.ok) {
-    const bodyText = (await response.text().catch(() => "")).slice(0, MAX_ERROR_BODY_CHARS);
-    throw toProviderHttpError({ providerLabel, status: response.status, bodyText, apiKey });
-  }
-  try {
-    return (await response.json()) as unknown;
-  } catch {
-    throw new HttpsError("internal", `${providerLabel} returned an unreadable model list.`);
   }
 }
 

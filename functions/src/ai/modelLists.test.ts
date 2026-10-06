@@ -281,6 +281,23 @@ describe("fetchProviderModelIds", () => {
     expect(error.message).not.toContain(FAKE_KEY);
   });
 
+  it("maps a stalled body read to deadline-exceeded", async () => {
+    // Models real fetch: an abort rejects a pending body read.
+    const stalledBody = ((...args: [unknown, { signal?: AbortSignal }?]) => {
+      const signal = args[1]?.signal;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          new Promise<never>((_resolve, reject) => {
+            signal?.addEventListener("abort", () => reject(new Error("aborted")));
+          }),
+        text: async () => "",
+      } as unknown as Response);
+    }) as unknown as FetchImpl;
+    await expectHttpsError(fetchProviderModelIds(nvidia(), FAKE_KEY, stalledBody, 20), "deadline-exceeded");
+  });
+
   it("reads a 200 without a models key as an empty list", async () => {
     const fetchImpl = mockFetch(() => ({ status: 200, body: { error: "nothing here" } }), []);
     await expect(fetchProviderModelIds(gemini(), FAKE_KEY, fetchImpl)).resolves.toEqual([]);

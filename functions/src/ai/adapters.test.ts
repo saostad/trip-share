@@ -349,4 +349,21 @@ describe("runAdapter", () => {
     }) as unknown as FetchImpl;
     await expectCode(runAdapter(geminiCall(), hanging, 20), "deadline-exceeded");
   });
+
+  it("maps a stalled body read to deadline-exceeded", async () => {
+    // Models real fetch: an abort rejects a pending body read.
+    const stalledBody = ((...args: [unknown, { signal?: AbortSignal }?]) => {
+      const signal = args[1]?.signal;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          new Promise<never>((_resolve, reject) => {
+            signal?.addEventListener("abort", () => reject(new Error("aborted")));
+          }),
+        text: async () => "",
+      } as unknown as Response);
+    }) as unknown as FetchImpl;
+    await expectCode(runAdapter(geminiCall(), stalledBody, 20), "deadline-exceeded");
+  });
 });
