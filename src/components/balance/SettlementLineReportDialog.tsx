@@ -110,9 +110,9 @@ export function SettlementLineReportDialog({
               {data.generatedLabel}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2.5">
-              <span className="font-semibold text-destructive">{data.from}</span>
+              <span className="font-semibold text-negative">{data.from}</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              <span className="font-semibold text-emerald-600">{data.to}</span>
+              <span className="font-semibold text-positive">{data.to}</span>
               <span className="ml-auto text-lg font-bold tabular-nums">
                 {formatCurrency(data.amount)}
               </span>
@@ -213,9 +213,9 @@ export function SettlementLineReportDialog({
                         <td
                           className={`px-2 py-1.5 text-right font-mono ${
                             row.fromImpact > 0.01
-                              ? "text-emerald-600"
+                              ? "text-positive"
                               : row.fromImpact < -0.01
-                                ? "text-destructive"
+                                ? "text-negative"
                                 : "text-muted-foreground"
                           }`}
                         >
@@ -224,9 +224,9 @@ export function SettlementLineReportDialog({
                         <td
                           className={`px-2 py-1.5 text-right font-mono ${
                             row.toImpact > 0.01
-                              ? "text-emerald-600"
+                              ? "text-positive"
                               : row.toImpact < -0.01
-                                ? "text-destructive"
+                                ? "text-negative"
                                 : "text-muted-foreground"
                           }`}
                         >
@@ -305,8 +305,8 @@ export function SettlementLineReportDialog({
                         className={
                           "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase " +
                           (step.kind === "expense"
-                            ? "bg-blue-500/10 text-blue-700 dark:text-blue-400"
-                            : "bg-amber-500/10 text-amber-700 dark:text-amber-400")
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground")
                         }
                       >
                         {step.kind}
@@ -349,9 +349,9 @@ export function SettlementLineReportDialog({
                                 <td
                                   className={`px-2 py-1 text-right font-mono ${
                                     fx.delta > 0.01
-                                      ? "text-emerald-600"
+                                      ? "text-positive"
                                       : fx.delta < -0.01
-                                        ? "text-destructive"
+                                        ? "text-negative"
                                         : ""
                                   }`}
                                 >
@@ -399,8 +399,8 @@ function BreakdownCard({
 }) {
   const tint =
     variant === "owes"
-      ? "border-destructive/20 bg-destructive/5"
-      : "border-emerald-500/20 bg-emerald-500/5";
+      ? "border-negative/20 bg-negative/5"
+      : "border-positive/20 bg-positive/5";
 
   return (
     <div className={`rounded-md border px-2.5 py-2 text-xs space-y-1 ${tint}`}>

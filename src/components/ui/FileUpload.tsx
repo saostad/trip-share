@@ -162,7 +162,7 @@ export function FileUpload({ storagePath, value, onChange, onFileSelected }: Fil
           href={value.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="min-w-0 flex-1 truncate text-xs text-blue-600 hover:underline"
+          className="min-w-0 flex-1 truncate text-xs text-primary hover:underline"
         >
           {value.name}
         </a>
@@ -212,7 +212,7 @@ export function FileUpload({ storagePath, value, onChange, onFileSelected }: Fil
       {uploading && (
         <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>

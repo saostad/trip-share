@@ -325,7 +325,7 @@ export function PaymentList({
                 <span className="min-w-0 truncate font-medium">{payment.from}</span>
                 <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 truncate font-medium">{payment.to}</span>
-                <span className="ml-auto shrink-0 font-semibold text-emerald-600">
+                <span className="ml-auto shrink-0 font-semibold text-positive">
                   {formatCurrency(payment.amount)}
                 </span>
                 {!readOnly && onEdit && onDelete && (
@@ -364,7 +364,7 @@ export function PaymentList({
                       href={payment.attachment.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-0.5 text-blue-600 hover:underline"
+                      className="inline-flex items-center gap-0.5 text-primary hover:underline"
                     >
                       <Paperclip className="h-3 w-3" />
                       <span className="truncate">{payment.attachment.name}</span>

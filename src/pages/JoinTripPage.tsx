@@ -106,13 +106,13 @@ export function JoinTripPage() {
   if (state === 'archived') {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-amber-600">Trip archived</h1>
+        <h1 className="text-2xl font-bold text-warning-foreground">Trip archived</h1>
         <p className="mt-4 text-muted-foreground">
           This trip has been archived by the owner and is no longer accepting new members.
         </p>
         <Link
           to="/"
-          className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="mt-6 inline-block rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/80"
         >
           Go to Dashboard
         </Link>
@@ -122,7 +122,7 @@ export function JoinTripPage() {
 
   return (
     <div className="container mx-auto px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold text-red-600">Invalid Link</h1>
+      <h1 className="text-2xl font-bold text-destructive">Invalid Link</h1>
       <p className="mt-4 text-muted-foreground">
         This link is invalid or has expired.
       </p>
@@ -131,7 +131,7 @@ export function JoinTripPage() {
       </p>
       <Link
         to="/"
-        className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        className="mt-6 inline-block rounded-lg bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/80"
       >
         Go to Dashboard
       </Link>

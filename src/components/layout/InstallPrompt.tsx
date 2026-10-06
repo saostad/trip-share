@@ -73,7 +73,7 @@ export function InstallPrompt() {
   // Android / desktop Chromium install banner
   if (deferredPrompt) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 border-b bg-blue-600 px-4 py-2.5 text-white shadow-md">
+      <div className="fixed top-0 left-0 right-0 z-50 border-b bg-primary px-4 py-2.5 text-primary-foreground shadow-md">
         <div className="container mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <img
@@ -83,7 +83,7 @@ export function InstallPrompt() {
             />
             <div className="min-w-0">
               <p className="text-sm font-semibold">Install TripShare</p>
-              <p className="truncate text-xs text-blue-100">
+              <p className="truncate text-xs text-primary-foreground/80">
                 Add to your home screen for quick access
               </p>
             </div>
@@ -93,14 +93,14 @@ export function InstallPrompt() {
               size="sm"
               variant="secondary"
               onClick={handleInstall}
-              className="gap-1.5 bg-white text-blue-600 hover:bg-blue-50"
+              className="gap-1.5 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
             >
               <Download className="h-3.5 w-3.5" />
               Install
             </Button>
             <button
               onClick={handleDismiss}
-              className="rounded-full p-1 hover:bg-blue-500"
+              className="rounded-full p-1 hover:bg-primary-foreground/20"
               aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
@@ -114,7 +114,7 @@ export function InstallPrompt() {
   // iOS Safari — guide user to Share → Add to Home Screen
   if (showIosHint) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 border-b bg-blue-600 px-4 py-2.5 text-white shadow-md">
+      <div className="fixed top-0 left-0 right-0 z-50 border-b bg-primary px-4 py-2.5 text-primary-foreground shadow-md">
         <div className="container mx-auto flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0">
             <img
@@ -124,15 +124,15 @@ export function InstallPrompt() {
             />
             <div className="min-w-0 text-sm">
               <p className="font-semibold">Install TripShare</p>
-              <p className="text-xs text-blue-100 mt-0.5 leading-relaxed">
+              <p className="text-xs text-primary-foreground/80 mt-0.5 leading-relaxed">
                 Tap <Share className="inline h-3.5 w-3.5 align-text-bottom" /> Share, then{' '}
-                <span className="font-medium text-white">Add to Home Screen</span>
+                <span className="font-medium text-primary-foreground">Add to Home Screen</span>
               </p>
             </div>
           </div>
           <button
             onClick={handleDismiss}
-            className="rounded-full p-1 hover:bg-blue-500 shrink-0"
+            className="rounded-full p-1 hover:bg-primary-foreground/20 shrink-0"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />

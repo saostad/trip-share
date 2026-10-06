@@ -7,6 +7,7 @@ import {
   AvatarGroup,
   AvatarGroupCount,
 } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import type { Trip, TripRole } from "@/types";
 
 interface TripCardProps {
@@ -46,20 +47,10 @@ export function TripCard({ trip, role }: TripCardProps) {
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="truncate">{trip.name}</CardTitle>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-              {isArchived && (
-                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                  Archived
-                </span>
-              )}
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                  role === "owner"
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200"
-                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
-                }`}
-              >
+              {isArchived && <Badge variant="warning">Archived</Badge>}
+              <Badge variant={role === "owner" ? "primary" : "neutral"}>
                 {role === "owner" ? "Owner" : "Collaborator"}
-              </span>
+              </Badge>
             </div>
           </div>
         </CardHeader>

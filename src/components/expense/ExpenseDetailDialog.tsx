@@ -87,7 +87,7 @@ function AttachmentPreview({ attachment }: { attachment: FileAttachment }) {
         href={attachment.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-sm text-blue-600 hover:bg-muted/40 hover:underline dark:text-blue-400"
+        className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-2 text-sm text-primary hover:bg-muted/40 hover:underline"
       >
         {kind === "image" ? (
           <Paperclip className="h-3.5 w-3.5 shrink-0" />

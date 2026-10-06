@@ -18,6 +18,7 @@ import { PaymentForm } from "@/components/balance/PaymentForm";
 import { PaymentList } from "@/components/balance/PaymentList";
 import { EditPaymentForm } from "@/components/balance/EditPaymentForm";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -333,15 +334,11 @@ export function TripDetailPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold">{trip.name}</h1>
-            {isArchived && (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                Archived
-              </span>
-            )}
+            {isArchived && <Badge variant="warning">Archived</Badge>}
           </div>
 
           {isArchived && (
-            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-100">
+            <div className="mb-4 rounded-lg border border-warning/30 bg-warning/15 px-3 py-2.5 text-sm text-warning-foreground">
               This trip is archived. Expenses, payments, and trip settings cannot be changed.
               {isOwner && " You can unarchive it to allow edits again."}
             </div>

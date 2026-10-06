@@ -106,7 +106,7 @@ export function SettlementList({
       </div>
 
       {transactions.length === 0 ? (
-        <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+        <p className="rounded-lg border border-positive/20 bg-positive/5 px-3 py-3 text-sm text-positive">
           All settled! No payments needed.
         </p>
       ) : (
@@ -131,11 +131,11 @@ export function SettlementList({
                   ) : (
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
-                  <span className="min-w-0 truncate font-medium text-destructive">
+                  <span className="min-w-0 truncate font-medium text-negative">
                     {transaction.from}
                   </span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 truncate font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="min-w-0 truncate font-medium text-positive">
                     {transaction.to}
                   </span>
                   <span className="ml-auto shrink-0 text-base font-semibold tabular-nums">
@@ -314,8 +314,8 @@ function PersonCard({
 }) {
   const tint =
     variant === "owes"
-      ? "border-destructive/20 bg-destructive/5"
-      : "border-emerald-500/20 bg-emerald-500/5";
+      ? "border-negative/20 bg-negative/5"
+      : "border-positive/20 bg-positive/5";
 
   return (
     <div className={`space-y-1 rounded-md border px-2.5 py-2 ${tint}`}>

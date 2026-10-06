@@ -48,7 +48,7 @@ function formatUpdatedAt(value: string): string | null {
 
 function StatusDot({ tone }: { tone: "ok" | "warn" | "missing" }) {
   const color =
-    tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : "bg-gray-300";
+    tone === "ok" ? "bg-positive" : tone === "warn" ? "bg-warning-foreground" : "bg-muted-foreground";
   return <span aria-hidden="true" className={`inline-block size-2 rounded-full ${color}`} />;
 }
 
@@ -61,7 +61,7 @@ export function AdminPage() {
         <Header />
         <div className="flex min-h-[50vh] items-center justify-center">
           <div
-            className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
+            className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary"
             role="status"
             aria-label="Loading admin status"
           />
@@ -76,7 +76,7 @@ export function AdminPage() {
         <Header />
         <main className="mx-auto max-w-2xl px-4 py-10 text-center">
           <p className="text-lg font-medium">You&apos;re not authorized to view this page.</p>
-          <Link to="/" className="mt-4 inline-block text-sm text-blue-600 hover:underline">
+          <Link to="/" className="mt-4 inline-block text-sm text-primary hover:underline">
             Go back home
           </Link>
         </main>
@@ -344,14 +344,14 @@ function AiReceiptSection() {
             {status.settingsStatus === "missing" && <span>Not set up yet.</span>}
           </div>
           {status.settingsStatus === "invalid" && (
-            <p className="text-amber-600" role="alert">
+            <p className="text-warning-foreground" role="alert">
               The saved settings are invalid:{" "}
               {withoutTrailingPeriod(status.settingsError ?? "unknown error")}. Saving will
               replace the stored settings.
             </p>
           )}
           {status.keysStatus === "invalid" && (
-            <div className="space-y-1 text-amber-600" role="alert">
+            <div className="space-y-1 text-warning-foreground" role="alert">
               <p>
                 The AI_PROVIDER_KEYS secret isn&apos;t valid JSON, so no provider has a key. Run
                 this to replace it:

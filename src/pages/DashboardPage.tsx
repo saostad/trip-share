@@ -40,7 +40,7 @@ function TripCardSkeleton() {
 function InviteOnlyPanel() {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-xl border border-border bg-card px-6 py-12 text-center shadow-sm">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/15 text-warning-foreground">
         <Lock className="h-6 w-6" />
       </div>
       <h2 className="mb-2 text-lg font-semibold text-foreground">
@@ -118,10 +118,7 @@ export function DashboardPage() {
         <div className="mb-6 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-foreground">My Trips</h1>
           {showCreateControls && (
-            <Button
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
-              onClick={() => setShowCreateDialog(true)}
-            >
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="size-4" data-icon="inline-start" />
               New Trip
             </Button>
@@ -155,10 +152,7 @@ export function DashboardPage() {
             <p className="mb-6 max-w-sm text-sm text-muted-foreground">
               Create your first trip to start splitting expenses with friends.
             </p>
-            <Button
-              className="bg-emerald-500 text-white hover:bg-emerald-600"
-              onClick={() => setShowCreateDialog(true)}
-            >
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="size-4" data-icon="inline-start" />
               Create your first trip
             </Button>
@@ -168,7 +162,7 @@ export function DashboardPage() {
         {!loading && !accessLoading && !error && trips.length > 0 && (
           <div className="space-y-4">
             {!canCreateTrips && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-900 dark:text-amber-100">
+              <div className="rounded-lg border border-warning/30 bg-warning/15 px-3 py-2.5 text-sm text-warning-foreground">
                 Creating new trips is invite-only. You can still open trips you
                 joined via a share link.
               </div>

@@ -77,8 +77,8 @@ export function SettlementReportDialog({
   }
 
   function balanceClass(n: number): string {
-    if (n > 0.01) return "text-emerald-600";
-    if (n < -0.01) return "text-destructive";
+    if (n > 0.01) return "text-positive";
+    if (n < -0.01) return "text-negative";
     return "text-muted-foreground";
   }
 
@@ -165,7 +165,7 @@ export function SettlementReportDialog({
               Remaining settlements ({report.settlementMethodLabel})
             </h3>
             {report.remainingSettlements.length === 0 ? (
-              <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+              <p className="rounded-lg border border-positive/30 bg-positive/5 px-3 py-2 text-xs text-positive">
                 All settled — no further payments needed.
               </p>
             ) : (
@@ -175,9 +175,9 @@ export function SettlementReportDialog({
                     key={`${t.from}-${t.to}-${t.amount}`}
                     className="flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg border px-3 py-2 text-xs"
                   >
-                    <span className="font-medium text-destructive">{t.from}</span>
+                    <span className="font-medium text-negative">{t.from}</span>
                     <span className="text-muted-foreground">pays</span>
-                    <span className="font-medium text-emerald-600">{t.to}</span>
+                    <span className="font-medium text-positive">{t.to}</span>
                     <span className="ml-auto font-semibold">
                       {formatCurrency(t.amount)}
                     </span>
@@ -274,7 +274,7 @@ export function SettlementReportDialog({
                   {formatCurrency(report.balanceChecksum)}
                 </span>
                 {report.isBalanced ? (
-                  <span className="ml-2 text-emerald-600">balanced</span>
+                  <span className="ml-2 text-positive">balanced</span>
                 ) : (
                   <span className="ml-2 text-destructive">not zero</span>
                 )}

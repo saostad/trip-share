@@ -316,12 +316,12 @@ export function PaymentForm({ participants, tripId, defaultFrom, onSubmit, onCan
                         Total: ${customTotal.toFixed(2)} / ${parsedTotalAmount.toFixed(2)}
                       </span>
                       {Math.abs(remaining) > 0.01 && (
-                        <span className={remaining > 0 ? "text-amber-600" : "text-destructive"}>
+                        <span className={remaining > 0 ? "text-warning-foreground" : "text-destructive"}>
                           {remaining > 0 ? `$${remaining.toFixed(2)} remaining` : `$${Math.abs(remaining).toFixed(2)} over`}
                         </span>
                       )}
                       {Math.abs(remaining) <= 0.01 && parsedTotalAmount > 0 && (
-                        <span className="text-emerald-600">Balanced</span>
+                        <span className="text-positive">Balanced</span>
                       )}
                     </div>
                     {splitError && (

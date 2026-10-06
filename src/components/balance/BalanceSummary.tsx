@@ -122,12 +122,12 @@ export function BalanceSummary({
           let statusLabel: string;
 
           if (isPositive) {
-            amountClass = "text-emerald-600 dark:text-emerald-400";
-            rowTint = "border-emerald-500/20 bg-emerald-500/5";
+            amountClass = "text-positive";
+            rowTint = "border-positive/20 bg-positive/5";
             statusLabel = "is owed";
           } else if (isNegative) {
-            amountClass = "text-destructive";
-            rowTint = "border-destructive/20 bg-destructive/5";
+            amountClass = "text-negative";
+            rowTint = "border-negative/20 bg-negative/5";
             statusLabel = "owes";
           } else {
             amountClass = "text-muted-foreground";
