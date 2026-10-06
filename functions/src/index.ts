@@ -2,7 +2,13 @@ import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { requireAdmin } from "./auth";
-import { checkTripAccess, runExtractionPipeline, runTestPipeline, type TestPipelineResult } from "./ai/extract";
+import {
+  checkTripAccess,
+  runExtractionPipeline,
+  runTestPipeline,
+  withExtractionLog,
+  type TestPipelineResult,
+} from "./ai/extract";
 import { validateCategoriesField, validateExtractInput, validateImageField } from "./ai/extractInput";
 import { fetchProviderModelIds, toListedModels, type ListedModel } from "./ai/modelLists";
 import type { NormalizedFields } from "./ai/normalize";
@@ -170,46 +176,51 @@ export const listAiModels = onCall(
 export const extractReceipt = onCall(
   { ...callableOptions, timeoutSeconds: 60, memory: "512MiB" },
   async (request): Promise<ExtractReceiptResponse> => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Sign in required.");
-    }
-    const uid = request.auth.uid;
-    const input = validateExtractInput(request.data);
-    const tripSnapshot = await getFirestore().doc(`trips/${input.tripId}`).get();
-    const access = checkTripAccess(tripSnapshot.data(), uid);
-    if (access.archived) {
-      throw new HttpsError("failed-precondition", "This trip is archived");
-    }
-    // Settings are re-read on every call; nothing is cached between calls.
-    const settingsSnapshot = await getFirestore().doc("appConfig/ai").get();
-    const state = parseAiSettings(settingsSnapshot.data());
-    if (state.status === "missing") {
-      throw new HttpsError("failed-precondition", "Receipt auto-fill isn't set up");
-    }
-    if (state.status === "invalid") {
-      throw new HttpsError("failed-precondition", "AI settings are invalid; ask an admin");
-    }
-    const settings = state.settings;
-    if (!settings.enabled) {
-      throw new HttpsError("failed-precondition", "Receipt auto-fill is turned off");
-    }
-    const provider = getProvider(settings.provider);
-    if (provider === undefined) {
-      throw new HttpsError("internal", "Saved provider is unknown.");
-    }
-    const apiKey = provider.secret.value();
-    if (!isKeyConfigured(apiKey)) {
-      throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
-    }
-    await checkAndIncrementUsage(getFirestore(), uid, settings.dailyLimitPerUser);
-    const result = await runExtractionPipeline({
-      provider,
-      model: settings.model,
-      apiKey,
-      image: input.image,
-      categories: input.categories,
+    return withExtractionLog("extractReceipt", request.auth?.uid, async (log) => {
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Sign in required.");
+      }
+      const uid = request.auth.uid;
+      const input = validateExtractInput(request.data);
+      const tripSnapshot = await getFirestore().doc(`trips/${input.tripId}`).get();
+      const access = checkTripAccess(tripSnapshot.data(), uid);
+      if (access.archived) {
+        throw new HttpsError("failed-precondition", "This trip is archived");
+      }
+      // Settings are re-read on every call; nothing is cached between calls.
+      const settingsSnapshot = await getFirestore().doc("appConfig/ai").get();
+      const state = parseAiSettings(settingsSnapshot.data());
+      if (state.status === "missing") {
+        throw new HttpsError("failed-precondition", "Receipt auto-fill isn't set up");
+      }
+      if (state.status === "invalid") {
+        throw new HttpsError("failed-precondition", "AI settings are invalid; ask an admin");
+      }
+      const settings = state.settings;
+      if (!settings.enabled) {
+        throw new HttpsError("failed-precondition", "Receipt auto-fill is turned off");
+      }
+      const provider = getProvider(settings.provider);
+      if (provider === undefined) {
+        throw new HttpsError("internal", "Saved provider is unknown.");
+      }
+      log.provider = provider.id;
+      log.model = settings.model;
+      const apiKey = provider.secret.value();
+      if (!isKeyConfigured(apiKey)) {
+        throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
+      }
+      await checkAndIncrementUsage(getFirestore(), uid, settings.dailyLimitPerUser);
+      const result = await runExtractionPipeline({
+        provider,
+        model: settings.model,
+        apiKey,
+        image: input.image,
+        categories: input.categories,
+      });
+      log.httpStatus = result.httpStatus;
+      return { fields: result.fields, missing: result.missing };
     });
-    return { fields: result.fields, missing: result.missing };
   },
 );
 
@@ -221,24 +232,28 @@ export const extractReceipt = onCall(
 export const testReceiptExtraction = onCall(
   { ...callableOptions, timeoutSeconds: 60, memory: "512MiB" },
   async (request): Promise<TestReceiptExtractionResponse> => {
-    await requireAdmin(request);
-    const data =
-      typeof request.data === "object" && request.data !== null
-        ? (request.data as Record<string, unknown>)
-        : {};
-    const providerId = validateProviderField(data["provider"]);
-    const model = validateModelField(data["model"]);
-    const image = validateImageField(data["image"]);
-    const categories = validateCategoriesField(data["categories"]);
-    const provider = getProvider(providerId);
-    if (provider === undefined) {
-      throw new HttpsError("internal", "Validated provider is unknown.");
-    }
-    const apiKey = provider.secret.value();
-    if (!isKeyConfigured(apiKey)) {
-      throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
-    }
-    return runTestPipeline({ provider, model, apiKey, image, categories });
+    return withExtractionLog("testReceiptExtraction", request.auth?.uid, async (log) => {
+      await requireAdmin(request);
+      const data =
+        typeof request.data === "object" && request.data !== null
+          ? (request.data as Record<string, unknown>)
+          : {};
+      const providerId = validateProviderField(data["provider"]);
+      const model = validateModelField(data["model"]);
+      const image = validateImageField(data["image"]);
+      const categories = validateCategoriesField(data["categories"]);
+      const provider = getProvider(providerId);
+      if (provider === undefined) {
+        throw new HttpsError("internal", "Validated provider is unknown.");
+      }
+      log.provider = provider.id;
+      log.model = model;
+      const apiKey = provider.secret.value();
+      if (!isKeyConfigured(apiKey)) {
+        throw new HttpsError("failed-precondition", `API key for ${provider.label} is not set.`);
+      }
+      return runTestPipeline({ provider, model, apiKey, image, categories });
+    });
   },
 );
 

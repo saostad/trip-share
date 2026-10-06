@@ -1,4 +1,5 @@
 import { HttpsError } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions/logger";
 import { extractJsonObject, JsonExtractionError, runAdapter } from "./adapters";
 import type { ValidatedCategory, ValidatedImage } from "./extractInput";
 import type { FetchImpl } from "./modelLists";
@@ -100,6 +101,61 @@ const MAX_TEST_RAW_TEXT_CHARS = 2000;
  * "don't return failures as data", because the test is a diagnostic tool.
  * Provider errors still throw.
  */
+export interface ExtractionLogContext {
+  provider?: string;
+  model?: string;
+  httpStatus?: number;
+}
+
+function readHttpStatus(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "httpStatus" in error) {
+    const status = (error as { httpStatus: unknown }).httpStatus;
+    return typeof status === "number" ? status : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Runs one extraction call with exactly one log line: `info` on success,
+ * `warn` on error. The line holds only `fn`, `uid`, `provider`, `model`,
+ * `outcome`, `latencyMs` and the HTTP status — never the key, the image,
+ * `rawText` or the extracted fields.
+ */
+export async function withExtractionLog<T>(
+  fn: string,
+  uid: string | undefined,
+  run: (log: ExtractionLogContext) => Promise<T>,
+): Promise<T> {
+  const log: ExtractionLogContext = {};
+  const start = Date.now();
+  try {
+    const result = await run(log);
+    logger.info({
+      fn,
+      uid,
+      provider: log.provider,
+      model: log.model,
+      outcome: "ok",
+      latencyMs: Date.now() - start,
+      ...(log.httpStatus === undefined ? {} : { httpStatus: log.httpStatus }),
+    });
+    return result;
+  } catch (error) {
+    const outcome = error instanceof HttpsError ? error.code : "internal";
+    const httpStatus = log.httpStatus ?? readHttpStatus(error);
+    logger.warn({
+      fn,
+      uid,
+      provider: log.provider,
+      model: log.model,
+      outcome,
+      latencyMs: Date.now() - start,
+      ...(httpStatus === undefined ? {} : { httpStatus }),
+    });
+    throw error;
+  }
+}
+
 export async function runTestPipeline(
   input: PipelineInput,
   deps: PipelineDeps = {},
